@@ -1,0 +1,161 @@
+package com.app.edcpoc
+
+import android.os.Bundle
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
+import androidx.activity.viewModels
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.app.edcpoc.data.model.UserRole
+import com.app.edcpoc.ui.components.*
+import com.app.edcpoc.ui.screens.ChangePinScreen
+import com.app.edcpoc.ui.screens.CreatePinScreen
+import com.app.edcpoc.ui.screens.KeamananScreen
+import com.app.edcpoc.ui.screens.LoginScreen
+import com.app.edcpoc.ui.screens.PinManagementScreen
+import com.app.edcpoc.ui.screens.ReissuePinScreen
+import com.app.edcpoc.ui.screens.SessionManagementScreen
+import com.app.edcpoc.ui.screens.TransactionScreen
+import com.app.edcpoc.ui.screens.VerificationPinScreen
+import com.app.edcpoc.ui.theme.EdcpocTheme
+import com.app.edcpoc.ui.viewmodel.AuthViewModel
+
+class MainActivity : ComponentActivity() {
+    private val authViewModel: AuthViewModel by viewModels()
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+
+        authViewModel.initialize(this@MainActivity)
+
+        setContent {
+            EdcpocTheme {
+                EDCMainApp()
+            }
+        }
+    }
+}
+
+@Composable
+fun EDCMainApp(authViewModel: AuthViewModel = viewModel()) {
+    var currentScreen by remember { mutableStateOf("login") }
+    val authState by authViewModel.uiState.collectAsState()
+    
+    // Debug logging
+    LaunchedEffect(authState.isLoggedIn, currentScreen) {
+        println("DEBUG: isLoggedIn = ${authState.isLoggedIn}, currentScreen = $currentScreen, user = ${authState.currentUser?.name}")
+    }
+    
+    // Determine which screen to show
+    val screenToShow = when {
+        !authState.isLoggedIn -> "login"
+        authState.isLoggedIn && currentScreen == "login" -> "home"
+        else -> currentScreen
+    }
+    
+    when (screenToShow) {
+        "login" -> {
+            LoginScreen(
+                onLoginSuccess = { 
+                    currentScreen = "home"
+                }
+            )
+        }
+        "home" -> EDCHomeScreen(
+            currentUser = authState.currentUser!!,
+            onTransaksiClick = { currentScreen = "transaksi" },
+            onKeamananClick = { currentScreen = "keamanan" },
+            onManajemenPINClick = { currentScreen = "pin_management" },
+            onSessionManagementClick = { currentScreen = "session_management" },
+            onLogoutClick = { 
+                authViewModel.logout()
+                currentScreen = "login"
+            }
+        )
+        "keamanan" -> KeamananScreen(
+            onBackClick = { currentScreen = "home" }
+        )
+        "create_pin" -> CreatePinScreen(
+            onBackClick = { currentScreen = "pin_management" },
+            onPinCreated = { pin ->
+                currentScreen = "pin_management"
+            }
+        )
+        "pin_management" -> PinManagementScreen(
+            currentUser = authState.currentUser!!,
+            onBackClick = { currentScreen = "home" },
+            onCreatePinClick = { currentScreen = "create_pin" },
+            onChangePinClick = { currentScreen = "change_pin" },
+            onReissuePinClick = { currentScreen = "reissue_pin" },
+            onVerificationPinClick = { currentScreen = "verification_pin" }
+        )
+        "change_pin" -> ChangePinScreen(
+            onBackClick = { currentScreen = "pin_management" },
+            onPinChanged = { pin ->
+                currentScreen = "pin_management"
+            }
+        )
+        "reissue_pin" -> ReissuePinScreen(
+            onBackClick = { currentScreen = "pin_management" },
+            onPinReissued = { cardNumber ->
+                currentScreen = "pin_management"
+            }
+        )
+        "verification_pin" -> VerificationPinScreen(
+            onBackClick = { currentScreen = "pin_management" },
+            onPinVerified = { isValid ->
+                currentScreen = "pin_management"
+            }
+        )
+        "session_management" -> SessionManagementScreen(
+            currentUser = authState.currentUser!!,
+            onBackClick = { currentScreen = "home" }
+        )
+        "transaksi" -> TransactionScreen(
+            onBackClick = { currentScreen = "home" },
+            onTransactionSuccess = { transaction ->
+                // Handle transaction success
+                currentScreen = "home"
+            }
+        )
+        else -> {
+            // Fallback for unknown screen states
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "Loading...",
+                        fontSize = 18.sp,
+                        color = Color(0xFF757575)
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    CircularProgressIndicator()
+                }
+            }
+        }
+    }
+}

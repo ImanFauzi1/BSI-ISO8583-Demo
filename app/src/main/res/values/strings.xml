@@ -1,0 +1,33 @@
+<resources>
+    <string name="app_name">EDC Mobile</string>
+    
+    <!-- Header -->
+    <string name="app_title">EDC MOBILE</string>
+    <string name="app_subtitle">Ready for Transactions</string>
+    <string name="status_ready">Siap Digunakan</string>
+    
+    <!-- Card Titles -->
+    <string name="transaksi_title">TRANSAKSI</string>
+    <string name="keamanan_title">KEAMANAN</string>
+    <string name="manajemen_pin_title">MANAJEMEN PIN</string>
+    
+    <!-- Button Labels -->
+    <string name="btn_transaksi">Transaksi</string>
+    <string name="btn_reissue_pin">Reissue PIN</string>
+    <string name="btn_logon">Logon</string>
+    <string name="btn_logoff">Logoff</string>
+    <string name="btn_create_pin">Create PIN</string>
+    <string name="btn_change_pin">Change PIN</string>
+    <string name="btn_verification_pin">Verification PIN</string>
+    
+    <!-- Footer -->
+    <string name="terminal_info">Terminal: EDC-2024-001</string>
+    <string name="app_version">v2.1.0</string>
+    
+    <!-- Create PIN Screen -->
+    <string name="create_pin_title">+ Create PIN</string>
+    <string name="create_pin_subtitle">Buat PIN Baru</string>
+    <string name="pin_input_title">Masukkan PIN (6 Digit)</string>
+    <string name="show_pin_text">Tampilkan</string>
+    <string name="confirm_button">CONFIRM</string>
+</resources>
