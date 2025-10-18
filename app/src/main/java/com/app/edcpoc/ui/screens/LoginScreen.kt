@@ -30,8 +30,8 @@ fun LoginScreen(
     onLoginSuccess: () -> Unit = {},
     authViewModel: AuthViewModel = viewModel()
 ) {
-    var username by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
+    var username by remember { mutableStateOf("supervisor") }
+    var password by remember { mutableStateOf("super123") }
     var showPassword by remember { mutableStateOf(false) }
     
     val uiState by authViewModel.uiState.collectAsState()

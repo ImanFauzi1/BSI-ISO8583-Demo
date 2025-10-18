@@ -19,6 +19,7 @@ object Constants {
     public final var emvHandler: EmvHandler? = null
     public final var realCardType: CardReaderTypeEnum? = null
     var mCardType: CardReaderTypeEnum = CardReaderTypeEnum.MAG_IC_RF_CARD
+    var cardType = CardReaderTypeEnum.MAG_IC_RF_CARD
 
     public final lateinit var mSys: Sys
     public final lateinit var mCardReadManager: CardReaderManager

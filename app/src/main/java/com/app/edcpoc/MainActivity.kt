@@ -1,5 +1,6 @@
 package com.app.edcpoc
 
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -38,6 +39,8 @@ import com.app.edcpoc.ui.screens.TransactionScreen
 import com.app.edcpoc.ui.screens.VerificationPinScreen
 import com.app.edcpoc.ui.theme.EdcpocTheme
 import com.app.edcpoc.ui.viewmodel.AuthViewModel
+import com.app.edcpoc.utils.DialogUtil.createEmvDialog
+import com.app.edcpoc.utils.EmvUtil
 
 class MainActivity : ComponentActivity() {
     private val authViewModel: AuthViewModel by viewModels()
@@ -50,14 +53,14 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             EdcpocTheme {
-                EDCMainApp()
+                EDCMainApp(this@MainActivity)
             }
         }
     }
 }
 
 @Composable
-fun EDCMainApp(authViewModel: AuthViewModel = viewModel()) {
+fun EDCMainApp(context: Context, authViewModel: AuthViewModel = viewModel()) {
     var currentScreen by remember { mutableStateOf("login") }
     val authState by authViewModel.uiState.collectAsState()
     
@@ -83,10 +86,10 @@ fun EDCMainApp(authViewModel: AuthViewModel = viewModel()) {
         }
         "home" -> EDCHomeScreen(
             currentUser = authState.currentUser!!,
-            onTransaksiClick = { currentScreen = "transaksi" },
-            onKeamananClick = { currentScreen = "keamanan" },
-            onManajemenPINClick = { currentScreen = "pin_management" },
-            onSessionManagementClick = { currentScreen = "session_management" },
+            onTransaksiClick = { createEmvDialog(context, emvUtil = authViewModel.emvUtil) },
+            onKeamananClick = { createEmvDialog(context, emvUtil = authViewModel.emvUtil) },
+            onManajemenPINClick = { createEmvDialog(context, emvUtil = authViewModel.emvUtil) },
+            onSessionManagementClick = { createEmvDialog(context, emvUtil = authViewModel.emvUtil) },
             onLogoutClick = { 
                 authViewModel.logout()
                 currentScreen = "login"

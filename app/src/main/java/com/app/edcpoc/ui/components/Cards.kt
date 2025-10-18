@@ -1,6 +1,10 @@
 package com.app.edcpoc.ui.components
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -15,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.font.FontWeight
 import com.app.edcpoc.R
+import com.app.edcpoc.utils.Constants.commandValue
 
 @Composable
 fun TransaksiCard(onTransaksiClick: () -> Unit) {
@@ -101,14 +106,20 @@ fun KeamananCard(onKeamananClick: () -> Unit) {
                     icon = Icons.Default.Lock,
                     modifier = Modifier.weight(1f),
                     iconColor = Color(0xFFFFC107),
-                    onClick = onKeamananClick
+                    onClick = {
+                        commandValue = "logon"
+                        onKeamananClick()
+                    }
                 )
                 ActionButton(
                     text = stringResource(R.string.btn_logoff),
                     icon = Icons.Default.Close,
                     modifier = Modifier.weight(1f),
                     iconColor = Color(0xFF8D6E63),
-                    onClick = onKeamananClick
+                    onClick = {
+                        commandValue = "logoff"
+                        onKeamananClick()
+                    }
                 )
             }
         }
@@ -151,14 +162,20 @@ fun ManajemenPINCard(onManajemenPINClick: () -> Unit) {
                     text = stringResource(R.string.btn_create_pin),
                     icon = Icons.Default.Add,
                     modifier = Modifier.weight(1f),
-                    onClick = onManajemenPINClick
+                    onClick = {
+                        commandValue = "createPIN"
+                        onManajemenPINClick()
+                    }
                 )
                 ActionButton(
                     text = stringResource(R.string.btn_change_pin),
                     icon = Icons.Default.Lock,
                     modifier = Modifier.weight(1f),
                     iconColor = Color(0xFFFFC107),
-                    onClick = onManajemenPINClick
+                    onClick = {
+                        commandValue = "changePIN"
+                        onManajemenPINClick()
+                    }
                 )
             }
             Spacer(modifier = Modifier.height(8.dp))
@@ -166,7 +183,10 @@ fun ManajemenPINCard(onManajemenPINClick: () -> Unit) {
                 text = stringResource(R.string.btn_verification_pin),
                 icon = Icons.Default.Check,
                 modifier = Modifier.fillMaxWidth(),
-                onClick = onManajemenPINClick
+                onClick = {
+                    commandValue = "verifyPIN"
+                    onManajemenPINClick()
+                }
             )
         }
     }
@@ -205,16 +225,22 @@ fun SessionManagementCard(onSessionManagementClick: () -> Unit) {
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 ActionButton(
-                    text = "Start/Close Date",
+                    text = "Start Date",
                     icon = Icons.Default.DateRange,
                     modifier = Modifier.weight(1f),
-                    onClick = onSessionManagementClick
+                    onClick = {
+                        commandValue = "startDate"
+                        onSessionManagementClick()
+                    }
                 )
                 ActionButton(
-                    text = "Logon/Logoff",
-                    icon = Icons.Default.AccountCircle,
+                    text = "Close Date",
+                    icon = Icons.Default.DateRange,
                     modifier = Modifier.weight(1f),
-                    onClick = onSessionManagementClick
+                    onClick = {
+                        commandValue = "closeDate"
+                        onSessionManagementClick()
+                    }
                 )
             }
         }

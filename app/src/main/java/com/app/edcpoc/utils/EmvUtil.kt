@@ -166,12 +166,13 @@ class EmvUtil(private val context: Context) {
             if (includeRegistrasiPIN) add("registrasiPIN")
         }
 
-        when (commandValue) {
-            in changePinCommands -> dialog?.dismiss()
-            "openAccount" -> dialog?.dismiss()
-            "Transfer" -> dialog?.dismiss()
-            "resetPIN" -> dialog?.dismiss()
-        }
+//        when (commandValue) {
+//            in changePinCommands -> dialog?.dismiss()
+//            "openAccount" -> dialog?.dismiss()
+//            "Transfer" -> dialog?.dismiss()
+//            "resetPIN" -> dialog?.dismiss()
+//        }
+        dialog?.dismiss()
     }
     fun cancelSearchCard() {
         mCardReadManager.cancelSearchCard()
@@ -228,16 +229,22 @@ class EmvUtil(private val context: Context) {
             track2hex = StringUtils.convertStringToHex(tk2)
 
             Log.d("Debug", "commandValue=$commandValue")
-            when (commandValue) {
-                "cardActivation", "IBMBRegistration", "openAccount", "resetPIN" -> {
-                    callback?.onDoSomething()
-                }
-                "InquiryBalance", "transaction", "createPIN", "registrasiPIN", "Transfer", "changePIN" -> {
+            when(commandValue) {
+                "startDate", "closeDate", "logon", "logoff" -> {
                     val pinResult = inputPIN()
                     Log.d(TAG, "Input PIN result: $pinResult")
                 }
-                else -> null
             }
+//            when (commandValue) {
+//                "cardActivation", "IBMBRegistration", "openAccount", "resetPIN" -> {
+//                    callback?.onDoSomething()
+//                }
+//                "InquiryBalance", "transaction", "createPIN", "registrasiPIN", "Transfer", "changePIN" -> {
+//                    val pinResult = inputPIN()
+//                    Log.d(TAG, "Input PIN result: $pinResult")
+//                }
+//                else -> null
+//            }
         } else {
             Log.e(TAG, "Mag card read error:  " + magReadData.resultcode)
         }
@@ -344,6 +351,10 @@ class EmvUtil(private val context: Context) {
                         Log.d("Debug", "commandValue=$commandValue")
                         inputPIN()
                     }
+                    "startDate", "closeDate", "logon", "logoff" -> {
+                        Log.d("Debug", "commandValue=$commandValue")
+                        inputPIN()
+                    }
                     else -> null
                 }
 //                var iRet: Int = inputPIN(pinType)
@@ -442,25 +453,36 @@ class EmvUtil(private val context: Context) {
             TAG,
             "Filed55: " + StringUtils.convertBytesToHex(field55).uppercase(Locale.getDefault())
         )
-        if (commandValue == "cardActivation") {
 
-            val mainHandler = Handler(Looper.getMainLooper())
-            mainHandler.post {
-//                mainActivity.cardActivation()
-                callback?.onDoSomething()
+        val mainHandler = Handler(Looper.getMainLooper())
+        when (commandValue) {
+            "cardActivation" -> {
+                mainHandler.post {
+                    callback?.onDoSomething()
+                }
             }
-        } else if (commandValue == "changePIN" || commandValue == "IBMBRegistration") {
-            val mainHandler = Handler(Looper.getMainLooper())
-            mainHandler.post {
-//                showDialogUtils.dialogBeforePIN(mainActivity)
+            "changePIN", "IBMBRegistration" -> {
+                mainHandler.post {
+                    // showDialogUtils.dialogBeforePIN(mainActivity)
+                }
             }
-        }else if (commandValue == "openAccount"){
-            val mainHandler = Handler(Looper.getMainLooper())
-            Log.d("EmvUtil", "getEmvData: openAccount")
-            mainHandler.post {
-                callback?.onDoSomething()
+            "openAccount" -> {
+                Log.d("EmvUtil", "getEmvData: openAccount")
+                mainHandler.post {
+                    callback?.onDoSomething()
+                }
+            }
+            "startDate", "closeDate", "logon", "logoff" -> {
+                Log.d("EmvUtil", "getEmvData: $commandValue")
+                mainHandler.post {
+                    callback?.onDoSomething()
+                }
+            }
+            else -> {
+                Log.d("EmvUtil", "getEmvData: else $commandValue")
             }
         }
+
         field55hex = StringUtils.convertBytesToHex(field55)
         val tlvData = StringUtils.convertBytesToHex(field55).uppercase(Locale.getDefault())
         val cardholderNameTag = "5F20"

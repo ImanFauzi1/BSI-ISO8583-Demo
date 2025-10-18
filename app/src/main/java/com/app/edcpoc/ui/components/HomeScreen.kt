@@ -2,6 +2,8 @@ package com.app.edcpoc.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -26,29 +28,51 @@ fun EDCHomeScreen(
     onSessionManagementClick: () -> Unit,
     onLogoutClick: () -> Unit
 ) {
-    Column(
+    LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(Color.White),
+        contentPadding = PaddingValues(0.dp),
+        verticalArrangement = Arrangement.spacedBy(0.dp)
     ) {
-        HeaderSection(
-            currentUser = currentUser,
-            onLogoutClick = onLogoutClick
-        )
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
+        item {
+            HeaderSection(
+                currentUser = currentUser,
+                onLogoutClick = onLogoutClick
+            )
+        }
+        item {
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+        item {
             TransaksiCard(onTransaksiClick = onTransaksiClick)
+        }
+        item {
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+        item {
             KeamananCard(onKeamananClick = onKeamananClick)
+        }
+        item {
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+        item {
             ManajemenPINCard(onManajemenPINClick = onManajemenPINClick)
-            if (currentUser.role == UserRole.SUPERVISOR) {
+        }
+        if (currentUser.role == UserRole.SUPERVISOR) {
+            item {
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+            item {
                 SessionManagementCard(onSessionManagementClick = onSessionManagementClick)
             }
         }
-        FooterSection()
+        item {
+            Spacer(modifier = Modifier.height(16.dp))
+        }
+        item {
+            FooterSection()
+        }
     }
 }
 
