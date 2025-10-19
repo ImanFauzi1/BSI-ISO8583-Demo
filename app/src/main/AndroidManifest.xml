@@ -27,7 +27,7 @@
         </activity>
         <activity
             android:name="com.zcs.sdk.pin.pinpad.PinPadPasswordActivity"
-            android:theme="@style/Theme.WindowActivity"
+            android:theme="@style/Theme.Transparent"
             android:hardwareAccelerated="false" />
     </application>
 

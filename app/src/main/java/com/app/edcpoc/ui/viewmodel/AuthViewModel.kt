@@ -7,11 +7,14 @@ import androidx.lifecycle.viewModelScope
 import com.app.edcpoc.data.model.*
 import com.app.edcpoc.data.repository.AuthRepository
 import com.app.edcpoc.interfaces.EmvUtilInterface
+import com.app.edcpoc.utils.Constants
 import com.app.edcpoc.utils.Constants.commandValue
+import com.app.edcpoc.utils.DialogUtil.createEmvDialog
 import com.app.edcpoc.utils.EmvUtil
 import com.app.edcpoc.utils.LogUtils
 import com.idpay.victoriapoc.utils.IsoManagement.IsoClient
 import com.idpay.victoriapoc.utils.IsoManagement.IsoUtils.isoChangePIN
+import com.idpay.victoriapoc.utils.IsoManagement.IsoUtils.isoCreatePIN
 import com.idpay.victoriapoc.utils.IsoManagement.IsoUtils.isoLogonLogoff
 import com.idpay.victoriapoc.utils.IsoManagement.IsoUtils.isoStartEndDate
 import com.idpay.victoriapoc.utils.IsoManagement.IsoUtils.isoVerificationPIN
@@ -22,7 +25,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class AuthViewModel : ViewModel(), EmvUtilInterface {
+class AuthViewModel : ViewModel() {
     private val TAG = "AuthViewModel"
     private val authRepository = AuthRepository()
     lateinit var emvUtil: EmvUtil
@@ -33,12 +36,12 @@ class AuthViewModel : ViewModel(), EmvUtilInterface {
     private val _dialogState = MutableStateFlow(DialogState())
     val dialogState: StateFlow<DialogState> = _dialogState.asStateFlow()
 
-    fun initialize(context: Context) {
+    fun initialize(context: Context, emvUtilInterface: EmvUtilInterface) {
         // Use applicationContext to avoid Compose crash
         emvUtil = EmvUtil(context.applicationContext)
         emvUtil.initialize()
         emvUtil.emvOpen()
-        emvUtil.setCallback(this)
+        emvUtil.setCallback(emvUtilInterface)
     }
 
     fun login(username: String, password: String) {
@@ -119,21 +122,6 @@ class AuthViewModel : ViewModel(), EmvUtilInterface {
                 LogUtils.i(TAG, "ISO $type Successfully sent message.")
             }
         }
-    }
-
-    // EmvUtilInterface implementation
-    override fun onDoSomething() {
-        when(commandValue) {
-            "startDate", "closeDate" -> isoSendMessage(commandValue, isoStartEndDate())
-            "logon", "logoff" -> isoSendMessage(commandValue, isoLogonLogoff())
-            "verifyPIN" -> isoSendMessage(commandValue, isoVerificationPIN())
-            "changePIN" -> isoSendMessage(commandValue, isoChangePIN())
-        }
-        LogUtils.i("AuthViewModel", "commandValue=$commandValue")
-    }
-
-    override fun onError(message: String) {
-        _dialogState.update { it.copy(showDialog = true, dialogMessage = message) }
     }
 
     fun dismissDialog() {

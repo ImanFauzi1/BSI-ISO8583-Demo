@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.app.edcpoc.data.model.UserRole
+import com.app.edcpoc.interfaces.EmvUtilInterface
 import com.app.edcpoc.ui.components.*
 import com.app.edcpoc.ui.screens.ChangePinScreen
 import com.app.edcpoc.ui.screens.CreatePinScreen
@@ -39,23 +40,57 @@ import com.app.edcpoc.ui.screens.TransactionScreen
 import com.app.edcpoc.ui.screens.VerificationPinScreen
 import com.app.edcpoc.ui.theme.EdcpocTheme
 import com.app.edcpoc.ui.viewmodel.AuthViewModel
+import com.app.edcpoc.utils.Constants
+import com.app.edcpoc.utils.Constants.commandValue
 import com.app.edcpoc.utils.DialogUtil.createEmvDialog
 import com.app.edcpoc.utils.EmvUtil
+import com.app.edcpoc.utils.LogUtils
+import com.idpay.victoriapoc.utils.IsoManagement.IsoUtils.isoChangePIN
+import com.idpay.victoriapoc.utils.IsoManagement.IsoUtils.isoCreatePIN
+import com.idpay.victoriapoc.utils.IsoManagement.IsoUtils.isoLogonLogoff
+import com.idpay.victoriapoc.utils.IsoManagement.IsoUtils.isoStartEndDate
+import com.idpay.victoriapoc.utils.IsoManagement.IsoUtils.isoVerificationPIN
+import kotlinx.coroutines.flow.update
 
-class MainActivity : ComponentActivity() {
+class MainActivity : ComponentActivity(), EmvUtilInterface {
     private val authViewModel: AuthViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        authViewModel.initialize(this@MainActivity)
+        authViewModel.initialize(this@MainActivity, this)
 
         setContent {
             EdcpocTheme {
                 EDCMainApp(this@MainActivity)
             }
         }
+    }
+
+    // EmvUtilInterface implementation
+    override fun onDoSomething(context: Context) {
+        when(commandValue) {
+            "startDate", "closeDate" -> authViewModel.isoSendMessage(commandValue, isoStartEndDate())
+            "logon", "logoff" -> authViewModel.isoSendMessage(commandValue, isoLogonLogoff())
+            "createPIN" -> {
+                if (Constants.step == 1) {
+                    Thread.sleep(600)
+                    createEmvDialog(this@MainActivity, emvUtil = authViewModel.emvUtil)
+                    Constants.step++
+                    return
+                }
+                Constants.step = 1
+                authViewModel.isoSendMessage(commandValue, isoCreatePIN())
+            }
+            "verifyPIN" -> authViewModel.isoSendMessage(commandValue, isoVerificationPIN())
+            "changePIN" -> authViewModel.isoSendMessage(commandValue, isoChangePIN())
+        }
+        LogUtils.i("AuthViewModel", "commandValue=$commandValue")
+    }
+
+    override fun onError(message: String) {
+        LogUtils.e("EmvUtilInterface", "Error: $message")
     }
 }
 

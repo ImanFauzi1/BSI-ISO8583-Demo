@@ -1,5 +1,7 @@
 package com.idpay.victoriapoc.utils.IsoManagement
 
+import com.app.edcpoc.utils.Constants.commandValue
+import com.app.edcpoc.utils.Constants.field48data
 import com.app.edcpoc.utils.Constants.pinBlockConfirm
 import com.app.edcpoc.utils.Constants.pinBlockOwn
 import com.app.edcpoc.utils.Constants.pos_entrymode
@@ -12,10 +14,14 @@ object IsoUtils {
 
     fun isoStartEndDate(): ByteArray? {
         try {
+            val proc = when(commandValue) {
+                "startDate" -> "910000"
+                "closeDate" -> "920000"
+                else -> "000000"
+            }
             val startEndDate = mapOf(
-                3 to "910000",
+                3 to proc,
                 11 to generateUniqueStan().padStart(6, '0'),
-                22 to pos_entrymode,
                 24 to "831",
                 35 to (track2data?.padStart(37, '0') ?: "".padStart(37, '0')),
                 41 to "TERM0001",
@@ -33,10 +39,15 @@ object IsoUtils {
 
     fun isoLogonLogoff(): ByteArray? {
         try {
+            val proc = when(commandValue) {
+                "logon" -> "810000"
+                "logoff" -> "820000"
+                else -> "000000"
+            }
+
             val logonLogoff = mapOf(
-                3 to "810000",
+                3 to proc,
                 11 to generateUniqueStan().padStart(6, '0'),
-                22 to pos_entrymode,
                 24 to "831",
                 35 to (track2data?.padStart(37, '0') ?: "".padStart(37, '0')),
                 41 to "TERM0001",
@@ -52,12 +63,32 @@ object IsoUtils {
         }
     }
 
+    fun isoCreatePIN(): ByteArray? {
+        try {
+            val createPin = mapOf(
+                3 to "710000",
+                11 to generateUniqueStan().padStart(6, '0'),
+                24 to "831",
+                35 to (track2data?.padStart(37, '0') ?: "".padStart(37, '0')),
+                41 to "TERM0001",
+                42 to "ATM00010",
+                48 to field48data,
+                52 to pinBlockOwn
+            )
+            LogUtils.i(TAG, "ISO Create PIN Data: $createPin")
+
+            return IsoBuilder.createRequest("0100", createPin)
+        } catch (e: Exception) {
+            LogUtils.e(TAG, "Error creating ISO Create PIN message", e)
+            return null
+        }
+    }
+
     fun isoReissuePIN(): ByteArray? {
         try {
             val reissuePin = mapOf(
                 3 to "720000",
                 11 to generateUniqueStan().padStart(6, '0'),
-                22 to pos_entrymode,
                 24 to "831",
                 35 to (track2data?.padStart(37, '0') ?: "".padStart(37, '0')),
                 41 to "TERM0001",
@@ -79,7 +110,6 @@ object IsoUtils {
             val changePin = mapOf(
                 3 to "730000",
                 11 to generateUniqueStan().padStart(6, '0'),
-                22 to pos_entrymode,
                 24 to "831",
                 35 to (track2data?.padStart(37, '0') ?: "".padStart(37, '0')),
                 41 to "TERM0001",
@@ -101,7 +131,6 @@ object IsoUtils {
             val verificationPin = mapOf(
                 3 to "740000",
                 11 to generateUniqueStan().padStart(6, '0'),
-                22 to pos_entrymode,
                 24 to "831",
                 35 to (track2data?.padStart(37, '0') ?: "".padStart(37, '0')),
                 41 to "TERM0001",

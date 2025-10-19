@@ -36,6 +36,7 @@ object Constants {
     var iRet = 0
 
     var mLatch: CountDownLatch? = null
+    var step: Int = 1
 
     //PINPAD
     var inputPINResult: Int = 0x00
@@ -43,10 +44,12 @@ object Constants {
     var pinBlockOwn: String? = null
     var pinBlockNew: String? = null
     var pinBlockConfirm: String? = null
-    var pinBlockCustomer: String? = null
+    var spvPinBlockOwn: String? = null
 
 //    card
     public final var cardNum: String? = null
+    var spvCardNum: String? = null
+    var field48data: String? = null
     public final var track2hex: String = ""
     var field55hex: String? = null
     var track2data: String? = null

@@ -27,6 +27,7 @@ import com.app.edcpoc.utils.Constants.pos_entrymode
 import com.app.edcpoc.utils.Constants.realCardType
 import com.app.edcpoc.utils.Constants.track2hex
 import com.app.edcpoc.utils.Constants.aids
+import com.app.edcpoc.utils.Constants.field48data
 import com.app.edcpoc.utils.Constants.field55hex
 import com.app.edcpoc.utils.Constants.inputPINResult
 import com.app.edcpoc.utils.Constants.mLatch
@@ -34,6 +35,9 @@ import com.app.edcpoc.utils.Constants.mPinBlock
 import com.app.edcpoc.utils.Constants.pinBlockConfirm
 import com.app.edcpoc.utils.Constants.pinBlockNew
 import com.app.edcpoc.utils.Constants.pinBlockOwn
+import com.app.edcpoc.utils.Constants.spvCardNum
+import com.app.edcpoc.utils.Constants.spvPinBlockOwn
+import com.app.edcpoc.utils.Constants.step
 import com.app.edcpoc.utils.Constants.tags
 import com.app.edcpoc.utils.Constants.track2data
 import com.app.edcpoc.utils.Constants.track2datacustomer
@@ -165,19 +169,6 @@ class EmvUtil(private val context: Context) {
     }
 
     private fun dismissDialogsBasedOnCommand(includeRegistrasiPIN: Boolean = false) {
-//        val changePinCommands = mutableSetOf(
-//            "changePIN", "createPIN", "cardActivation", "IBMBRegistration",
-//            "InquiryBalance", "transaction"
-//        ).apply {
-//            if (includeRegistrasiPIN) add("registrasiPIN")
-//        }
-
-//        when (commandValue) {
-//            in changePinCommands -> dialog?.dismiss()
-//            "openAccount" -> dialog?.dismiss()
-//            "Transfer" -> dialog?.dismiss()
-//            "resetPIN" -> dialog?.dismiss()
-//        }
         dialog?.dismiss()
     }
     fun cancelSearchCard() {
@@ -225,18 +216,15 @@ class EmvUtil(private val context: Context) {
             val tk3 = magReadData.tk3
             val expiredDate = magReadData.expiredDate
 
+            cardNum = magReadData.cardNo
+
             Log.d(TAG, "tk1:  $tk1")
             Log.d(TAG, "tk2:  $tk2")
             Log.d(TAG, "tk3:  $tk3")
             Log.d(TAG, "expiredDate:  $expiredDate")
             Log.d(TAG, "cardNo:  $cardNum")
 
-            cardNum = magReadData.cardNo
-
-            when(commandValue) {
-                "changePIN", "verifyPIN" -> track2datacustomer = tk2
-                else -> track2data = tk2
-            }
+            track2data = tk2
 
             track2hex = StringUtils.convertStringToHex(tk2)
 
@@ -249,7 +237,7 @@ class EmvUtil(private val context: Context) {
             Log.d(TAG, "Input PIN result: $pinResult")
 //            when (commandValue) {
 //                "cardActivation", "IBMBRegistration", "openAccount", "resetPIN" -> {
-//                    callback?.onDoSomething()
+//                    callback?.onDoSomething(appContext)
 //                }
 //                "InquiryBalance", "transaction", "createPIN", "registrasiPIN", "Transfer", "changePIN" -> {
 //                    val pinResult = inputPIN()
@@ -356,7 +344,7 @@ class EmvUtil(private val context: Context) {
                 val iRet = when (commandValue) {
                     "cardActivation", "IBMBRegistration", "openAccount", "resetPIN" -> {
                         Log.d("Debug", "onInputPIN commandValue=$commandValue")
-                        callback?.onDoSomething()
+                        callback?.onDoSomething(appContext)
                         EmvResult.EMV_OK
                     }
                     "InquiryBalance", "transaction", "createPIN", "registrasiPIN", "Transfer", "changePIN" -> {
@@ -470,7 +458,7 @@ class EmvUtil(private val context: Context) {
         when (commandValue) {
             "cardActivation" -> {
                 mainHandler.post {
-                    callback?.onDoSomething()
+                    callback?.onDoSomething(appContext)
                 }
             }
             "changePIN", "IBMBRegistration" -> {
@@ -481,13 +469,13 @@ class EmvUtil(private val context: Context) {
             "openAccount" -> {
                 Log.d("EmvUtil", "getEmvData: openAccount")
                 mainHandler.post {
-                    callback?.onDoSomething()
+                    callback?.onDoSomething(appContext)
                 }
             }
             "startDate", "closeDate", "logon", "logoff" -> {
                 Log.d("EmvUtil", "getEmvData: $commandValue")
                 mainHandler.post {
-                    callback?.onDoSomething()
+                    callback?.onDoSomething(appContext)
                 }
             }
             else -> {
@@ -584,13 +572,22 @@ class EmvUtil(private val context: Context) {
 //                        when (commandValue) {
 //                            "IBMBRegistration" -> mainActivity.verifyPIN()
 //                            "IBRegistration" -> mainActivity.ibmbRegistration()
-//                            "InquiryBalance", "transaction", "Transfer" -> callback?.onDoSomething()
+//                            "InquiryBalance", "transaction", "Transfer" -> callback?.onDoSomething(appContext)
 //                            "Settlement" -> mainActivity.settlement()
 //                            "createPIN", "registrasiPIN", "changePIN" -> inputNewPIN()
 //                        }
                         when(commandValue) {
                             "startDate", "closeDate", "logon", "logoff", "verifyPIN" -> {
-                                callback?.onDoSomething()
+                                callback?.onDoSomething(appContext)
+                            }
+                            "createPIN" -> {
+                                Log.d("Debug", "createPIN step=$step")
+                                if (step == 1) {
+                                    spvPinBlockOwn = pinBlockOwn
+                                    field48data = "$cardNum$spvPinBlockOwn"
+                                    Log.d("Debug", "field48data=$field48data")
+                                }
+                                callback?.onDoSomething(appContext)
                             }
                             "changePIN" -> inputNewPIN()
                         }
@@ -601,14 +598,9 @@ class EmvUtil(private val context: Context) {
 
         when(commandValue) {
             "changePIN" -> mPinPadManager?.setInputPinTitle("Masukkan PIN anda")
-            "createPIN", "registrasiPIN" -> mPinPadManager?.setInputPinTitle("Masukkan PIN Default anda")
+            "createPIN", "registrasiPIN" -> mPinPadManager?.setInputPinTitle("Masukkan PIN anda")
             else -> mPinPadManager?.setInputPinTitle("Masukkan PIN anda")
         }
-//        if (commandValue == "createPIN") {
-//            mPinPadManager?.setInputPinTitle("Masukkan PIN Default anda")
-//        } else {
-//            mPinPadManager?.setInputPinTitle("Masukkan PIN anda")
-//        }
         return inputPINResult
     }
 
@@ -724,7 +716,7 @@ class EmvUtil(private val context: Context) {
                         return
                     }
 
-                    callback?.onDoSomething()
+                    callback?.onDoSomething(appContext)
 
 //                    when (commandValue) {
 //                        "changePIN" -> {
@@ -735,12 +727,12 @@ class EmvUtil(private val context: Context) {
 //
 //                        if (pinBlockNew == pinBlockConfirm) {
 ////                            mainActivity.changePIN()
-//                            callback?.onDoSomething()
+//                            callback?.onDoSomething(appContext)
 //                        }
 //                    } else if (commandValue == "createPIN") {
 //                        if (pinBlockNew == pinBlockConfirm) {
 ////                            mainActivity.changePIN()
-//                            callback?.onDoSomething()
+//                            callback?.onDoSomething(appContext)
 //                        } else {
 //                            Toast.makeText(MyApp.getContext(), "PIN tidak sesuai", Toast.LENGTH_SHORT).show()
 //                            Log.e(TAG, "PIN tidak sesuai")
@@ -749,7 +741,7 @@ class EmvUtil(private val context: Context) {
 //                        if (pinBlockNew == pinBlockConfirm) {
 ////                            mainActivity.registrationPIN()
 //                            Log.d("InputConfirmPIN", "onSuccess: panggil registrasiPIN")
-//                            callback?.onDoSomething()
+//                            callback?.onDoSomething(appContext)
 //                        } else {
 //                            Log.e(TAG, "PIN tidak sesuai")
 //                            Toast.makeText(MyApp.getContext(), "PIN tidak sesuai", Toast.LENGTH_SHORT).show()
