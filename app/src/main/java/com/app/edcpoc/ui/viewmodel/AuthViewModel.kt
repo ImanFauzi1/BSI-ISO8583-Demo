@@ -11,7 +11,10 @@ import com.app.edcpoc.utils.Constants.commandValue
 import com.app.edcpoc.utils.EmvUtil
 import com.app.edcpoc.utils.LogUtils
 import com.idpay.victoriapoc.utils.IsoManagement.IsoClient
+import com.idpay.victoriapoc.utils.IsoManagement.IsoUtils.isoChangePIN
+import com.idpay.victoriapoc.utils.IsoManagement.IsoUtils.isoLogonLogoff
 import com.idpay.victoriapoc.utils.IsoManagement.IsoUtils.isoStartEndDate
+import com.idpay.victoriapoc.utils.IsoManagement.IsoUtils.isoVerificationPIN
 import com.zcs.sdk.util.StringUtils
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -65,35 +68,66 @@ class AuthViewModel : ViewModel(), EmvUtilInterface {
         return authRepository.hasPermission(user, action)
     }
 
-    fun isoStartCloseDate() {
-        viewModelScope.launch {
-            val isoDateBuilder = isoStartEndDate()
+    private fun parseIsoResponse(iso: String): Map<String, String> {
+        var idx = 0
+        fun take(n: Int): String {
+            val s = iso.substring(idx, (idx + n).coerceAtMost(iso.length))
+            idx += n
+            return s
+        }
+        return mapOf(
+            "MTI" to take(4),
+            "Bitmap" to take(16),
+            "ProcessingCode" to take(6),
+            "STI" to take(6),
+            "F12" to take(6),
+            "F13" to take(4),
+            "F24" to take(3),
+            "F37" to take(12),
+            "F38" to take(6),
+            "F39" to take(2),
+            "F41" to take(8)
+        )
+    }
 
-            if(isoDateBuilder == null) {
-                LogUtils.e("AuthViewModel", "Failed to create ISO Start/End Date message")
+    fun isoSendMessage(type: String? = null, isoBuilder: ByteArray?) {
+        viewModelScope.launch {
+            if (isoBuilder == null) {
+                LogUtils.e("AuthViewModel", "Failed to create ISO message $type")
                 return@launch
             }
 
-            IsoClient.sendMessage(isoDateBuilder) {response ->
-                LogUtils.i("AuthViewModel", "ISO Start/End Date Response: $response")
+            IsoClient.sendMessage(isoBuilder) {response ->
+                LogUtils.i("AuthViewModel", "ISO $type Response: $response")
 
                 if (response == null) {
-                    LogUtils.e("AuthViewModel", "Failed to receive ISO Start/End Date response")
+                    LogUtils.e("AuthViewModel", "Failed to receive ISO $type response")
+                    _dialogState.update { it.copy(showDialog = true, dialogMessage = "Gagal kirim ISO $type") }
                     return@sendMessage
                 }
 
-                LogUtils.i(TAG, "ISO Successfully sent Start/End Date message.")
+                val isoString = response["string"] as? String ?: ""
+                val fields = parseIsoResponse(isoString)
+                val message = when (commandValue) {
+                    "logon" -> "Sukses logon"
+                    "logoff" -> "Sukses logoff"
+                    else -> "ISO sukses dikirim"
+                }
+                val detail = fields.entries.joinToString("\n") { "${it.key}: ${it.value}" }
+                _dialogState.update { it.copy(showDialog = true, dialogMessage = "$message\n$detail") }
+
+                LogUtils.i(TAG, "ISO $type Successfully sent message.")
             }
         }
     }
 
     // EmvUtilInterface implementation
     override fun onDoSomething() {
-        // Example: trigger Compose dialog
         when(commandValue) {
-            "startDate", "closeDate" -> {
-                isoStartCloseDate()
-            }
+            "startDate", "closeDate" -> isoSendMessage(commandValue, isoStartEndDate())
+            "logon", "logoff" -> isoSendMessage(commandValue, isoLogonLogoff())
+            "verifyPIN" -> isoSendMessage(commandValue, isoVerificationPIN())
+            "changePIN" -> isoSendMessage(commandValue, isoChangePIN())
         }
         LogUtils.i("AuthViewModel", "commandValue=$commandValue")
     }

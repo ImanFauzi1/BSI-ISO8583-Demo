@@ -179,15 +179,29 @@ fun ManajemenPINCard(onManajemenPINClick: () -> Unit) {
                 )
             }
             Spacer(modifier = Modifier.height(8.dp))
-            ActionButton(
-                text = stringResource(R.string.btn_verification_pin),
-                icon = Icons.Default.Check,
+            Row(
                 modifier = Modifier.fillMaxWidth(),
-                onClick = {
-                    commandValue = "verifyPIN"
-                    onManajemenPINClick()
-                }
-            )
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                ActionButton(
+                    text = stringResource(R.string.btn_reissue_pin),
+                    icon = Icons.Default.Lock,
+                    modifier = Modifier.weight(1f),
+                    onClick = {
+                        commandValue = "reissuePIN"
+                        onManajemenPINClick()
+                    }
+                )
+                ActionButton(
+                    text = stringResource(R.string.btn_verification_pin),
+                    icon = Icons.Default.Check,
+                    modifier = Modifier.weight(1f),
+                    onClick = {
+                        commandValue = "verifyPIN"
+                        onManajemenPINClick()
+                    }
+                )
+            }
         }
     }
 }

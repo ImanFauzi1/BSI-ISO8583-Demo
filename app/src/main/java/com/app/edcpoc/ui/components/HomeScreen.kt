@@ -18,6 +18,7 @@ import com.app.edcpoc.data.model.UserRole
 import com.app.edcpoc.ui.theme.EdcpocTheme
 import androidx.compose.material3.*
 import com.app.edcpoc.ui.components.*
+import com.app.edcpoc.ui.viewmodel.DialogState
 
 @Composable
 fun EDCHomeScreen(
@@ -26,8 +27,23 @@ fun EDCHomeScreen(
     onKeamananClick: () -> Unit,
     onManajemenPINClick: () -> Unit,
     onSessionManagementClick: () -> Unit,
-    onLogoutClick: () -> Unit
+    onLogoutClick: () -> Unit,
+    dialogState: DialogState,
+    dismissDialog: () -> Unit
 ) {
+    if (dialogState.showDialog) {
+        AlertDialog(
+            onDismissRequest = dismissDialog,
+            title = { Text("Informasi") },
+            text = { Text(dialogState.dialogMessage ?: "") },
+            confirmButton = {
+                Button(onClick = dismissDialog) {
+                    Text("OK")
+                }
+            }
+        )
+    }
+
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
@@ -44,9 +60,9 @@ fun EDCHomeScreen(
         item {
             Spacer(modifier = Modifier.height(16.dp))
         }
-        item {
-            TransaksiCard(onTransaksiClick = onTransaksiClick)
-        }
+//        item {
+//            TransaksiCard(onTransaksiClick = onTransaksiClick)
+//        }
         item {
             Spacer(modifier = Modifier.height(16.dp))
         }
@@ -88,7 +104,9 @@ fun EDCHomeScreenPreview() {
             onKeamananClick = {},
             onManajemenPINClick = {},
             onSessionManagementClick = {},
-            onLogoutClick = {}
+            onLogoutClick = {},
+            dialogState = DialogState(),
+            dismissDialog = {}
         )
     }
 }

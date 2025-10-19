@@ -10,6 +10,7 @@ import com.zcs.sdk.card.ICCard
 import com.zcs.sdk.card.RfCard
 import com.zcs.sdk.emv.EmvHandler
 import com.zcs.sdk.pin.pinpad.PinPadManager
+import java.util.concurrent.CountDownLatch
 
 object Constants {
     val mDriverManager: DriverManager = DriverManager.getInstance()
@@ -34,18 +35,22 @@ object Constants {
     const val READ_TIMEOUT = 30000
     var iRet = 0
 
+    var mLatch: CountDownLatch? = null
+
     //PINPAD
     var inputPINResult: Int = 0x00
     var mPinBlock = ByteArray(12 + 1)
     var pinBlockOwn: String? = null
     var pinBlockNew: String? = null
     var pinBlockConfirm: String? = null
+    var pinBlockCustomer: String? = null
 
 //    card
     public final var cardNum: String? = null
     public final var track2hex: String = ""
     var field55hex: String? = null
     var track2data: String? = null
+    var track2datacustomer: String? = null
 
     public final var aids = arrayOf(
         "A000000333010101",

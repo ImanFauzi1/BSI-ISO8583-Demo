@@ -90,10 +90,12 @@ fun EDCMainApp(context: Context, authViewModel: AuthViewModel = viewModel()) {
             onKeamananClick = { createEmvDialog(context, emvUtil = authViewModel.emvUtil) },
             onManajemenPINClick = { createEmvDialog(context, emvUtil = authViewModel.emvUtil) },
             onSessionManagementClick = { createEmvDialog(context, emvUtil = authViewModel.emvUtil) },
-            onLogoutClick = { 
+            onLogoutClick = {
                 authViewModel.logout()
                 currentScreen = "login"
-            }
+            },
+            dialogState = authViewModel.dialogState.collectAsState().value,
+            dismissDialog = { authViewModel.dismissDialog() }
         )
         "keamanan" -> KeamananScreen(
             onBackClick = { currentScreen = "home" }

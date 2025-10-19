@@ -5,6 +5,7 @@ import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.util.Log
+import android.widget.Toast
 import com.app.edcpoc.interfaces.EmvUtilInterface
 import com.app.edcpoc.ui.viewmodel.AuthViewModel
 import com.app.edcpoc.utils.Constants.READ_TIMEOUT
@@ -28,10 +29,14 @@ import com.app.edcpoc.utils.Constants.track2hex
 import com.app.edcpoc.utils.Constants.aids
 import com.app.edcpoc.utils.Constants.field55hex
 import com.app.edcpoc.utils.Constants.inputPINResult
+import com.app.edcpoc.utils.Constants.mLatch
 import com.app.edcpoc.utils.Constants.mPinBlock
+import com.app.edcpoc.utils.Constants.pinBlockConfirm
+import com.app.edcpoc.utils.Constants.pinBlockNew
 import com.app.edcpoc.utils.Constants.pinBlockOwn
 import com.app.edcpoc.utils.Constants.tags
 import com.app.edcpoc.utils.Constants.track2data
+import com.app.edcpoc.utils.Constants.track2datacustomer
 import com.zcs.sdk.SdkData
 import com.zcs.sdk.SdkResult
 import com.zcs.sdk.card.CardInfoEntity
@@ -53,6 +58,7 @@ import com.zcs.sdk.util.StringUtils
 import java.io.File
 import java.io.IOException
 import java.util.Locale
+import kotlin.collections.set
 
 /**
  * Utility class for EMV operations. Pass an Activity or Fragment context if you need to show dialogs or UI elements.
@@ -159,12 +165,12 @@ class EmvUtil(private val context: Context) {
     }
 
     private fun dismissDialogsBasedOnCommand(includeRegistrasiPIN: Boolean = false) {
-        val changePinCommands = mutableSetOf(
-            "changePIN", "createPIN", "cardActivation", "IBMBRegistration",
-            "InquiryBalance", "transaction"
-        ).apply {
-            if (includeRegistrasiPIN) add("registrasiPIN")
-        }
+//        val changePinCommands = mutableSetOf(
+//            "changePIN", "createPIN", "cardActivation", "IBMBRegistration",
+//            "InquiryBalance", "transaction"
+//        ).apply {
+//            if (includeRegistrasiPIN) add("registrasiPIN")
+//        }
 
 //        when (commandValue) {
 //            in changePinCommands -> dialog?.dismiss()
@@ -226,16 +232,21 @@ class EmvUtil(private val context: Context) {
             Log.d(TAG, "cardNo:  $cardNum")
 
             cardNum = magReadData.cardNo
-            track2data = tk2
+
+            when(commandValue) {
+                "changePIN", "verifyPIN" -> track2datacustomer = tk2
+                else -> track2data = tk2
+            }
+
             track2hex = StringUtils.convertStringToHex(tk2)
 
             Log.d("Debug", "commandValue=$commandValue")
-            when(commandValue) {
-                "startDate", "closeDate", "logon", "logoff" -> {
-                    val pinResult = inputPIN()
-                    Log.d(TAG, "Input PIN result: $pinResult")
-                }
-            }
+//            when(commandValue) {
+//                "startDate", "closeDate", "logon", "logoff", "verifyPIN" -> {
+//                }
+//            }
+            val pinResult = inputPIN()
+            Log.d(TAG, "Input PIN result: $pinResult")
 //            when (commandValue) {
 //                "cardActivation", "IBMBRegistration", "openAccount", "resetPIN" -> {
 //                    callback?.onDoSomething()
@@ -577,16 +588,27 @@ class EmvUtil(private val context: Context) {
 //                            "Settlement" -> mainActivity.settlement()
 //                            "createPIN", "registrasiPIN", "changePIN" -> inputNewPIN()
 //                        }
-                        callback?.onDoSomething()
+                        when(commandValue) {
+                            "startDate", "closeDate", "logon", "logoff", "verifyPIN" -> {
+                                callback?.onDoSomething()
+                            }
+                            "changePIN" -> inputNewPIN()
+                        }
                     }
                 }
             })
         Log.d("Debug", "inputPIN: selesai panggil inputPIN $commandValue")
-        if (commandValue == "createPIN") {
-            mPinPadManager?.setInputPinTitle("Masukkan PIN Default anda")
-        } else {
-            mPinPadManager?.setInputPinTitle("Masukkan PIN anda")
+
+        when(commandValue) {
+            "changePIN" -> mPinPadManager?.setInputPinTitle("Masukkan PIN anda")
+            "createPIN", "registrasiPIN" -> mPinPadManager?.setInputPinTitle("Masukkan PIN Default anda")
+            else -> mPinPadManager?.setInputPinTitle("Masukkan PIN anda")
         }
+//        if (commandValue == "createPIN") {
+//            mPinPadManager?.setInputPinTitle("Masukkan PIN Default anda")
+//        } else {
+//            mPinPadManager?.setInputPinTitle("Masukkan PIN anda")
+//        }
         return inputPINResult
     }
 
@@ -614,6 +636,137 @@ class EmvUtil(private val context: Context) {
             0, pin_key_byte, pin_key_byte.size.toByte(),
             null, 0.toByte(), null, 0.toByte()
         )
+    }
+    fun inputNewPIN(): Boolean {
+        Log.e(TAG, "start inputNewPIN")
+        mPinPadManager?.inputOnlinePin(
+            appContext,
+            6.toByte(),
+            12.toByte(),
+            60,
+            true,
+            cardNum,
+            0.toByte(),
+            PinAlgorithmMode.ANSI_X_9_8,
+            object : OnPinPadInputListener {
+                override fun onError(code: Int) {
+                    Log.d("Debug", "backCode=$code")
+                    inputPINResult = when (code) {
+                        SdkResult.SDK_PAD_ERR_NOPIN -> EmvResult.EMV_NO_PASSWORD
+                        SdkResult.SDK_PAD_ERR_TIMEOUT -> EmvResult.EMV_TIME_OUT
+                        SdkResult.SDK_PAD_ERR_CANCEL -> EmvResult.EMV_USER_CANCEL
+                        else -> EmvResult.EMV_NO_PINPAD_OR_ERR
+                    }
+                    mLatch?.countDown()
+                }
+
+                override fun onSuccess(bytes: ByteArray) {
+                    System.arraycopy(bytes, 0, mPinBlock, 0, bytes.size)
+                    mPinBlock[bytes.size] = 0x00
+                    Log.e(TAG, "PinBlock: " + StringUtils.convertBytesToHex(bytes))
+                    val pinBlockOwnHex = StringUtils.convertBytesToHex(bytes)
+                    pinBlockNew = StringUtils.convertBytesToHex(bytes)
+                    Log.d("Debug", "pinBlockNewHex=$pinBlockOwnHex")
+                    Log.d("Debug", "pinBlockNew=$pinBlockNew")
+
+                    inputConfirmPIN()
+
+                }
+            })
+
+        when(commandValue) {
+            "changePIN" -> mPinPadManager?.setInputPinTitle("Masukkan PIN baru anda")
+            "createPIN", "registrasiPIN" -> mPinPadManager?.setInputPinTitle("Masukkan PIN baru anda")
+            else -> mPinPadManager?.setInputPinTitle("Masukkan PIN baru anda")
+        }
+//        if (commandValue == "IBMBRegistration") {
+//            mPinPadManager?.setInputPinTitle("Masukkan PIN Internet Banking/Mobile Banking anda")
+//        } else if (commandValue == "createPIN" || commandValue == "registrasiPIN") {
+//            mPinPadManager?.setInputPinTitle("Masukkan PIN baru anda")
+//        } else {
+//            mPinPadManager?.setInputPinTitle("Masukkan PIN baru anda")
+//        }
+        return true
+    }
+    fun inputConfirmPIN(): Boolean {
+        Log.e(TAG, "start inputNewPIN")
+        mPinPadManager?.inputOnlinePin(
+            appContext,
+            6.toByte(),
+            12.toByte(),
+            60,
+            true,
+            cardNum,
+            0.toByte(),
+            PinAlgorithmMode.ANSI_X_9_8,
+            object : OnPinPadInputListener {
+                override fun onError(code: Int) {
+                    Log.d("Debug", "backCode=$code")
+                    inputPINResult = when (code) {
+                        SdkResult.SDK_PAD_ERR_NOPIN -> EmvResult.EMV_NO_PASSWORD
+                        SdkResult.SDK_PAD_ERR_TIMEOUT -> EmvResult.EMV_TIME_OUT
+                        SdkResult.SDK_PAD_ERR_CANCEL -> EmvResult.EMV_USER_CANCEL
+                        else -> EmvResult.EMV_NO_PINPAD_OR_ERR
+                    }
+                    mLatch?.countDown()
+                }
+
+                override fun onSuccess(bytes: ByteArray) {
+                    System.arraycopy(bytes, 0, mPinBlock, 0, bytes.size)
+                    mPinBlock[bytes.size] = 0x00
+                    pinBlockConfirm = StringUtils.convertBytesToHex(bytes)
+                    Log.d("Debug", "pinBlockConfirm=$pinBlockConfirm")
+                    Log.d("Debug", "pinBlockNew=$pinBlockNew")
+
+                    if(pinBlockNew != pinBlockConfirm) {
+                        Toast.makeText(appContext, "PIN tidak sesuai", Toast.LENGTH_SHORT).show()
+                        Log.e(TAG, "PIN tidak sesuai")
+                        return
+                    }
+
+                    callback?.onDoSomething()
+
+//                    when (commandValue) {
+//                        "changePIN" -> {
+//
+//                        }
+//                    }
+//                    if (commandValue == "changePIN") {
+//
+//                        if (pinBlockNew == pinBlockConfirm) {
+////                            mainActivity.changePIN()
+//                            callback?.onDoSomething()
+//                        }
+//                    } else if (commandValue == "createPIN") {
+//                        if (pinBlockNew == pinBlockConfirm) {
+////                            mainActivity.changePIN()
+//                            callback?.onDoSomething()
+//                        } else {
+//                            Toast.makeText(MyApp.getContext(), "PIN tidak sesuai", Toast.LENGTH_SHORT).show()
+//                            Log.e(TAG, "PIN tidak sesuai")
+//                        }
+//                    }else if(commandValue == "registrasiPIN"){
+//                        if (pinBlockNew == pinBlockConfirm) {
+////                            mainActivity.registrationPIN()
+//                            Log.d("InputConfirmPIN", "onSuccess: panggil registrasiPIN")
+//                            callback?.onDoSomething()
+//                        } else {
+//                            Log.e(TAG, "PIN tidak sesuai")
+//                            Toast.makeText(MyApp.getContext(), "PIN tidak sesuai", Toast.LENGTH_SHORT).show()
+//                        }
+//                    }
+
+//                    Log.d("Debug", "pinBlockConfirm=$pinBlockConfirm")
+//                    Log.d("Debug", "backCode= $commandValue")
+//                    if (commandValue == "createPIN") {
+//                        mainActivity.createPIN()
+//                    } else if (commandValue == "changePIN") {+
+//                        mainActivity.changePIN()
+//                    }
+                }
+            })
+        mPinPadManager?.setInputPinTitle("Masukkan PIN konfirmasi anda")
+        return true
     }
 
     fun loadAids(emvHandler: EmvHandler) {
