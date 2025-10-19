@@ -29,7 +29,7 @@ object Constants {
 
     public final var commandValue: String = ""
     public final var pos_entrymode: String = ""
-    var tpdu: String? = null
+    var tpdu: String? = "0000000001"
     var mRfCardType: Byte = 0
     const val READ_TIMEOUT = 30000
     var iRet = 0
@@ -45,7 +45,7 @@ object Constants {
     public final var cardNum: String? = null
     public final var track2hex: String = ""
     var field55hex: String? = null
-    var track2data: String = ""
+    var track2data: String? = null
 
     public final var aids = arrayOf(
         "A000000333010101",

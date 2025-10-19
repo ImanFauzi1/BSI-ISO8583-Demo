@@ -29,9 +29,24 @@ object IsoClient {
                 inStream.readFully(responseBytes)
 
                 LogUtils.e(TAG, "Received response bytes: ${responseBytes.size}")
+                LogUtils.e(TAG, "Response bytes (HEX): ${responseBytes.joinToString("") { "%02X".format(it) }}")
 
-                val unpack = Iso8583Packer.unpack(responseBytes)
-                onResult(unpack)
+                // Untuk kebutuhan parsing string ISO, buang TPDU (5 bytes) dari responseBytes
+                val stringIso = if (responseBytes.size > 5) {
+                    val isoString = responseBytes.copyOfRange(5, responseBytes.size).toString(Charsets.US_ASCII)
+                    isoString
+                } else {
+                    ""
+                }
+
+                onResult(
+                    mapOf(
+                        "rawBytes" to responseBytes,
+                        "hex" to responseBytes.joinToString("") { "%02X".format(it) },
+                        "string" to stringIso,
+                        "parsed" to (Iso8583Packer.unpack(responseBytes) ?: emptyMap<String, Any>())
+                    )
+                )
             } catch (e: Exception) {
                 onResult(null)
                 LogUtils.e(TAG, "Error sending ISO message: ${e.message}")

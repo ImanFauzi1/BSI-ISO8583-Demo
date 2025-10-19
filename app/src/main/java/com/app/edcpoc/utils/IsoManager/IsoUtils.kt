@@ -17,7 +17,7 @@ object IsoUtils {
                 11 to generateUniqueStan().padStart(6, '0'),
                 22 to pos_entrymode,
                 24 to "831",
-                35 to track2data.padStart(37, '0'),
+                35 to (track2data?.padStart(37, '0') ?: "".padStart(37, '0')),
                 41 to "TERM0001",
                 42 to "ATM00010",
                 52 to pinBlockOwn

@@ -12,6 +12,7 @@ import com.app.edcpoc.utils.EmvUtil
 import com.app.edcpoc.utils.LogUtils
 import com.idpay.victoriapoc.utils.IsoManagement.IsoClient
 import com.idpay.victoriapoc.utils.IsoManagement.IsoUtils.isoStartEndDate
+import com.zcs.sdk.util.StringUtils
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -72,11 +73,6 @@ class AuthViewModel : ViewModel(), EmvUtilInterface {
                 LogUtils.e("AuthViewModel", "Failed to create ISO Start/End Date message")
                 return@launch
             }
-
-            // Log payload ByteArray as HEX (for backend debug)
-            LogUtils.i("AuthViewModel", "ISO Payload (HEX): ${isoDateBuilder.joinToString("") { "%02X".format(it) }}")
-            // Jika ingin log tanpa 2-byte length:
-            LogUtils.i("AuthViewModel", "ISO Payload (HEX, no length): ${isoDateBuilder.drop(2).joinToString("") { "%02X".format(it) }}")
 
             IsoClient.sendMessage(isoDateBuilder) {response ->
                 LogUtils.i("AuthViewModel", "ISO Start/End Date Response: $response")

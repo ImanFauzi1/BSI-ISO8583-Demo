@@ -45,7 +45,9 @@ object Iso8583Packer {
             body.append(v)
         }
 
+        LogUtils.d("packer", "ISO Body: $body = fields = $fields")
         val isoBytes = body.toString().toByteArray(StandardCharsets.US_ASCII)
+        LogUtils.d("packer", "ISO Body: ${isoBytes.toHexString()}")
 
 //        append tpdu
         val tpduBytes = (tpdu?.let { StringUtils.convertHexToBytes(it) } ?: ByteArray(0))
@@ -63,52 +65,74 @@ object Iso8583Packer {
 
         val result = buf.array()
         LogUtils.i(TAG, "Final packed ISO (HEX): ${result.joinToString("") { "%02X".format(it) }}")
+
+        // result = [length 2 bytes][TPDU 5 bytes][MTI 4 bytes][Bitmap 8 bytes][Field1][Field2][Field3]...
         return result
 
     }
-    fun unpack(data: ByteArray): Map<String, Any> {
-        val buffer = ByteBuffer.wrap(data)
+    fun unpack(data: ByteArray): Map<String, Any>? {
+        try {
+            if (data.size < 17) {
+                LogUtils.e(TAG, "Response too short for ISO unpack: size=${data.size}, HEX=${data.joinToString("") { "%02X".format(it) }}")
+                return null
+            }
+            val buffer = ByteBuffer.wrap(data)
 
-        // read 2-byte length
-        val length = buffer.short.toInt() and 0xFFFF
+            // read 2-byte length
+            val length = buffer.short.toInt() and 0xFFFF
 
-        // TPDU (5 bytes)
-        val tpduBytes = ByteArray(5)
-        buffer.get(tpduBytes)
-        val tpdu = tpduBytes.joinToString("") { "%02X".format(it) }
+            if (data.size < length) {
+                LogUtils.e(TAG, "Response size (${data.size}) < length field ($length)")
+                return null
+            }
 
-        // MTI (4 chars)
-        val mtiBytes = ByteArray(4)
-        buffer.get(mtiBytes)
-        val mti = String(mtiBytes, StandardCharsets.US_ASCII)
+            // TPDU (5 bytes)
+            val tpduBytes = ByteArray(5)
+            buffer.get(tpduBytes)
+            val tpdu = tpduBytes.joinToString("") { "%02X".format(it) }
 
-        // Bitmap (16 hex chars → 8 bytes)
-        val bitmapBytes = ByteArray(8)
-        buffer.get(bitmapBytes)
-        val bitmapHex = bitmapBytes.joinToString("") { "%02X".format(it) }
+            // MTI (4 chars)
+            val mtiBytes = ByteArray(4)
+            buffer.get(mtiBytes)
+            val mti = String(mtiBytes, StandardCharsets.US_ASCII)
 
-        // Parse bitmap bits
-        val bitmapBits = bitmapBytes.joinToString("") {
-            it.toInt().and(0xFF).toString(2).padStart(8, '0')
+            // Bitmap (16 hex chars → 8 bytes)
+            val bitmapBytes = ByteArray(8)
+            buffer.get(bitmapBytes)
+            val bitmapHex = bitmapBytes.joinToString("") { "%02X".format(it) }
+
+            // Parse bitmap bits
+            val bitmapBits = bitmapBytes.joinToString("") {
+                it.toInt().and(0xFF).toString(2).padStart(8, '0')
+            }
+
+            val activeBits = mutableListOf<Int>()
+            bitmapBits.forEachIndexed { idx, c ->
+                if (c == '1') activeBits.add(idx + 1)
+            }
+
+            // sisanya field data (raw)
+            val remainingLen = length - 5 - 4 - 8
+            if (remainingLen < 0 || buffer.remaining() < remainingLen) {
+                LogUtils.e(TAG, "Not enough bytes for field data: remaining=${buffer.remaining()}, expected=$remainingLen")
+                return null
+            }
+            val remaining = ByteArray(remainingLen)
+            buffer.get(remaining)
+            val fieldsRaw = String(remaining, StandardCharsets.US_ASCII)
+
+            return mapOf(
+                "length" to length,
+                "tpdu" to tpdu,
+                "mti" to mti,
+                "bitmapHex" to bitmapHex,
+                "activeFields" to activeBits,
+                "rawFields" to fieldsRaw
+            )
+        } catch (e: Exception) {
+            LogUtils.e(TAG, "Error unpacking ISO: ${e.message}")
+            LogUtils.e(TAG, "Stacktrace: ${e.stackTraceToString()}")
+            return null
         }
-
-        val activeBits = mutableListOf<Int>()
-        bitmapBits.forEachIndexed { idx, c ->
-            if (c == '1') activeBits.add(idx + 1)
-        }
-
-        // sisanya field data (raw)
-        val remaining = ByteArray(length - 5 - 4 - 8)
-        buffer.get(remaining)
-        val fieldsRaw = String(remaining, StandardCharsets.US_ASCII)
-
-        return mapOf(
-            "length" to length,
-            "tpdu" to tpdu,
-            "mti" to mti,
-            "bitmapHex" to bitmapHex,
-            "activeFields" to activeBits,
-            "rawFields" to fieldsRaw
-        )
     }
 }

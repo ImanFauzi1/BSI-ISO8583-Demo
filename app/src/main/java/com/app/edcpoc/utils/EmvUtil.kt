@@ -226,6 +226,7 @@ class EmvUtil(private val context: Context) {
             Log.d(TAG, "cardNo:  $cardNum")
 
             cardNum = magReadData.cardNo
+            track2data = tk2
             track2hex = StringUtils.convertStringToHex(tk2)
 
             Log.d("Debug", "commandValue=$commandValue")
@@ -302,33 +303,28 @@ class EmvUtil(private val context: Context) {
                 val track2 = arrayOfNulls<String>(1)
                 val pan = arrayOfNulls<String>(1)
                 emvHandler?.getTrack2AndPAN(track2, pan)
-
-                val track2Str = track2.getOrNull(0)
-                val panStr = pan.getOrNull(0)
-
-                if (track2Str.isNullOrEmpty() || panStr.isNullOrEmpty()) {
-                    Log.e(TAG, "Missing track2 or PAN. track2=$track2Str pan=$panStr")
-                    return -1
+                var index = 0
+                if (track2[0]!!.contains("D")) {
+                    index = track2[0]!!.indexOf("D") + 1
+                } else if (track2[0]!!.contains("=")) {
+                    index = track2[0]!!.indexOf("=") + 1
                 }
-
-                val delimiterPos = track2Str.indexOfFirst { it == 'D' || it == '=' }
-                if (delimiterPos == -1 || delimiterPos + 5 > track2Str.length) {
-                    Log.e(TAG, "Invalid track2 format: $track2Str")
-                    return -1
-                }
-
-                val exp = track2Str.substring(delimiterPos + 1, delimiterPos + 1 + 4)
-                Log.e(TAG, "cardNum:$panStr")
+                val exp = track2[0]!!.substring(index, index + 4)
+                Log.e(TAG, "cardNum:" + pan[0])
                 Log.e(TAG, "exp:$exp")
 
-                track2data = track2Str
+                track2data = track2[0]
                 Log.d("Debug", "track2data : $track2data")
                 track2hex = StringUtils.convertStringToHex(track2data)
 
                 Log.d("Debug", "track2hex : $track2hex")
-                cardNum = panStr
+                cardNum = pan[0]
                 Log.e(TAG, "cardNum:$cardNum")
+                //                cardExp = exp;
                 return 0
+
+//                363031393030373536333931363437383d3237303632323038343334323130323335303031
+//                        6019007563916478=27062208434210235001
             }
 
             override fun onInputPIN(pinType: Byte): Int {
