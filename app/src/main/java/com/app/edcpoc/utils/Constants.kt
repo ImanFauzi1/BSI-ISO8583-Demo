@@ -50,6 +50,7 @@ object Constants {
     public final var cardNum: String? = null
     var spvCardNum: String? = null
     var field48data: String? = null
+    var field48hex: String? = null
     public final var track2hex: String = ""
     var field55hex: String? = null
     var track2data: String? = null

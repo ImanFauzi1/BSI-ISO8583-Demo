@@ -1,24 +1,18 @@
 package com.app.edcpoc.ui.viewmodel
 
 import android.content.Context
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.app.edcpoc.data.model.*
 import com.app.edcpoc.data.repository.AuthRepository
 import com.app.edcpoc.interfaces.EmvUtilInterface
-import com.app.edcpoc.utils.Constants
 import com.app.edcpoc.utils.Constants.commandValue
-import com.app.edcpoc.utils.DialogUtil.createEmvDialog
 import com.app.edcpoc.utils.EmvUtil
+import com.app.edcpoc.utils.IsoManager.ISO8583
+import com.app.edcpoc.utils.IsoManager.Model8583Bit
+import com.app.edcpoc.utils.IsoManager.Model8583Request
 import com.app.edcpoc.utils.LogUtils
 import com.idpay.victoriapoc.utils.IsoManagement.IsoClient
-import com.idpay.victoriapoc.utils.IsoManagement.IsoUtils.isoChangePIN
-import com.idpay.victoriapoc.utils.IsoManagement.IsoUtils.isoCreatePIN
-import com.idpay.victoriapoc.utils.IsoManagement.IsoUtils.isoLogonLogoff
-import com.idpay.victoriapoc.utils.IsoManagement.IsoUtils.isoStartEndDate
-import com.idpay.victoriapoc.utils.IsoManagement.IsoUtils.isoVerificationPIN
-import com.zcs.sdk.util.StringUtils
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

@@ -580,7 +580,7 @@ class EmvUtil(private val context: Context) {
                             "startDate", "closeDate", "logon", "logoff", "verifyPIN" -> {
                                 callback?.onDoSomething(appContext)
                             }
-                            "createPIN" -> {
+                            "createPIN", "reissuePIN" -> {
                                 Log.d("Debug", "createPIN step=$step")
                                 if (step == 1) {
                                     spvPinBlockOwn = pinBlockOwn
@@ -715,6 +715,16 @@ class EmvUtil(private val context: Context) {
                         Log.e(TAG, "PIN tidak sesuai")
                         return
                     }
+
+//                    when(commandValue) {
+//                        "reissuePIN" -> {
+//                            if (step == 1) {
+//                                spvPinBlockOwn = pinBlockOwn
+//                                field48data = "$cardNum$spvPinBlockOwn"
+//                                Log.d("Debug", "field48data=$field48data")
+//                            }
+//                        }
+//                    }
 
                     callback?.onDoSomething(appContext)
 
