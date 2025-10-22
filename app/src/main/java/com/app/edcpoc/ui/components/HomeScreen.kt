@@ -13,8 +13,6 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
-import com.app.edcpoc.data.model.User
-import com.app.edcpoc.data.model.UserRole
 import com.app.edcpoc.ui.theme.EdcpocTheme
 import androidx.compose.material3.*
 import com.app.edcpoc.ui.components.*
@@ -22,7 +20,6 @@ import com.app.edcpoc.ui.viewmodel.DialogState
 
 @Composable
 fun EDCHomeScreen(
-    currentUser: User,
     onTransaksiClick: () -> Unit,
     onKeamananClick: () -> Unit,
     onManajemenPINClick: () -> Unit,
@@ -53,7 +50,6 @@ fun EDCHomeScreen(
     ) {
         item {
             HeaderSection(
-                currentUser = currentUser,
                 onLogoutClick = onLogoutClick
             )
         }
@@ -75,14 +71,7 @@ fun EDCHomeScreen(
         item {
             ManajemenPINCard(onManajemenPINClick = onManajemenPINClick)
         }
-        if (currentUser.role == UserRole.SUPERVISOR) {
-            item {
-                Spacer(modifier = Modifier.height(16.dp))
-            }
-            item {
-                SessionManagementCard(onSessionManagementClick = onSessionManagementClick)
-            }
-        }
+        // SessionManagementCard bisa tetap tampil jika perlu, atau dihapus jika tidak ada user
         item {
             Spacer(modifier = Modifier.height(16.dp))
         }
@@ -97,9 +86,6 @@ fun EDCHomeScreen(
 fun EDCHomeScreenPreview() {
     EdcpocTheme {
         EDCHomeScreen(
-            currentUser = User(
-                "1", "supervisor", "John Supervisor", UserRole.SUPERVISOR
-            ),
             onTransaksiClick = {},
             onKeamananClick = {},
             onManajemenPINClick = {},

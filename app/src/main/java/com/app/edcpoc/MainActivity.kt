@@ -1,6 +1,7 @@
 package com.app.edcpoc
 
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -59,13 +60,20 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Cek session aktivasi, jika belum aktif redirect ke SvpActivity
+        if (!PreferenceManager.isActivated(this)) {
+            startActivity(Intent(this, SvpActivity::class.java))
+            finish()
+            return
+        }
         enableEdgeToEdge()
 
         authViewModel.initialize(this@MainActivity, this)
 
         setContent {
             EdcpocTheme {
-                EDCMainApp(this@MainActivity)
+                // Hapus login officer di MainActivity, langsung tampilkan home
+                EDCHomeApp(this@MainActivity)
             }
         }
     }
@@ -135,107 +143,30 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
 }
 
 @Composable
-fun EDCMainApp(context: Context, authViewModel: AuthViewModel = viewModel()) {
-    var currentScreen by remember { mutableStateOf("login") }
+fun EDCHomeApp(context: Context, authViewModel: AuthViewModel = viewModel()) {
+    // Asumsikan user sudah login officer, langsung tampilkan home
+    var currentScreen by remember { mutableStateOf("home") }
     val authState by authViewModel.uiState.collectAsState()
-    
-    // Debug logging
-    LaunchedEffect(authState.isLoggedIn, currentScreen) {
-        println("DEBUG: isLoggedIn = ${authState.isLoggedIn}, currentScreen = $currentScreen, user = ${authState.currentUser?.name}")
-    }
-    
-    // Determine which screen to show
-    val screenToShow = when {
-        !authState.isLoggedIn -> "login"
-        authState.isLoggedIn && currentScreen == "login" -> "home"
-        else -> currentScreen
-    }
-    
-    when (screenToShow) {
-        "login" -> {
-            LoginScreen(
-                onLoginSuccess = { 
-                    currentScreen = "home"
-                }
-            )
-        }
+
+    when (currentScreen) {
         "home" -> EDCHomeScreen(
-            currentUser = authState.currentUser!!,
+            // Hapus currentUser, tidak perlu dikirim
             onTransaksiClick = { createEmvDialog(context, emvUtil = authViewModel.emvUtil) },
             onKeamananClick = { createEmvDialog(context, emvUtil = authViewModel.emvUtil) },
             onManajemenPINClick = { createEmvDialog(context, emvUtil = authViewModel.emvUtil) },
             onSessionManagementClick = { createEmvDialog(context, emvUtil = authViewModel.emvUtil) },
             onLogoutClick = {
-                authViewModel.logout()
-                currentScreen = "login"
+                // Logout officer, redirect ke OfficerActivity
+                PreferenceManager.setOfficerLoggedIn(context, false)
+                val intent = Intent(context, OfficerActivity::class.java)
+                if (context is ComponentActivity) {
+                    context.startActivity(intent)
+                    context.finish()
+                }
             },
             dialogState = authViewModel.dialogState.collectAsState().value,
             dismissDialog = { authViewModel.dismissDialog() }
         )
-        "keamanan" -> KeamananScreen(
-            onBackClick = { currentScreen = "home" }
-        )
-        "create_pin" -> CreatePinScreen(
-            onBackClick = { currentScreen = "pin_management" },
-            onPinCreated = { pin ->
-                currentScreen = "pin_management"
-            }
-        )
-        "pin_management" -> PinManagementScreen(
-            currentUser = authState.currentUser!!,
-            onBackClick = { currentScreen = "home" },
-            onCreatePinClick = { currentScreen = "create_pin" },
-            onChangePinClick = { currentScreen = "change_pin" },
-            onReissuePinClick = { currentScreen = "reissue_pin" },
-            onVerificationPinClick = { currentScreen = "verification_pin" }
-        )
-        "change_pin" -> ChangePinScreen(
-            onBackClick = { currentScreen = "pin_management" },
-            onPinChanged = { pin ->
-                currentScreen = "pin_management"
-            }
-        )
-        "reissue_pin" -> ReissuePinScreen(
-            onBackClick = { currentScreen = "pin_management" },
-            onPinReissued = { cardNumber ->
-                currentScreen = "pin_management"
-            }
-        )
-        "verification_pin" -> VerificationPinScreen(
-            onBackClick = { currentScreen = "pin_management" },
-            onPinVerified = { isValid ->
-                currentScreen = "pin_management"
-            }
-        )
-        "session_management" -> SessionManagementScreen(
-            currentUser = authState.currentUser!!,
-            onBackClick = { currentScreen = "home" }
-        )
-        "transaksi" -> TransactionScreen(
-            onBackClick = { currentScreen = "home" },
-            onTransactionSuccess = { transaction ->
-                // Handle transaction success
-                currentScreen = "home"
-            }
-        )
-        else -> {
-            // Fallback for unknown screen states
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    Text(
-                        text = "Loading...",
-                        fontSize = 18.sp,
-                        color = Color(0xFF757575)
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    CircularProgressIndicator()
-                }
-            }
-        }
+        // ...screen lain jika ada...
     }
 }

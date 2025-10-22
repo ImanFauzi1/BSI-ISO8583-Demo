@@ -13,13 +13,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.app.edcpoc.data.model.User
 import androidx.compose.ui.res.stringResource
 import com.app.edcpoc.R
 
 @Composable
 fun HeaderSection(
-    currentUser: User,
     onLogoutClick: () -> Unit
 ) {
     Box(
@@ -41,45 +39,19 @@ fun HeaderSection(
                 fontSize = 14.sp,
                 modifier = Modifier.padding(top = 4.dp)
             )
-            Text(
-                text = "Welcome, ${currentUser.name} (${currentUser.role})",
-                color = Color.White,
-                fontSize = 12.sp,
-                modifier = Modifier.padding(top = 4.dp)
-            )
-            Row(
-                modifier = Modifier.padding(top = 8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(8.dp)
-                        .background(Color(0xFF4CAF50), RoundedCornerShape(4.dp))
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = stringResource(R.string.status_ready),
-                    color = Color.White,
-                    fontSize = 12.sp,
-                    modifier = Modifier
-                        .background(
-                            Color(0xFFBBDEFB),
-                            RoundedCornerShape(12.dp)
-                        )
-                        .padding(horizontal = 12.dp, vertical = 4.dp)
+        }
+        Row(
+            modifier = Modifier
+                .align(Alignment.TopEnd),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(onClick = onLogoutClick) {
+                Icon(
+                    imageVector = Icons.Default.ExitToApp,
+                    contentDescription = "Logout",
+                    tint = Color.White
                 )
             }
-        }
-        IconButton(
-            onClick = onLogoutClick,
-            modifier = Modifier.align(Alignment.TopEnd)
-        ) {
-            Icon(
-                imageVector = Icons.Default.ExitToApp,
-                contentDescription = "Logout",
-                tint = Color.White,
-                modifier = Modifier.size(24.dp)
-            )
         }
     }
 }

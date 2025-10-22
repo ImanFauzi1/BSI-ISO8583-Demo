@@ -15,20 +15,29 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Edcpoc">
         <activity
+            android:name="com.zcs.sdk.pin.pinpad.PinPadPasswordActivity"
+            android:theme="@style/Theme.Transparent"
+            android:hardwareAccelerated="false" />
+        <activity
+            android:name=".SvpActivity"
+            android:exported="true"
+            android:label="SVP Device Locked"
+            android:theme="@style/Theme.Edcpoc" />
+        <activity
             android:name=".MainActivity"
             android:exported="true"
             android:label="@string/app_name"
             android:theme="@style/Theme.Edcpoc">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
         <activity
-            android:name="com.zcs.sdk.pin.pinpad.PinPadPasswordActivity"
-            android:theme="@style/Theme.Transparent"
-            android:hardwareAccelerated="false" />
+            android:name=".OfficerActivity"
+            android:exported="true"
+            android:label="Officer Login"
+            android:theme="@style/Theme.Edcpoc" />
     </application>
 
 </manifest>
