@@ -3,25 +3,19 @@ package com.app.edcpoc.ui.components
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import com.app.edcpoc.ui.theme.EdcpocTheme
 import androidx.compose.material3.*
-import com.app.edcpoc.ui.components.*
 import com.app.edcpoc.ui.viewmodel.DialogState
 
 @Composable
 fun EDCHomeScreen(
     onTransaksiClick: () -> Unit,
-    onKeamananClick: () -> Unit,
+    onEnrollmentClick: (String) -> Unit,
     onManajemenPINClick: () -> Unit,
     onSessionManagementClick: () -> Unit,
     onLogoutClick: () -> Unit,
@@ -63,7 +57,7 @@ fun EDCHomeScreen(
             Spacer(modifier = Modifier.height(16.dp))
         }
         item {
-            KeamananCard(onKeamananClick = onKeamananClick)
+            EnrollmentCard(onEnrollmentClick = onEnrollmentClick)
         }
         item {
             Spacer(modifier = Modifier.height(16.dp))
@@ -87,7 +81,7 @@ fun EDCHomeScreenPreview() {
     EdcpocTheme {
         EDCHomeScreen(
             onTransaksiClick = {},
-            onKeamananClick = {},
+            onEnrollmentClick = {},
             onManajemenPINClick = {},
             onSessionManagementClick = {},
             onLogoutClick = {},

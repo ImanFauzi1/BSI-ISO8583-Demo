@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Person
@@ -25,26 +24,26 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.app.edcpoc.interfaces.EmvUtilInterface
 import com.app.edcpoc.ui.theme.EdcpocTheme
-import com.app.edcpoc.ui.viewmodel.SessionViewModel
-import com.app.edcpoc.ui.viewmodel.SvpOfficerViewModel
+import com.app.edcpoc.ui.viewmodel.ISOViewModel
 import com.app.edcpoc.utils.Constants.cardNum
 import com.app.edcpoc.utils.Constants.commandValue
+import com.app.edcpoc.utils.Constants.track2data
 import com.app.edcpoc.utils.CoreUtils.initializeEmvUtil
 import com.app.edcpoc.utils.DialogUtil.createEmvDialog
 import com.idpay.victoriapoc.utils.IsoManagement.IsoUtils
+import com.idpay.victoriapoc.utils.IsoManagement.IsoUtils.generateIsoStartEndDate
 import com.zcs.sdk.util.LogUtils
 import com.zcs.sdk.util.StringUtils
 import kotlin.getValue
 
 class OfficerActivity : ComponentActivity(), EmvUtilInterface {
-    private val svpOfficerViewModel: SvpOfficerViewModel by viewModels()
+    private val ISOViewModel: ISOViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -61,7 +60,7 @@ class OfficerActivity : ComponentActivity(), EmvUtilInterface {
             return
         }
 
-        svpOfficerViewModel.emvUtil = initializeEmvUtil(this@OfficerActivity, this)
+        ISOViewModel.emvUtil = initializeEmvUtil(this@OfficerActivity, this)
 
         setContent {
             EdcpocTheme {
@@ -70,10 +69,10 @@ class OfficerActivity : ComponentActivity(), EmvUtilInterface {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     OfficerLoginScreen(
-                        svpOfficerViewModel = svpOfficerViewModel,
+                        ISOViewModel = ISOViewModel,
                         onLogin = {
                             commandValue = "logon"
-                            svpOfficerViewModel.emvUtil?.let { createEmvDialog(this, it)  }
+                            ISOViewModel.emvUtil?.let { createEmvDialog(this, it)  }
                         },
                         onError = { message ->
                             Toast.makeText(this@OfficerActivity, message, Toast.LENGTH_LONG).show()
@@ -81,15 +80,16 @@ class OfficerActivity : ComponentActivity(), EmvUtilInterface {
                         onCloseDate = {
                             LogUtils.d("test", "Close Date clicked")
                             commandValue = "closeDate"
-                            svpOfficerViewModel.emvUtil?.let { createEmvDialog(this, it) }
+                            ISOViewModel.emvUtil?.let { createEmvDialog(this, it) }
                         },
                         onSuccess = {
                             if (commandValue == "closeDate") {
                                 onCloseDate()
                                 return@OfficerLoginScreen
                             }
-                            PreferenceManager.setOfficerLoggedIn(this@OfficerActivity, cardNum)
+                            PreferenceManager.setOfficerLoggedIn(this@OfficerActivity, track2data)
                             startActivity(Intent(this, MainActivity::class.java))
+                            track2data = null
                             finish()
                         }
                     )
@@ -106,15 +106,13 @@ class OfficerActivity : ComponentActivity(), EmvUtilInterface {
 
     override fun onDoSomething(context: Context) {
         when(commandValue) {
-            "logon", "logoff" -> {
-                val proc = when(commandValue) {
-                    "logon" -> "810000"
-                    "logoff" -> "820000"
-                    else -> ""
-                }
-
-                val iso = IsoUtils.generateIsoLogonLogoff("0800", proc)
-                svpOfficerViewModel.isoSendMessage(commandValue, StringUtils.convertHexToBytes(iso))
+            "logon" -> {
+                val iso = IsoUtils.generateIsoLogonLogoff("0800", "810000", track2data!!)
+                ISOViewModel.isoSendMessage(commandValue, StringUtils.convertHexToBytes(iso))
+            }
+            "closeDate" -> {
+                val iso = generateIsoStartEndDate("0800", "920000")
+                ISOViewModel.isoSendMessage(commandValue, StringUtils.convertHexToBytes(iso))
             }
         }
     }
@@ -126,13 +124,13 @@ class OfficerActivity : ComponentActivity(), EmvUtilInterface {
 
 @Composable
 fun OfficerLoginScreen(
-    svpOfficerViewModel: SvpOfficerViewModel,
+    ISOViewModel: ISOViewModel,
     onLogin: () -> Unit,
     onSuccess: (String) -> Unit,
     onError: (String) -> Unit,
     onCloseDate: () -> Unit
 ) {
-    val uiState by svpOfficerViewModel.uiState.collectAsState()
+    val uiState by ISOViewModel.uiState.collectAsState()
 
     LaunchedEffect(uiState) {
         if (!uiState.cardNum.isNullOrEmpty()) {

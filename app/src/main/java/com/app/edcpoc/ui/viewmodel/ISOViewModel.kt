@@ -14,11 +14,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class SvpOfficerViewModel : ViewModel() {
-    val TAG = "SvpViewModel"
+class ISOViewModel : ViewModel() {
+    val TAG = "ISOViewModel"
     private val _uiState = MutableStateFlow(SvpUiState())
     val uiState: StateFlow<SvpUiState> = _uiState.asStateFlow()
     var emvUtil: EmvUtil? = null
+    private val _dialogState = MutableStateFlow(DialogState())
+    val dialogState: StateFlow<DialogState> = _dialogState.asStateFlow()
 
     fun isoSendMessage(type: String? = null, isoBuilder: ByteArray?) {
         viewModelScope.launch {
@@ -60,8 +62,18 @@ class SvpOfficerViewModel : ViewModel() {
         _uiState.value = SvpUiState()
         cardNum = null
     }
+    fun dismissDialog() {
+        _dialogState.update { it.copy(showDialog = false, dialogMessage = null) }
+    }
 }
+
+data class DialogState(
+    val showDialog: Boolean = false,
+    val dialogMessage: String? = null
+)
+
 data class SvpUiState(
+    val isLoading: Boolean = false,
     val stateType: String? = null,
     val cardNum: String? = null,
     val errorMessage: String? = null

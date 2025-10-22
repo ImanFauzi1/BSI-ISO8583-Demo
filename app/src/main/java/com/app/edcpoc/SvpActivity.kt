@@ -7,7 +7,6 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -31,8 +30,9 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.text.style.TextAlign
 import com.app.edcpoc.interfaces.EmvUtilInterface
-import com.app.edcpoc.ui.viewmodel.SvpOfficerViewModel
+import com.app.edcpoc.ui.viewmodel.ISOViewModel
 import com.app.edcpoc.utils.Constants.commandValue
+import com.app.edcpoc.utils.Constants.track2data
 import com.app.edcpoc.utils.CoreUtils.initializeEmvUtil
 import com.app.edcpoc.utils.DialogUtil.createEmvDialog
 import com.idpay.victoriapoc.utils.IsoManagement.IsoUtils.generateIsoStartEndDate
@@ -41,7 +41,7 @@ import com.zcs.sdk.util.StringUtils
 import kotlin.getValue
 
 class SvpActivity : ComponentActivity(), EmvUtilInterface {
-    private val svpOfficerViewModel: SvpOfficerViewModel by viewModels()
+    private val ISOViewModel: ISOViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,7 +52,7 @@ class SvpActivity : ComponentActivity(), EmvUtilInterface {
             return
         }
 
-        svpOfficerViewModel.emvUtil = initializeEmvUtil(this@SvpActivity, this)
+        ISOViewModel.emvUtil = initializeEmvUtil(this@SvpActivity, this)
 
         setContent {
             EdcpocTheme {
@@ -61,10 +61,10 @@ class SvpActivity : ComponentActivity(), EmvUtilInterface {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     SvpLockedScreen(
-                        svpOfficerViewModel = svpOfficerViewModel,
+                        ISOViewModel = ISOViewModel,
                         onActivate = {
                             commandValue = "startDate"
-                            svpOfficerViewModel.emvUtil?.let { createEmvDialog(this, it)  }
+                            ISOViewModel.emvUtil?.let { createEmvDialog(this, it)  }
                         },
                         onSuccess = { cardNum ->
                             saveSession(cardNum)
@@ -77,24 +77,19 @@ class SvpActivity : ComponentActivity(), EmvUtilInterface {
     }
 
     private fun saveSession(cardNum: String) {
-        PreferenceManager.setSvpCardNum(this, cardNum)
+        PreferenceManager.setSvpCardNum(this, track2data)
         Toast.makeText(this, "Aktivasi berhasil!", Toast.LENGTH_SHORT).show()
         startActivity(Intent(this, OfficerActivity::class.java))
-        svpOfficerViewModel.clearState()
+        ISOViewModel.clearState()
+        track2data = null
         finish()
     }
 
     override fun onDoSomething(context: Context) {
         when(commandValue) {
-            "startDate", "closeDate" -> {
-                val proc = when(commandValue) {
-                    "startDate" -> "910000"
-                    "closeDate" -> "920000"
-                    else -> ""
-                }
-
-                val iso = generateIsoStartEndDate("0800", proc)
-                svpOfficerViewModel.isoSendMessage(commandValue, StringUtils.convertHexToBytes(iso))
+            "startDate" -> {
+                val iso = generateIsoStartEndDate("0800", "910000")
+                ISOViewModel.isoSendMessage(commandValue, StringUtils.convertHexToBytes(iso))
             }
         }
     }
@@ -106,7 +101,7 @@ class SvpActivity : ComponentActivity(), EmvUtilInterface {
 
 @Composable
 fun SvpLockedScreen(
-    svpOfficerViewModel: SvpOfficerViewModel,
+    ISOViewModel: ISOViewModel,
     onActivate: () -> Unit,
     onSuccess: (String) -> Unit,
     onError: (String) -> Unit
@@ -114,7 +109,7 @@ fun SvpLockedScreen(
     val currentOnSuccess by rememberUpdatedState(onSuccess)
     val currentOnError by rememberUpdatedState(onError)
 
-    val uiState by svpOfficerViewModel.uiState.collectAsState()
+    val uiState by ISOViewModel.uiState.collectAsState()
 
     LaunchedEffect(uiState.cardNum, uiState.errorMessage) {
         LogUtils.d("SvpLockedScreen", "UI State changed: $uiState")
@@ -123,7 +118,7 @@ fun SvpLockedScreen(
         }
         if (!uiState.errorMessage.isNullOrEmpty()) {
             currentOnError(uiState.errorMessage!!)
-            svpOfficerViewModel.clearState()
+            ISOViewModel.clearState()
         }
     }
 

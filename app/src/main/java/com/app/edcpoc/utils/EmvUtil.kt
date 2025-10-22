@@ -7,7 +7,6 @@ import android.os.Looper
 import android.util.Log
 import android.widget.Toast
 import com.app.edcpoc.interfaces.EmvUtilInterface
-import com.app.edcpoc.ui.viewmodel.AuthViewModel
 import com.app.edcpoc.utils.Constants.READ_TIMEOUT
 import com.app.edcpoc.utils.Constants.cardInfoEntity
 import com.app.edcpoc.utils.Constants.cardNum
@@ -580,16 +579,16 @@ class EmvUtil(private val context: Context) {
                             "startDate", "closeDate", "logon", "logoff", "verifyPIN" -> {
                                 callback?.onDoSomething(appContext)
                             }
-                            "createPIN", "reissuePIN" -> {
-                                Log.d("Debug", "createPIN step=$step")
-                                if (step == 1) {
-                                    spvPinBlockOwn = pinBlockOwn
-                                    field48data = "$cardNum$spvPinBlockOwn"
-                                    Log.d("Debug", "field48data=$field48data")
-                                }
-                                callback?.onDoSomething(appContext)
-                            }
-                            "changePIN" -> inputNewPIN()
+//                            "createPIN", "reissuePIN" -> {
+//                                Log.d("Debug", "createPIN step=$step")
+//                                if (step == 1) {
+//                                    spvPinBlockOwn = pinBlockOwn
+//                                    field48data = "$cardNum$spvPinBlockOwn"
+//                                    Log.d("Debug", "field48data=$field48data")
+//                                }
+//                                callback?.onDoSomething(appContext)
+//                            }
+                            "changePIN", "createPIN", "reissuePIN" -> inputNewPIN()
                         }
                     }
                 }
@@ -598,7 +597,7 @@ class EmvUtil(private val context: Context) {
 
         when(commandValue) {
             "changePIN" -> mPinPadManager?.setInputPinTitle("Masukkan PIN anda")
-            "createPIN", "registrasiPIN" -> mPinPadManager?.setInputPinTitle("Masukkan PIN anda")
+            "createPIN", "reissuePIN" -> mPinPadManager?.setInputPinTitle("Masukkan PIN SVP")
             else -> mPinPadManager?.setInputPinTitle("Masukkan PIN anda")
         }
         return inputPINResult
@@ -714,6 +713,13 @@ class EmvUtil(private val context: Context) {
                         Toast.makeText(appContext, "PIN tidak sesuai", Toast.LENGTH_SHORT).show()
                         Log.e(TAG, "PIN tidak sesuai")
                         return
+                    }
+
+                    when(commandValue) {
+                        "createPIN", "reissuePIN" -> {
+                            field48data = "$cardNum$pinBlockConfirm"
+                            Log.d("Debug", "field48data=$field48data")
+                        }
                     }
 
 //                    when(commandValue) {

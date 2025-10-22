@@ -19,8 +19,8 @@ object PreferenceManager {
     fun getSvpCardNum(context: Context): String? =
         getPrefs(context).getString(SVP_CARD_NUM, null)
 
-    fun setOfficerLoggedIn(context: Context, cardNum: String?) {
-        getPrefs(context).edit { putString(OFFICER_CARD_NUM, cardNum) }
+    fun setOfficerLoggedIn(context: Context, track2data: String?) {
+        getPrefs(context).edit { putString(OFFICER_CARD_NUM, track2data) }
     }
 
     fun getOfficerCardNum(context: Context): String? =
