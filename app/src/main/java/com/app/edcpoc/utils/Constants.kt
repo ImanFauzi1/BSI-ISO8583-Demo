@@ -1,5 +1,8 @@
 package com.app.edcpoc.utils
 
+import android.graphics.Bitmap
+import cn.com.aratek.fp.FingerprintScanner
+import com.simo.ektp.IndonesianIdentityCard
 import com.zcs.sdk.DriverManager
 import com.zcs.sdk.Printer
 import com.zcs.sdk.Sys
@@ -30,11 +33,23 @@ object Constants {
 
     public final var commandValue: String = ""
     public final var pos_entrymode: String = ""
+    val FINGERPRINT_MATCH_THRESHOLD = 60
     var tpdu: String? = "0000000001"
     var mRfCardType: Byte = 0
     const val READ_TIMEOUT = 30000
     var iRet = 0
+    var isTimeout = false
+    var fingerTimeout = 10
+    var base64Finger: String? = null
 
+    var indonesianIdentityCard: IndonesianIdentityCard? = null
+    var mScanner: FingerprintScanner? = null
+    lateinit var signBites: ByteArray
+    var signatureBitmap: Bitmap? = null
+    const val psamProfile = "psamProfile"
+    var feature64Kanan = ""
+    var sign64 = ""
+    var face64 = ""
     var mLatch: CountDownLatch? = null
     var step: Int = 1
 

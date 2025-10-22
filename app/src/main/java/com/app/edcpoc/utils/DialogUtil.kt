@@ -9,7 +9,7 @@ import com.zcs.sdk.util.StringUtils
 object DialogUtil {
     private const val TAG = "DialogUtil"
 
-    private fun createDialog(
+    fun createDialog(
         context: Context,
         title: String = "Processing...",
         message: String?,

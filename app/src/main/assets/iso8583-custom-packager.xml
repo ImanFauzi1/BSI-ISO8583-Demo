@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE isopackager PUBLIC
+    "-//jPOS/jPOS Generic Packager DTD 1.0//EN"
+    "http://jpos.org/dtd/generic-packager-1.0.dtd">
+
+<isopackager>
+    <isofield
+        id="0"
+        length="4"
+        name="Message Type Id"
+        class="org.jpos.iso.IFA_NUMERIC" />
+    <isofield
+        id="3"
+        length="6"
+        name="Processing Code"
+        class="org.jpos.iso.IFA_NUMERIC" />
+    <isofield
+        id="11"
+        length="6"
+        name="Systems Trace No"
+        class="org.jpos.iso.IFA_NUMERIC" />
+    <isofield
+        id="12"
+        length="6"
+        name="Time, Local Trans."
+        class="org.jpos.iso.IFA_NUMERIC" />
+    <isofield
+        id="13"
+        length="4"
+        name="Date, Local Trans."
+        class="org.jpos.iso.IFA_NUMERIC" />
+    <isofield
+        id="24"
+        length="3"
+        name="NII"
+        class="org.jpos.iso.IFA_NUMERIC" />
+    <isofield
+        id="35"
+        length="37"
+        name="Track 2 Data"
+        class="org.jpos.iso.IFA_LLCHAR" />
+    <isofield
+        id="37"
+        length="12"
+        name="Retrieval Ref No"
+        class="org.jpos.iso.IF_CHAR" />
+    <isofield
+        id="38"
+        length="6"
+        name="Auth Id. Response"
+        class="org.jpos.iso.IF_CHAR" />
+    <isofield
+        id="39"
+        length="2"
+        name="Response Code"
+        class="org.jpos.iso.IF_CHAR" />
+    <isofield
+        id="41"
+        length="8"
+        name="Card Acceptor Terminal Id"
+        class="org.jpos.iso.IF_CHAR" />
+    <isofield
+        id="42"
+        length="15"
+        name="Card Acq. Id"
+        class="org.jpos.iso.IF_CHAR" />
+    <isofield
+        id="52"
+        length="8"
+        name="PIN Data"
+        class="org.jpos.iso.IFA_BINARY" />
+</isopackager>

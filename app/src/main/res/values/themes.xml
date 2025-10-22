@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
 
-    <style name="Theme.Edcpoc" parent="android:Theme.Material.Light.NoActionBar" />
+    <style name="Theme.Edcpoc" parent="Theme.AppCompat.Light.NoActionBar" />
     <style name="Theme.WindowActivity" parent="android:style/Theme.Dialog">
         <item name="android:windowNoTitle">true</item><!-- //对话框无标题 -->
         <item name="android:windowIsTranslucent">true</item><!-- //此对话框的背景 -->
@@ -13,7 +13,7 @@
         <item name="android:backgroundDimEnabled">true</item><!-- //是否允许对话框的背景变暗 -->
         <item name="android:windowAnimationStyle">@android:style/Animation.Dialog</item>
     </style>
-    <style name="Theme.Transparent" parent="android:Theme.Material.Light.NoActionBar">
+    <style name="Theme.Transparent" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:windowNoTitle">true</item>

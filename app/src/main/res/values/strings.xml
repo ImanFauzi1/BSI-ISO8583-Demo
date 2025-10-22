@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
     <string name="app_name">EDC Mobile</string>
     
     <!-- Header -->
@@ -30,4 +30,90 @@
     <string name="pin_input_title">Masukkan PIN (6 Digit)</string>
     <string name="show_pin_text">Tampilkan</string>
     <string name="confirm_button">CONFIRM</string>
+
+    <!-- Error Code Strings -->
+    <string name="info_error" translatable="false">Error</string>
+    <string name="operation_successful" translatable="false">Operation is successful!</string>
+    <string name="error_operation_failed" translatable="false">Operation failed!</string>
+    <string name="error_wrong_connection" translatable="false">Operation failed because of wrong connection!</string>
+    <string name="error_device_busy" translatable="false">Operation failed because device is busy!</string>
+    <string name="error_device_not_open" translatable="false">Operation failed because device is not open!</string>
+    <string name="error_timeout" translatable="false">Operation failed because of timeout!</string>
+    <string name="error_no_permission" translatable="false">Operation failed because of no permission!</string>
+    <string name="error_wrong_parameter" translatable="false">Operation failed because of wrong parameter!</string>
+    <string name="error_decode" translatable="false">Operation failed because of decoding failure!</string>
+    <string name="error_initialization_failed" translatable="false">Operation failed because of initialization failure!</string>
+    <string name="error_unknown" translatable="false">Operation failed because of unknown error!</string>
+    <string name="error_not_support" translatable="false">Operation failed because it\'s not supported!</string>
+    <string name="error_not_enough_memory" translatable="false">Operation failed because of insufficient memory!</string>
+    <string name="error_device_not_found" translatable="false">Operation failed because device is not found!</string>
+    <string name="error_device_reopen" translatable="false">Operation failed because device is repeatedly turned on!</string>
+    <string name="error_algorithm_initialization_failed" translatable="false">Operation failed because of fingerprint algorithm initialization failure!</string>
+    <string name="error_invalid_feature_data" translatable="false">Operation failed because of invalid fingerprint feature data!</string>
+    <string name="error_bad_image" translatable="false">Operation failed because of unqualified fingerprint image!</string>
+    <string name="error_not_match" translatable="false">Operation failed because fingerprint dose not match!</string>
+    <string name="error_low_point" translatable="false">Operation failed because fingerprint verification score is too low!</string>
+    <string name="error_no_finger" translatable="false">Operation failed because of no fingers found!</string>
+    <string name="error_no_result" translatable="false">Operation failed because of no match fingerprint is found in database!</string>
+    <string name="error_out_of_bound" translatable="false">Operation failed because fingerprint ID is out of range!</string>
+    <string name="error_database_full" translatable="false">Operation failed because database is full!</string>
+    <string name="error_library_missing" translatable="false">Operation failed because fingerprint algorithm library is missing!</string>
+    <string name="error_algorithm_uninitialize" translatable="false">Operation failed because fingerprint algorithm is not initialized!</string>
+    <string name="error_algorithm_reinitialize" translatable="false">Operation failed because of fingerprint algorithm is initialized repeatedly!</string>
+    <string name="error_repeated_enroll" translatable="false">Operation failed because of fingerprint is enrolled repeatedly!</string>
+    <string name="error_not_enrolled" translatable="false">Operation failed because fingerprint is not enrolled!</string>
+    <string name="error_no_card" translatable="false">Operation failed because no card is found!</string>
+    <string name="error_invalid_card" translatable="false">Operation failed because card is not supported!</string>
+    <string name="error_invalid_decode_lib" translatable="false">Operation failed because decoding library is invalid!</string>
+    <string name="error_card_validate_failed" translatable="false">Operation failed because of encryption key authentication failure!</string>
+    <string name="error_card_not_activate" translatable="false">Operation failed because card is not activated!</string>
+    <string name="error_no_paper" translatable="false">Paper has been exhausted!</string>
+    <string name="error_number_format" translatable="false">Input number is invalid!</string>
+    <string name="error_other" translatable="false">Error: <xliff:g>%1$d</xliff:g></string>
+    <string name="account">Account</string>
+    <string name="transaction">Transaction</string>
+    <string name="data">Data</string>
+    <string name="cari_data">Cari Data</string>
+    <string name="identity_aliyun_no_face">No face is detected.</string>
+    <string name="identity_aliyun_distance_too_far">Move closer.</string>
+    <string name="identity_aliyun_distance_too_close">Move further away.</string>
+    <string name="identity_aliyun_face_not_in_center">Move your face into the circle.</string>
+    <string name="identity_aliyun_bad_pitch">Directly face your mobile phone.</string>
+    <string name="identity_aliyun_bad_yaw">Directly face your mobile phone.</string>
+    <string name="identity_aliyun_is_moving">Make your face clearer.</string>
+    <string name="identity_aliyun_bad_brightness">Brighten up your face.</string>
+    <string name="identity_aliyun_bad_quality">Adjust your posture.</string>
+    <string name="identity_aliyun_bad_eye_openness">Directly face your mobile phone.</string>
+    <string name="identity_aliyun_blink_openness">Blink.</string>
+    <string name="identity_aliyun_stack_time">Stay still.</string>
+    <string name="identity_aliyun_is_blur">Make your face clearer.</string>
+    <string name="identity_aliyun_face_init_text">Directly face your mobile phone.</string>
+    <string name="identity_aliyun_face_comm_tips_text">Pick up your mobile phone and blink.</string>
+    <string name="identity_aliyun_zface_processing">Processing</string>
+    <string name="identity_message_box_title_not_support">The current system does not support face verification.</string>
+    <string name="identity_message_box_message_not_support">Only higher versions of the system support face verification.</string>
+    <string name="identity_message_box_title_no_camera_permission">Insufficient permissions.</string>
+    <string name="identity_message_box_message_no_camera_permission">Make sure that the app has been granted camera permissions.</string>
+    <string name="identity_message_box_title_operation_time_out">The operation timed out.</string>
+    <string name="identity_message_box_title_network">The network condition does not meet the requirements.</string>
+    <string name="identity_message_box_message_network">Check network connectivity.</string>
+    <string name="identity_message_box_title_sys_error">The operation failed.</string>
+    <string name="identity_message_box_message_sys_error">A system error occurred. Try again.</string>
+    <string name="identity_message_box_title_exit_tip">Are you sure that you want to exit?</string>
+    <string name="identity_message_box_message_exit_tip">You need to only show your face.</string>
+    <string name="identity_message_box_btn_ok_tip">OK</string>
+    <string name="identity_message_box_btn_cancel_tip">Cancel</string>
+    <string name="identity_message_box_title_retry_face_scan">The operation timed out.</string>
+    <string name="identity_message_box_message_retry_face_scan">Directly face your mobile phone to make your face easier to scan.</string>
+    <string name="identity_message_box_btn_retry_ok">Try again.</string>
+    <string name="identity_message_box_title_retry_face_scan_time_out">The operation failed.</string>
+    <string name="identity_message_box_message_retry_face_scan_time_out">The number of face verification failures exceeds the upper limit. Try again later.</string>
+    <string name="identity_message_box_message_btn_retry_ok_time_out">OK.</string>
+    <string name="identity_ocr_alert_net_message_error">The network condition does not meet the requirements. Try again.</string>
+    <string name="identity_ocr_alert_retry_text">Retry</string>
+    <string name="identity_ocr_alert_exit_text">Exit</string>
+    <string name="identity_final_handleing">Verifying</string>
+    <string name="username">Username</string>
+    <string name="password">Password</string>
+    <string name="masukkan_password">Masukkan Password</string>
 </resources>

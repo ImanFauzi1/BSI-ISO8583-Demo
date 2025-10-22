@@ -1,0 +1,65 @@
+package com.app.edcpoc.ui.viewmodel
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.app.edcpoc.data.repository.ApiRepository
+import com.app.edcpoc.data.model.FaceCompareRequest
+import com.app.edcpoc.data.model.FaceCompareTencentResponse
+import com.app.edcpoc.data.model.KtpReq
+import com.app.edcpoc.data.model.KtpResp
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
+
+sealed class ApiUiState<out T> {
+    object Idle : ApiUiState<Nothing>()
+    object Loading : ApiUiState<Nothing>()
+    data class Success<T>(val data: T) : ApiUiState<T>()
+    data class Error(val message: String) : ApiUiState<Nothing>()
+}
+
+class ApiViewModel(
+    private val repository: ApiRepository = ApiRepository()
+) : ViewModel() {
+    private val _ktpState = MutableStateFlow<ApiUiState<KtpResp>>(ApiUiState.Idle)
+    val ktpState: StateFlow<ApiUiState<KtpResp>> = _ktpState
+
+    private val _ktpSpvState = MutableStateFlow<ApiUiState<KtpResp>>(ApiUiState.Idle)
+    val ktpSpvState: StateFlow<ApiUiState<KtpResp>> = _ktpSpvState
+
+    private val _faceCompareState = MutableStateFlow<ApiUiState<FaceCompareTencentResponse>>(ApiUiState.Idle)
+    val faceCompareState: StateFlow<ApiUiState<FaceCompareTencentResponse>> = _faceCompareState
+
+    fun sendKtpData(param: KtpReq) {
+        _ktpState.value = ApiUiState.Loading
+        viewModelScope.launch {
+            val result = repository.sendKtpData(param)
+            _ktpState.value = result.fold(
+                onSuccess = { ApiUiState.Success(it) },
+                onFailure = { ApiUiState.Error(it.message ?: "Unknown error") }
+            )
+        }
+    }
+
+    fun sendKtpDataSpv(param: KtpReq) {
+        _ktpSpvState.value = ApiUiState.Loading
+        viewModelScope.launch {
+            val result = repository.sendKtpDataSpv(param)
+            _ktpSpvState.value = result.fold(
+                onSuccess = { ApiUiState.Success(it) },
+                onFailure = { ApiUiState.Error(it.message ?: "Unknown error") }
+            )
+        }
+    }
+
+    fun faceCompare(param: FaceCompareRequest) {
+        _faceCompareState.value = ApiUiState.Loading
+        viewModelScope.launch {
+            val result = repository.faceCompare(param)
+            _faceCompareState.value = result.fold(
+                onSuccess = { ApiUiState.Success(it) },
+                onFailure = { ApiUiState.Error(it.message ?: "Unknown error") }
+            )
+        }
+    }
+}

@@ -2,6 +2,8 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    id("org.jetbrains.kotlin.kapt")
+    id("dagger.hilt.android.plugin") // Added Hilt Gradle plugin
 }
 
 android {
@@ -71,6 +73,16 @@ dependencies {
     implementation("org.jpos:jpos:2.1.7") {
         exclude(group = "org.apache.crimson")
     }
+    implementation("com.squareup.retrofit2:retrofit:2.9.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
+
+    // Hilt for Dependency Injection
+    implementation("com.google.dagger:hilt-android:2.51.1")
+    implementation(libs.androidx.appcompat)
+    kapt("com.google.dagger:hilt-compiler:2.51.1")
+
     implementation(libs.androidx.compose.foundation)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)

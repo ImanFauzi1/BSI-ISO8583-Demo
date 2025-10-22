@@ -12,6 +12,14 @@ object PreferenceManager {
     private fun getPrefs(context: Context): SharedPreferences =
         context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
 
+    fun setPCID(context: Context, pcid: String){
+        getPrefs(context).edit { putString("PCID", pcid) }
+    }
+
+    fun setConfigFile(context: Context, configFile: String){
+        getPrefs(context).edit { putString("CONFIG_FILE", configFile) }
+    }
+
     fun setSvpCardNum(context: Context, svpCardNum: String?) {
         getPrefs(context).edit { putString(SVP_CARD_NUM, svpCardNum) }
     }
@@ -28,5 +36,13 @@ object PreferenceManager {
 
     fun clearAll(context: Context) {
         getPrefs(context).edit { clear() }
+    }
+
+    fun getPCID(context: Context): String? {
+        return getPrefs(context).getString("PCID", null)
+    }
+
+    fun getConfigFile(context: Context): String? {
+        return getPrefs(context).getString("CONFIG_FILE", null)
     }
 }
