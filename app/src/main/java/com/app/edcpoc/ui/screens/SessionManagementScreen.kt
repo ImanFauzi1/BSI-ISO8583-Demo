@@ -69,7 +69,7 @@ fun SessionManagementScreen(
                         isDailySessionActive = uiState.isDailySessionActive,
                         isUserLoggedIn = uiState.isUserLoggedIn,
                         isLoading = uiState.isLoading,
-                        onStartDate = { sessionViewModel.startDate(currentUser.id, currentUser.username, currentUser.role) },
+                        onStartDate = { sessionViewModel.startDate(currentUser.id) },
                         onCloseDate = { sessionViewModel.closeDate(currentUser.id) },
                         onLogon = { sessionViewModel.logon(currentUser.id, currentUser.username, currentUser.role) },
                         onLogoff = { sessionViewModel.logoff() }

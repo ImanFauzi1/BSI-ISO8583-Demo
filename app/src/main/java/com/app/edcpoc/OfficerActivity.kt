@@ -1,10 +1,15 @@
 package com.app.edcpoc
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -25,11 +30,39 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.app.edcpoc.interfaces.EmvUtilInterface
 import com.app.edcpoc.ui.theme.EdcpocTheme
+import com.app.edcpoc.ui.viewmodel.SessionViewModel
+import com.app.edcpoc.ui.viewmodel.SvpOfficerViewModel
+import com.app.edcpoc.utils.Constants.cardNum
+import com.app.edcpoc.utils.Constants.commandValue
+import com.app.edcpoc.utils.CoreUtils.initializeEmvUtil
+import com.app.edcpoc.utils.DialogUtil.createEmvDialog
+import com.idpay.victoriapoc.utils.IsoManagement.IsoUtils
+import com.zcs.sdk.util.LogUtils
+import com.zcs.sdk.util.StringUtils
+import kotlin.getValue
 
-class OfficerActivity : ComponentActivity() {
+class OfficerActivity : ComponentActivity(), EmvUtilInterface {
+    private val svpOfficerViewModel: SvpOfficerViewModel by viewModels()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        if (PreferenceManager.getSvpCardNum(this).isNullOrEmpty()) {
+            startActivity(Intent(this, SvpActivity::class.java))
+            finish()
+            return
+        }
+
+        if (PreferenceManager.getOfficerCardNum(this) != null){
+            startActivity(Intent(this, MainActivity::class.java))
+            finish()
+            return
+        }
+
+        svpOfficerViewModel.emvUtil = initializeEmvUtil(this@OfficerActivity, this)
+
         setContent {
             EdcpocTheme {
                 Surface(
@@ -37,19 +70,26 @@ class OfficerActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     OfficerLoginScreen(
+                        svpOfficerViewModel = svpOfficerViewModel,
                         onLogin = {
-                            PreferenceManager.setOfficerLoggedIn(this, true)
-                            startActivity(Intent(this, MainActivity::class.java))
-                            finish()
+                            commandValue = "logon"
+                            svpOfficerViewModel.emvUtil?.let { createEmvDialog(this, it)  }
                         },
-                        onLogout = {
-                            PreferenceManager.setOfficerLoggedIn(this, false)
-                            startActivity(Intent(this, OfficerActivity::class.java))
-                            finish()
+                        onError = { message ->
+                            Toast.makeText(this@OfficerActivity, message, Toast.LENGTH_LONG).show()
                         },
                         onCloseDate = {
-                            PreferenceManager.clearAll(this)
-                            startActivity(Intent(this, SvpActivity::class.java))
+                            LogUtils.d("test", "Close Date clicked")
+                            commandValue = "closeDate"
+                            svpOfficerViewModel.emvUtil?.let { createEmvDialog(this, it) }
+                        },
+                        onSuccess = {
+                            if (commandValue == "closeDate") {
+                                onCloseDate()
+                                return@OfficerLoginScreen
+                            }
+                            PreferenceManager.setOfficerLoggedIn(this@OfficerActivity, cardNum)
+                            startActivity(Intent(this, MainActivity::class.java))
                             finish()
                         }
                     )
@@ -57,49 +97,91 @@ class OfficerActivity : ComponentActivity() {
             }
         }
     }
+
+    fun onCloseDate() {
+        PreferenceManager.clearAll(this)
+        startActivity(Intent(this, SvpActivity::class.java))
+        finish()
+    }
+
+    override fun onDoSomething(context: Context) {
+        when(commandValue) {
+            "logon", "logoff" -> {
+                val proc = when(commandValue) {
+                    "logon" -> "810000"
+                    "logoff" -> "820000"
+                    else -> ""
+                }
+
+                val iso = IsoUtils.generateIsoLogonLogoff("0800", proc)
+                svpOfficerViewModel.isoSendMessage(commandValue, StringUtils.convertHexToBytes(iso))
+            }
+        }
+    }
+
+    override fun onError(message: String) {
+        TODO("Not yet implemented")
+    }
 }
 
 @Composable
 fun OfficerLoginScreen(
+    svpOfficerViewModel: SvpOfficerViewModel,
     onLogin: () -> Unit,
-    onLogout: () -> Unit,
+    onSuccess: (String) -> Unit,
+    onError: (String) -> Unit,
     onCloseDate: () -> Unit
 ) {
-    val context = LocalContext.current
-    var isLoggedIn by remember { mutableStateOf(false) }
+    val uiState by svpOfficerViewModel.uiState.collectAsState()
 
-    // Cek session officer saat composable pertama kali dipanggil
-    LaunchedEffect(Unit) {
-        isLoggedIn = PreferenceManager.isOfficerLoggedIn(context)
+    LaunchedEffect(uiState) {
+        if (!uiState.cardNum.isNullOrEmpty()) {
+            onSuccess(uiState.cardNum!!)
+            return@LaunchedEffect
+        }
+        if (!uiState.errorMessage.isNullOrEmpty()) {
+            onError(uiState.errorMessage!!)
+            return@LaunchedEffect
+        }
     }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
     ) {
-        // Tombol Close Date di pojok kanan atas, selalu tampil
-        IconButton(
-            onClick = onCloseDate,
+        Row(
             modifier = Modifier
                 .align(Alignment.TopEnd)
                 .padding(16.dp)
+                .background(Color.Transparent)
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = onCloseDate
+                )
+                .padding(horizontal = 8.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
                 imageVector = Icons.Default.Close,
                 contentDescription = "Close Date",
                 tint = Color(0xFFB71C1C),
-                modifier = Modifier.size(28.dp)
+                modifier = Modifier.size(24.dp)
+            )
+            Text(
+                text = "Close Date",
+                color = Color(0xFFB71C1C),
+                fontWeight = FontWeight.Bold,
+                fontSize = 16.sp,
+                modifier = Modifier.padding(start = 4.dp)
             )
         }
-        // Card dihilangkan, hanya Column biasa tanpa border/shadow
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
             modifier = Modifier
                 .align(Alignment.Center)
                 .padding(32.dp)
-                .background(Color(0xFFF5F5F5))
         ) {
             Icon(
                 imageVector = Icons.Default.Person,
@@ -121,27 +203,12 @@ fun OfficerLoginScreen(
                 textAlign = TextAlign.Center,
                 modifier = Modifier.padding(bottom = 32.dp)
             )
-            if (!isLoggedIn) {
-                Button(
-                    onClick = {
-                        onLogin()
-                        isLoggedIn = true
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF388E3C))
-                ) {
-                    Text(text = "Login", color = Color.White, fontWeight = FontWeight.Bold)
-                }
-            } else {
-                Button(
-                    onClick = {
-                        onLogout()
-                        isLoggedIn = false
-                    },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1976D2)),
-                    modifier = Modifier.padding(top = 16.dp)
-                ) {
-                    Text(text = "Logout", color = Color.White, fontWeight = FontWeight.Bold)
-                }
+
+            Button(
+                onClick = { onLogin() },
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF388E3C))
+            ) {
+                Text(text = "Login", color = Color.White, fontWeight = FontWeight.Bold)
             }
         }
     }

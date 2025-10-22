@@ -30,13 +30,6 @@ class AuthViewModel : ViewModel() {
     private val _dialogState = MutableStateFlow(DialogState())
     val dialogState: StateFlow<DialogState> = _dialogState.asStateFlow()
 
-    fun initialize(context: Context, emvUtilInterface: EmvUtilInterface) {
-        // Use applicationContext to avoid Compose crash
-        emvUtil = EmvUtil(context.applicationContext)
-        emvUtil.initialize()
-        emvUtil.emvOpen()
-        emvUtil.setCallback(emvUtilInterface)
-    }
 
     fun login(username: String, password: String) {
         viewModelScope.launch {

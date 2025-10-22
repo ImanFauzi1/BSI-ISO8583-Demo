@@ -2,6 +2,7 @@ package com.idpay.victoriapoc.utils.IsoManagement
 
 import android.content.Context
 import android.util.Log
+import android.widget.Toast
 import com.app.edcpoc.utils.Constants.commandValue
 import com.app.edcpoc.utils.Constants.field48data
 import com.app.edcpoc.utils.Constants.pinBlockConfirm
@@ -28,6 +29,27 @@ object IsoUtils {
         model8583Request.setMTI(mti)
         model8583Request.setTPDU("0000000001")
         return model8583Request
+    }
+    fun parseIsoResponse(iso: String): Map<String, String> {
+        var idx = 0
+        fun take(n: Int): String {
+            val s = iso.substring(idx, (idx + n).coerceAtMost(iso.length))
+            idx += n
+            return s
+        }
+        return mapOf(
+            "MTI" to take(4),
+            "Bitmap" to take(16),
+            "ProcessingCode" to take(6),
+            "STI" to take(6),
+            "F12" to take(6),
+            "F13" to take(4),
+            "F24" to take(3),
+            "F37" to take(12),
+            "F38" to take(6),
+            "F39" to take(2),
+            "F41" to take(8)
+        )
     }
     fun getSpecs(): HashMap<Int?, Model8583Bit?>? {
         val specs = HashMap<Int?, Model8583Bit?>();
@@ -205,8 +227,8 @@ object IsoUtils {
             )
 
             val specs = model8583Request.setSpecs(getSpecs())
-            LogUtils.d(TAG, "ISO Data: ${Gson().toJson(ISO8583.packToHex(model8583Request))}")
             val packed = ISO8583.packToHex(specs)
+            LogUtils.d(TAG, "ISO Data: ${Gson().toJson(packed)}")
 
             return packed
         } catch (e: Exception) {
@@ -305,7 +327,7 @@ object IsoUtils {
                 Model8583Bit(
                     35,
                     "Track 2 Data",
-                    ISO8583.LENHEX_2FULL,
+                    ISO8583.LEN_2FULL,
                     track2data?.replace('=', 'D')
                 ).setFunction("padStart")
             )

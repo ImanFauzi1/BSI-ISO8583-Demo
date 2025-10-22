@@ -2,25 +2,32 @@ package com.app.edcpoc.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.app.edcpoc.PreferenceManager
 import com.app.edcpoc.data.model.*
 import com.app.edcpoc.data.repository.SessionRepository
+import com.app.edcpoc.utils.Constants.cardNum
+import com.app.edcpoc.utils.Constants.commandValue
+import com.app.edcpoc.utils.EmvUtil
+import com.app.edcpoc.utils.LogUtils
+import com.idpay.victoriapoc.utils.IsoManagement.IsoClient
+import com.idpay.victoriapoc.utils.IsoManagement.IsoUtils.parseIsoResponse
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class SessionViewModel : ViewModel() {
-    
+    private val TAG = "SessionViewModel"
     private val sessionRepository = SessionRepository()
-    
     private val _uiState = MutableStateFlow(SessionUiState())
     val uiState: StateFlow<SessionUiState> = _uiState.asStateFlow()
     
-    fun startDate(userId: String, username: String, role: UserRole) {
+    fun startDate(cardNum: String) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
             
-            val success = sessionRepository.startDate(userId, username, role)
+            val success = sessionRepository.startDate(cardNum)
             
             _uiState.value = _uiState.value.copy(
                 isLoading = false,
@@ -32,11 +39,11 @@ class SessionViewModel : ViewModel() {
         }
     }
     
-    fun closeDate(userId: String) {
+    fun closeDate(cardNum: String) {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isLoading = true, errorMessage = null)
             
-            val success = sessionRepository.closeDate(userId)
+            val success = sessionRepository.closeDate(cardNum)
             
             _uiState.value = _uiState.value.copy(
                 isLoading = false,
@@ -79,7 +86,7 @@ class SessionViewModel : ViewModel() {
             updateSessionInfo()
         }
     }
-    
+
     fun updateSessionInfo() {
         _uiState.value = _uiState.value.copy(
             dailySession = sessionRepository.getCurrentDailySession(),

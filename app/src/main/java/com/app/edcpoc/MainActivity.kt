@@ -3,55 +3,28 @@ package com.app.edcpoc
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.collectAsState
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.app.edcpoc.data.model.UserRole
 import com.app.edcpoc.interfaces.EmvUtilInterface
 import com.app.edcpoc.ui.components.*
-import com.app.edcpoc.ui.screens.ChangePinScreen
-import com.app.edcpoc.ui.screens.CreatePinScreen
-import com.app.edcpoc.ui.screens.KeamananScreen
-import com.app.edcpoc.ui.screens.LoginScreen
-import com.app.edcpoc.ui.screens.PinManagementScreen
-import com.app.edcpoc.ui.screens.ReissuePinScreen
-import com.app.edcpoc.ui.screens.SessionManagementScreen
-import com.app.edcpoc.ui.screens.TransactionScreen
-import com.app.edcpoc.ui.screens.VerificationPinScreen
 import com.app.edcpoc.ui.theme.EdcpocTheme
 import com.app.edcpoc.ui.viewmodel.AuthViewModel
 import com.app.edcpoc.utils.Constants
 import com.app.edcpoc.utils.Constants.commandValue
+import com.app.edcpoc.utils.CoreUtils.initializeEmvUtil
 import com.app.edcpoc.utils.DialogUtil.createEmvDialog
-import com.app.edcpoc.utils.EmvUtil
 import com.app.edcpoc.utils.LogUtils
-import com.google.gson.Gson
 import com.idpay.victoriapoc.utils.IsoManagement.IsoUtils
 import com.idpay.victoriapoc.utils.IsoManagement.IsoUtils.generateIsoStartEndDate
 import com.zcs.sdk.util.StringUtils
-import org.jpos.iso.ISOMsg
 
 
 class MainActivity : ComponentActivity(), EmvUtilInterface {
@@ -60,15 +33,20 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Cek session aktivasi, jika belum aktif redirect ke SvpActivity
-        if (!PreferenceManager.isActivated(this)) {
+
+        if (PreferenceManager.getOfficerCardNum(this) == null) {
+            startActivity(Intent(this, OfficerActivity::class.java))
+            finish()
+            return
+        }
+        if (PreferenceManager.getSvpCardNum(this) == null) {
             startActivity(Intent(this, SvpActivity::class.java))
             finish()
             return
         }
         enableEdgeToEdge()
 
-        authViewModel.initialize(this@MainActivity, this)
+        authViewModel.emvUtil = initializeEmvUtil(this@MainActivity, this)
 
         setContent {
             EdcpocTheme {
@@ -157,7 +135,7 @@ fun EDCHomeApp(context: Context, authViewModel: AuthViewModel = viewModel()) {
             onSessionManagementClick = { createEmvDialog(context, emvUtil = authViewModel.emvUtil) },
             onLogoutClick = {
                 // Logout officer, redirect ke OfficerActivity
-                PreferenceManager.setOfficerLoggedIn(context, false)
+                PreferenceManager.setOfficerLoggedIn(context, null)
                 val intent = Intent(context, OfficerActivity::class.java)
                 if (context is ComponentActivity) {
                     context.startActivity(intent)
@@ -167,6 +145,5 @@ fun EDCHomeApp(context: Context, authViewModel: AuthViewModel = viewModel()) {
             dialogState = authViewModel.dialogState.collectAsState().value,
             dismissDialog = { authViewModel.dismissDialog() }
         )
-        // ...screen lain jika ada...
     }
 }

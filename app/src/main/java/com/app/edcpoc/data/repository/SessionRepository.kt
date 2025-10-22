@@ -8,7 +8,7 @@ class SessionRepository {
     private var currentDailySession: DailySession? = null
     private var currentUserSession: Session? = null
     
-    suspend fun startDate(userId: String, username: String, role: UserRole): Boolean {
+    suspend fun startDate(userId: String): Boolean {
         // Simulate network delay
         delay(1000)
         
