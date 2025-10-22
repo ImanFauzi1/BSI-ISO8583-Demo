@@ -52,6 +52,7 @@ public class ISO8583 {
             if(!model8583Request.specs.containsKey(bit.number)){
                 throw new Exception("Data element specification for bit number "+bit.number+" not found");
             }
+
             Model8583Bit specBit = model8583Request.specs.get(bit.number);
             assert specBit != null;
             if(specBit.len!=bit.len||!specBit.name.equals(bit.name)){
@@ -72,7 +73,7 @@ public class ISO8583 {
             if(!isAllHex(bit.value)){
                 throw new Exception("Data element number "+bit.number+" must be in hex format");
             }
-            if(bit.value.equals("")){
+            if(bit.value.isEmpty()){
                 throw new Exception("Data element number "+bit.number+" value is empty");
             }
             switch (bit.len){
@@ -174,11 +175,11 @@ public class ISO8583 {
     }
     private static void processPackHexHalf(StringBuilder data,int lengthMode,String bitNumber,String value) throws Exception {
         int len1half = value.length();
-        if(len1half%2!=0){
+        if(len1half % 2 != 0){
             throw new Exception("Data element number "+bitNumber+" length must be even number of characters. It is "+value);
         }
         int halfLength = len1half/2;
-        if(halfLength>=Math.pow(16,lengthMode)){
+        if(halfLength >= Math.pow(16,lengthMode)){
             throw new Exception("Data element length exceeds maximum for length mode "+lengthMode);
         }
         data.append(String.format("%0"+lengthMode+"X", halfLength)).append(value);

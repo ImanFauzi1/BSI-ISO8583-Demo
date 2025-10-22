@@ -43,23 +43,12 @@ import com.app.edcpoc.ui.theme.EdcpocTheme
 import com.app.edcpoc.ui.viewmodel.AuthViewModel
 import com.app.edcpoc.utils.Constants
 import com.app.edcpoc.utils.Constants.commandValue
-import com.app.edcpoc.utils.Constants.pinBlockOwn
-import com.app.edcpoc.utils.Constants.pos_entrymode
-import com.app.edcpoc.utils.Constants.track2hex
-import com.app.edcpoc.utils.CoreUtils.generateUniqueStan
 import com.app.edcpoc.utils.DialogUtil.createEmvDialog
 import com.app.edcpoc.utils.EmvUtil
 import com.app.edcpoc.utils.LogUtils
 import com.google.gson.Gson
 import com.idpay.victoriapoc.utils.IsoManagement.IsoUtils
 import com.idpay.victoriapoc.utils.IsoManagement.IsoUtils.generateIsoStartEndDate
-import com.idpay.victoriapoc.utils.IsoManagement.IsoUtils.generateIsoStartEndDateJpos
-import com.idpay.victoriapoc.utils.IsoManagement.IsoUtils.isoChangePIN
-import com.idpay.victoriapoc.utils.IsoManagement.IsoUtils.isoCreatePIN
-import com.idpay.victoriapoc.utils.IsoManagement.IsoUtils.isoLogonLogoff
-import com.idpay.victoriapoc.utils.IsoManagement.IsoUtils.isoReissuePIN
-import com.idpay.victoriapoc.utils.IsoManagement.IsoUtils.isoStartEndDate
-import com.idpay.victoriapoc.utils.IsoManagement.IsoUtils.isoVerificationPIN
 import com.zcs.sdk.util.StringUtils
 import org.jpos.iso.ISOMsg
 
@@ -92,8 +81,8 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
                     else -> ""
                 }
 
-                val d = generateIsoStartEndDate("0800", proc)
-                authViewModel.isoSendMessage(commandValue, StringUtils.convertHexToBytes(d))
+                val iso = generateIsoStartEndDate("0800", proc)
+                authViewModel.isoSendMessage(commandValue, StringUtils.convertHexToBytes(iso))
             }
             "logon", "logoff" -> {
                 val proc = when(commandValue) {

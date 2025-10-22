@@ -408,7 +408,7 @@ class EmvUtil(private val context: Context) {
             }
         }
 
-        Log.e(TAG, "Emv Trans start...")
+        Log.e(TAG, "Emv Trans start... ${emvHandler == null}")
         // for the emv result, plz refer to emv doc.
         // for the emv result, plz refer to emv doc.
         // for the emv result, plz refer to emv doc.
@@ -797,7 +797,8 @@ class EmvUtil(private val context: Context) {
             ea.termCapNoCVMReq = "E0E9C8"
             ea.termCapCVMReq = "E0E9C8"
             ea.udol = "9F6A04"
-            emvHandler.addApp(ea)
+            val ret = emvHandler.addApp(ea)
+            Log.d("Debug", "addApp ret=$ret for AID: $aid")
         }
     }
     private fun loadMasterCardCapks1(emvHandle: EmvHandler) {
@@ -817,7 +818,8 @@ class EmvUtil(private val context: Context) {
         capk.checkSum = "1CAB162A1BE81492BB952C2846617B756F833C07"
         capk.expDate = "20301231" // YYYYMMDD
         capk.exponent = "03"
-        emvHandle.addCapk(capk)
+        val ret = emvHandle.addCapk(capk)
+        Log.d("Debug", "addCapk ret=$ret for CAPK RID: ${capk.rid} KeyID: ${capk.keyID}")
     }
 
     private fun loadMasterCardCapks(emvHandle: EmvHandler) {
@@ -842,7 +844,8 @@ class EmvUtil(private val context: Context) {
         capk.checkSum = "E78686DB119C1CBFAD2149EF3CBE9CF54AC6321E"
         capk.expDate = "20301231" // YYYYMMDD
         capk.exponent = "03"
-        emvHandle.addCapk(capk)
+        val ret = emvHandle.addCapk(capk)
+        Log.d("Debug", "addCapk ret=$ret for CAPK RID: ${capk.rid} KeyID: ${capk.keyID}")
     }
 
     private fun loadAnnexCapk(ep: EmvHandler) {
@@ -867,7 +870,8 @@ class EmvUtil(private val context: Context) {
         ea.clCVMLimit = "000000005000"
         ea.ecTTLVal = "000000100000"
         try {
-            ep.addApp(ea)
+            val ret = ep.addApp(ea)
+            Log.d("Debug", "addApp ret=$ret for AID: ${ea.aid}")
         } catch (e: Exception) {
             e.printStackTrace()
             e.message
@@ -895,6 +899,7 @@ class EmvUtil(private val context: Context) {
         ea.clOfflineLimit = "000000008000"
         ea.clCVMLimit = "000000005000"
         ea.ecTTLVal = "000000100000"
-        emvHandle.addApp(ea)
+        val ret = emvHandle.addApp(ea)
+        Log.d("Debug", "addApp ret=$ret for AID: ${ea.aid} ")
     }
 }

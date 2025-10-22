@@ -124,7 +124,7 @@ object IsoUtils {
             48, Model8583Bit(
                 48,
                 "Add. Data – Private",
-                ISO8583.LENHEX_3FULL,
+                ISO8583.LENHEX_4FULL,
                 999
             )
         )
@@ -181,7 +181,9 @@ object IsoUtils {
                     41,
                     "Terminal ID",
                     ISO8583.LEN_0,
-                    StringUtils.convertStringToHex("TERM0001".padEnd(8, ' '))
+//                    StringUtils.convertStringToHex("TERM0001".padEnd(8, ' '))
+//                    "12345678".padEnd(8, ' ')
+                    StringUtils.convertStringToHex("1234".padEnd(8, ' '))
                 )
             )
             model8583Request.bits_sending?.add(
@@ -189,7 +191,8 @@ object IsoUtils {
                     42,
                     "Merchant ID",
                     ISO8583.LEN_0,
-                    StringUtils.convertStringToHex("ATM00010".padEnd(15, ' '))
+                    StringUtils.convertStringToHex("123456".padEnd(15, ' '))
+//                    "123456".padEnd(15, '0')
                 )
             )
             model8583Request.bits_sending?.add(
@@ -201,9 +204,11 @@ object IsoUtils {
                 )
             )
 
-            model8583Request.setSpecs(getSpecs())
+            val specs = model8583Request.setSpecs(getSpecs())
             LogUtils.d(TAG, "ISO Data: ${Gson().toJson(ISO8583.packToHex(model8583Request))}")
-            return ISO8583.packToHex(model8583Request)
+            val packed = ISO8583.packToHex(specs)
+
+            return packed
         } catch (e: Exception) {
             LogUtils.e(TAG, "Error creating ISO message", e)
             return null
