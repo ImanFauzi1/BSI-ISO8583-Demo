@@ -1,8 +1,11 @@
 package com.app.edcpoc
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -10,24 +13,27 @@ import android.os.SystemClock
 import android.provider.MediaStore
 import android.util.Base64
 import android.view.KeyEvent
-import android.view.LayoutInflater
+import android.widget.EditText
+import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
-import androidx.appcompat.app.AlertDialog
-import androidx.appcompat.app.AppCompatActivity
+import android.app.AlertDialog
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import androidx.compose.runtime.*
 import androidx.compose.runtime.collectAsState
-import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.app.edcpoc.data.model.KtpDataModel
 import com.app.edcpoc.interfaces.EmvUtilInterface
 import com.app.edcpoc.ui.components.*
 import com.app.edcpoc.ui.theme.EdcpocTheme
 import com.app.edcpoc.ui.viewmodel.ISOViewModel
-import com.app.edcpoc.utils.Constants
+import com.app.edcpoc.utils.Constants.FACE_RECOGNIZE
+import com.app.edcpoc.utils.Constants.KTP_READ
+import com.app.edcpoc.utils.Constants.MANUAL_KTP_READ
 import com.app.edcpoc.utils.Constants.base64Finger
 import com.app.edcpoc.utils.Constants.commandValue
 import com.app.edcpoc.utils.Constants.face64
@@ -41,6 +47,7 @@ import com.app.edcpoc.utils.Constants.signBites
 import com.app.edcpoc.utils.Constants.signatureBitmap
 import com.app.edcpoc.utils.CoreUtils.initializeEmvUtil
 import com.app.edcpoc.utils.DialogUtil.createEmvDialog
+import com.app.edcpoc.utils.EktpUtil
 import com.app.edcpoc.utils.EktpUtil.setData
 import com.app.edcpoc.utils.EktpUtil.updateFingerprintImage
 import com.app.edcpoc.utils.KtpReaderManager.createFingerDialog
@@ -57,6 +64,8 @@ import com.simo.ektp.GlobalVars.CONFIG_FILE
 import com.simo.ektp.GlobalVars.PCID
 import com.simo.ektp.GlobalVars.VALUE_AGAMA
 import com.simo.ektp.GlobalVars.VALUE_ALAMAT
+import com.simo.ektp.GlobalVars.VALUE_BIOMETRIC_LEFT
+import com.simo.ektp.GlobalVars.VALUE_BIOMETRIC_RIGHT
 import com.simo.ektp.GlobalVars.VALUE_FOTO
 import com.simo.ektp.GlobalVars.VALUE_GOL_DARAH
 import com.simo.ektp.GlobalVars.VALUE_JNS_KELAMIN
@@ -80,16 +89,16 @@ import com.simo.ektp.Utils.getFingerPosTips
 import com.simo.ektp.Utils.getSignBitmap
 import com.zcs.sdk.util.StringUtils
 import java.util.Arrays
+import java.util.logging.Level.CONFIG
 
-class MainActivity : AppCompatActivity(), EmvUtilInterface {
+class MainActivity : ComponentActivity(), EmvUtilInterface {
     companion object {
         var enrollType: String = ""
-        val ENROLLMENT_EKTP = "ektp_reader"
-        val ENROLLMENT_EMPLOYEE = "employee_enrollment"
-        val ENROLLMENT_TENCENT = "tencent_enrollment"
         private const val CAMERA_REQUEST_CODE = 1001
+        private const val IDENTITY_PERMISSION_REQUEST_CODE = 1024
     }
     private val TAG = MainActivity::class.java.simpleName
+    private val identityPermissions = arrayOf(Manifest.permission.CAMERA)
     private val isoViewModel: ISOViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -109,42 +118,47 @@ class MainActivity : AppCompatActivity(), EmvUtilInterface {
 
         isoViewModel.emvUtil = initializeEmvUtil(this@MainActivity, this)
 
+        handlePermissions()
         checkPsamConfiguration()
+        handleInitSdk()
 
         setContent {
-            var showKtpDialog by remember { mutableStateOf(false) }
-            var ktpData by remember { mutableStateOf<KtpDataModel?>(null) }
-            val context = LocalContext.current
             EdcpocTheme {
-                if (showKtpDialog && ktpData != null) {
-                    KtpDataDialog(
-                        data = ktpData!!,
-                        onClose = { showKtpDialog = false },
-                        onSubmit = {
-                            // TODO: handle submit action
-                            showKtpDialog = false
-                        }
-                    )
-                }
                 EDCHomeApp(
                     this@MainActivity,
                     onEnrollmentClick = {onEnrollmentClick(it)},
                     isoViewModel = isoViewModel
                 )
             }
-            // Helper to trigger dialog from getData()
-            LaunchedEffect(Unit) {
-                DialogTriggerHelper.dialogTrigger = { data ->
-                    ktpData = data
-                    showKtpDialog = true
-                }
-            }
         }
     }
 
+    fun handleInitSdk() {
+        EktpUtil.initialize()
+        EktpUtil.ektpOpen()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        EktpSdkZ90.instance().closePsamAndRfidReaders()
+    }
     fun onEnrollmentClick(enrollmentType: String) {
-        when(enrollmentType) {
-            "ktp_reader" -> {startEnrollment(enrollmentType)}
+        if (enrollmentType == MANUAL_KTP_READ) {
+            val intent = Intent(this@MainActivity, ManualEnrollmentActivity::class.java)
+            startActivity(intent)
+            return
+        }
+
+        enrollType = enrollmentType
+        indonesianIdentityCard = null
+        feature64Kanan = ""
+        fmd = null
+        clearVar()
+
+        EktpSdkZ90.instance().closePsamAndRfidReaders()
+
+        createReadingDialog(this@MainActivity, "Reading KTP, Please wait...") { _, _ ->
+            handleCardReadResult()
         }
     }
 
@@ -186,33 +200,46 @@ class MainActivity : AppCompatActivity(), EmvUtilInterface {
 
     @SuppressLint("NewApi")
     private fun showManualPsamInputDialog() {
-        // Ubah: jangan panggil setContent ulang, gunakan AlertDialog biasa atau state Compose utama
+        val inputLayout = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(32, 16, 32, 16)
+        }
+        val pcidEditText = EditText(this).apply {
+            hint = "PCID"
+            setText("2024BB12121100000000000000095067")
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply { bottomMargin = 16 }
+        }
+        val configEditText = EditText(this).apply {
+            hint = "Config"
+            setText("E743E49AC5FD1A180D28AB938B1F3F6FC6F008D3BE955670BE598C9E084837F1")
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+        }
+        inputLayout.addView(pcidEditText)
+        inputLayout.addView(configEditText)
+
         AlertDialog.Builder(this)
             .setTitle("Manual PSAM Input")
+            .setView(inputLayout)
             .setMessage("Masukkan PCID dan Config secara manual.")
             .setPositiveButton("OK") { dialog, _ ->
-                // TODO: tampilkan input dialog Compose lewat state di setContent utama jika ingin
+                PCID = pcidEditText.text.toString()
+                CONFIG_FILE = configEditText.text.toString()
+
+                PreferenceManager.setPCID(this@MainActivity,PCID)
+                PreferenceManager.setConfigFile(this@MainActivity, CONFIG_FILE)
                 dialog.dismiss()
             }
             .setNegativeButton("Cancel") { dialog, _ ->
                 dialog.dismiss()
                 finish()
             }
-            .setCancelable(false)
             .show()
-    }
-
-    private fun startEnrollment(type: String) {
-        enrollType = type
-        clearVar()
-        indonesianIdentityCard = null
-        fmd = null
-        feature64Kanan = ""
-        EktpSdkZ90.instance().closePsamAndRfidReaders()
-
-        createReadingDialog(this@MainActivity, "Reading KTP, Please wait...") { _, _ ->
-            handleCardReadResult()
-        }
     }
 
     private fun openCamera() {
@@ -239,15 +266,14 @@ class MainActivity : AppCompatActivity(), EmvUtilInterface {
                         sign64 = convertBmpToBase64(bitmap, Base64.NO_WRAP) ?: ""
                     }
                 }
-//                sign64 = base64Image(VALUE_SIGNATURE)
                 face64 = base64Image(VALUE_FOTO)
             }
 
             when (enrollType) {
-                ENROLLMENT_EKTP, ENROLLMENT_EMPLOYEE -> {
+                KTP_READ -> {
                     startFingerprintCapture()
                 }
-                ENROLLMENT_TENCENT -> {
+                FACE_RECOGNIZE -> {
                     openCamera()
                 }
                 else -> LogUtils.e(TAG, "Unknown enrollment type: $enrollType")
@@ -263,7 +289,6 @@ class MainActivity : AppCompatActivity(), EmvUtilInterface {
         LogUtils.i(TAG, "Fingerprint position tips: $message")
 
         createFingerDialog(this@MainActivity, message) {_, _ ->
-            indonesianIdentityCard?.let { setData(it) }
             handleFingerprintResult()
         }
     }
@@ -295,11 +320,12 @@ class MainActivity : AppCompatActivity(), EmvUtilInterface {
 
     private fun getData() {
         val data = KtpDataModel(
+            type = enrollType,
             agama = VALUE_AGAMA ?: "",
             alamat = VALUE_ALAMAT ?: "",
             desa = "",
             error = false,
-            foto = VALUE_FOTO ?: "",
+            foto = convertBitmap(VALUE_FOTO, 0, null),
             golonganDarah = VALUE_GOL_DARAH ?: "",
             jenisKelamin = VALUE_JNS_KELAMIN ?: "",
             kecamatan = VALUE_KEC ?: "",
@@ -307,7 +333,7 @@ class MainActivity : AppCompatActivity(), EmvUtilInterface {
             kewarganegaraan = VALUE_NATIONALITY ?: "",
             kodePos = "",
             kota = VALUE_KAB ?: "",
-            masaBerlaku = "",
+            masaBerlaku = "SEUMUR HIDUP",
             message = "",
             nama = VALUE_NAMA ?: "",
             nik = VALUE_NIK ?: "",
@@ -315,13 +341,26 @@ class MainActivity : AppCompatActivity(), EmvUtilInterface {
             provinsi = VALUE_PROV ?: "",
             rt = VALUE_RT ?: "",
             rw = VALUE_RW ?: "",
-            sidikJari = "",
+            sidikJariBytes = Base64.encodeToString(fmd, Base64.NO_WRAP),
+            sidikJari = base64Finger,
             statusPerkawinan = VALUE_STATUS ?: "",
-            tandaTangan = "",
+            tandaTangan = sign64,
             tanggalLahir = VALUE_TGL_LAHIR ?: "",
             tempatLahir = VALUE_TMP_LAHIR ?: ""
         )
-        DialogTriggerHelper.dialogTrigger?.invoke(data)
+        val intent = Intent(this, KtpPreviewActivity::class.java)
+        intent.putExtra("ktpData", data)
+        startActivity(intent)
+    }
+
+    private fun convertBitmap(photo: String?, offset: Int = 0, length: Int? = null): String? {
+        if (photo != null) {
+            val bytes = StringUtils.convertHexToBytes(photo)
+            val base64 = Base64.encodeToString(bytes, Base64.NO_WRAP)
+            LogUtils.d(TAG, "convertBitmap: offset=$offset, length=$length, base64Size=${base64.length}, base64=${base64.substring(offset, length?.let { offset + it } ?: base64.length)}")
+            return base64
+        }
+        return null
     }
 
     private fun setFingerPrintMatchFailed() {
@@ -340,6 +379,25 @@ class MainActivity : AppCompatActivity(), EmvUtilInterface {
 
     private fun showToast(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+    }
+
+    private fun handlePermissions() {
+        val requestPerms = getUnGrantedPermissions()
+        if (requestPerms.isNotEmpty()) {
+            requestPermissions(requestPerms.toTypedArray(), IDENTITY_PERMISSION_REQUEST_CODE)
+        }
+    }
+
+    private fun getUnGrantedPermissions(): MutableList<String> {
+        val requestPerms = mutableListOf<String>()
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            for (permission in identityPermissions) {
+                if (PackageManager.PERMISSION_GRANTED != checkSelfPermission(permission)) {
+                    requestPerms.add(permission)
+                }
+            }
+        }
+        return requestPerms
     }
 
 

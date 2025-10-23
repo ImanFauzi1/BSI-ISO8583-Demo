@@ -48,6 +48,12 @@
             android:exported="true"
             android:label="Officer Login"
             android:theme="@style/Theme.Edcpoc" />
+        <activity
+            android:name=".ManualEnrollmentActivity"
+            android:exported="false" />
+        <activity
+            android:name=".KtpPreviewActivity"
+            android:exported="false" />
     </application>
 
 </manifest>

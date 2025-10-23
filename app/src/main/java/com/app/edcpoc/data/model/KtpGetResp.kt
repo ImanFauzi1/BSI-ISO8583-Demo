@@ -1,17 +1,23 @@
 package com.app.edcpoc.data.model
 
-import android.graphics.Bitmap
-import kotlinx.serialization.Serializable
+data class KtpGetResp(
+    val status: Int,
+    val message: String,
+    val data: KtpGetData
+)
 
-@Serializable
-data class KtpDataModel(
-    val type: String,
+data class KtpGetData(
+    val error: Boolean,
+    val ktp: GetKtp
+)
+
+data class GetKtp(
     val agama: String,
     val alamat: String,
     val desa: String,
-    val error: Boolean,
-    val foto: String?,
+    val foto: String,
     val golonganDarah: String,
+    val id_cif: String?,
     val jenisKelamin: String,
     val kecamatan: String,
     val kelurahan: String,
@@ -19,17 +25,15 @@ data class KtpDataModel(
     val kodePos: String,
     val kota: String,
     val masaBerlaku: String,
-    val message: String,
     val nama: String,
     val nik: String,
     val pekerjaan: String,
     val provinsi: String,
     val rt: String,
     val rw: String,
-    val sidikJari: String?,
-    val sidikJariBytes: String?,
+    val sidikJari: String,
     val statusPerkawinan: String,
-    val tandaTangan: String?,
+    val tandaTangan: String,
     val tanggalLahir: String,
     val tempatLahir: String
-) : java.io.Serializable
+)

@@ -7,6 +7,8 @@ import com.app.edcpoc.data.model.FaceCompareRequest
 import com.app.edcpoc.data.model.FaceCompareTencentResponse
 import com.app.edcpoc.data.model.KtpReq
 import com.app.edcpoc.data.model.KtpResp
+import com.app.edcpoc.utils.LogUtils
+import com.google.gson.Gson
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -36,7 +38,10 @@ class ApiViewModel(
             val result = repository.sendKtpData(param)
             _ktpState.value = result.fold(
                 onSuccess = { ApiUiState.Success(it) },
-                onFailure = { ApiUiState.Error(it.message ?: "Unknown error") }
+                onFailure = {
+                    LogUtils.d("ApiViewModel", "Error sending KTP data: ${Gson().toJson(it)}")
+                    ApiUiState.Error(it.message ?: "Unknown error")
+                }
             )
         }
     }

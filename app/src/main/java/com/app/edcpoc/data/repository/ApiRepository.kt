@@ -5,6 +5,9 @@ import com.app.edcpoc.data.model.FaceCompareTencentResponse
 import com.app.edcpoc.data.model.KtpResp
 import com.app.edcpoc.data.model.KtpReq
 import com.app.edcpoc.data.remote.ApiService
+import com.app.edcpoc.utils.LogUtils
+import com.app.edcpoc.data.model.ApiErrorResponse
+import com.google.gson.Gson
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import retrofit2.Retrofit
@@ -12,6 +15,8 @@ import retrofit2.converter.gson.GsonConverterFactory
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import okhttp3.Interceptor
+import okhttp3.ResponseBody
+
 
 private fun provideApiService(baseUrl: String): ApiService {
     val logging = HttpLoggingInterceptor().apply {
@@ -39,7 +44,7 @@ private fun provideApiService(baseUrl: String): ApiService {
 
 class ApiRepository {
     private val tencent_base_url = "https://demo-faceapi.idpay.co.id/"
-    private val edcmid_base_url = "https://edcmid-central.idpay.co.id/"
+    private val edcmid_base_url = "https://edcmid.idpay.co.id/"
 
     suspend fun sendKtpData(param: KtpReq): Result<KtpResp> = withContext(Dispatchers.IO) {
         val api = provideApiService(edcmid_base_url)
@@ -48,12 +53,23 @@ class ApiRepository {
             if (response.isSuccessful) {
                 val body = response.body()
                 if (body != null) {
-                    Result.success(body)
+                    if (body.status == -1) {
+                        Result.failure(Exception(body.message))
+                    } else {
+                        Result.success(body)
+                    }
                 } else {
                     Result.failure(Exception("Response body is null"))
                 }
             } else {
-                Result.failure(Exception("Response error: ${response.code()} ${response.message()}"))
+                val errorBody = response.errorBody()?.string()
+                val errorResponse = try {
+                    Gson().fromJson(errorBody, ApiErrorResponse::class.java)
+                } catch (e: Exception) {
+                    null
+                }
+                val errorMsg = errorResponse?.message ?: errorBody ?: "Unknown error"
+                Result.failure(Exception(errorMsg))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -67,12 +83,23 @@ class ApiRepository {
             if (response.isSuccessful) {
                 val body = response.body()
                 if (body != null) {
-                    Result.success(body)
+                    if (body.status == -1) {
+                        Result.failure(Exception(body.message))
+                    } else {
+                        Result.success(body)
+                    }
                 } else {
                     Result.failure(Exception("Response body is null"))
                 }
             } else {
-                Result.failure(Exception("Response error: ${response.code()} ${response.message()}"))
+                val errorBody = response.errorBody()?.string()
+                val errorResponse = try {
+                    Gson().fromJson(errorBody, ApiErrorResponse::class.java)
+                } catch (e: Exception) {
+                    null
+                }
+                val errorMsg = errorResponse?.message ?: errorBody ?: "Unknown error"
+                Result.failure(Exception(errorMsg))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -86,12 +113,23 @@ class ApiRepository {
             if (response.isSuccessful) {
                 val body = response.body()
                 if (body != null) {
-                    Result.success(body)
+                    if (body.status == -1) {
+                        Result.failure(Exception(body.message))
+                    } else {
+                        Result.success(body)
+                    }
                 } else {
                     Result.failure(Exception("Response body is null"))
                 }
             } else {
-                Result.failure(Exception("Response error: ${response.code()} ${response.message()}"))
+                val errorBody = response.errorBody()?.string()
+                val errorResponse = try {
+                    Gson().fromJson(errorBody, ApiErrorResponse::class.java)
+                } catch (e: Exception) {
+                    null
+                }
+                val errorMsg = errorResponse?.message ?: errorBody ?: "Unknown error"
+                Result.failure(Exception(errorMsg))
             }
         } catch (e: Exception) {
             Result.failure(e)

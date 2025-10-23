@@ -15,6 +15,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.font.FontWeight
 import com.app.edcpoc.R
+import com.app.edcpoc.utils.Constants.FACE_RECOGNIZE
+import com.app.edcpoc.utils.Constants.KTP_READ
+import com.app.edcpoc.utils.Constants.MANUAL_KTP_READ
 import com.app.edcpoc.utils.Constants.commandValue
 
 @Composable
@@ -103,7 +106,7 @@ fun EnrollmentCard(onEnrollmentClick: (String) -> Unit) {
                     modifier = Modifier.weight(1f),
                     iconColor = Color(0xFF8D6E63),
                     onClick = {
-                        onEnrollmentClick("ktp_read")
+                        onEnrollmentClick(KTP_READ)
                     }
                 )
                 ActionButton(
@@ -112,7 +115,7 @@ fun EnrollmentCard(onEnrollmentClick: (String) -> Unit) {
                     modifier = Modifier.weight(1f),
                     iconColor = Color(0xFF8D6E63),
                     onClick = {
-                        onEnrollmentClick("manual_ktp_read")
+                        onEnrollmentClick(MANUAL_KTP_READ)
                     }
                 )
             }
@@ -127,7 +130,7 @@ fun EnrollmentCard(onEnrollmentClick: (String) -> Unit) {
                     modifier = Modifier.weight(1f),
                     iconColor = Color(0xFF8D6E63),
                     onClick = {
-                        onEnrollmentClick("face_recognize")
+                        onEnrollmentClick(FACE_RECOGNIZE)
                     }
                 )
             }

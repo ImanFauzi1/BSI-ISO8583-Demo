@@ -18,21 +18,25 @@ import java.util.concurrent.CountDownLatch
 object Constants {
     val mDriverManager: DriverManager = DriverManager.getInstance()
 
-    public final var mPrinter: Printer? = null
-    public final var mPinPadManager: PinPadManager? = null
-    public final var emvHandler: EmvHandler? = null
-    public final var realCardType: CardReaderTypeEnum? = null
+    var mPrinter: Printer? = null
+    var mPinPadManager: PinPadManager? = null
+    var emvHandler: EmvHandler? = null
+    var realCardType: CardReaderTypeEnum? = null
     var mCardType: CardReaderTypeEnum = CardReaderTypeEnum.MAG_IC_RF_CARD
     var cardType = CardReaderTypeEnum.MAG_IC_RF_CARD
 
-    public final lateinit var mSys: Sys
-    public final lateinit var mCardReadManager: CardReaderManager
-    public final lateinit var mICCard: ICCard
-    public final lateinit var mRfCard: RfCard
-    public final lateinit var cardInfoEntity: CardInfoEntity
+    var KTP_READ = "ktp_read"
+    var MANUAL_KTP_READ = "manual_ktp_read"
+    var FACE_RECOGNIZE = "face_recognize"
 
-    public final var commandValue: String = ""
-    public final var pos_entrymode: String = ""
+    lateinit var mSys: Sys
+    lateinit var mCardReadManager: CardReaderManager
+    lateinit var mICCard: ICCard
+    lateinit var mRfCard: RfCard
+    lateinit var cardInfoEntity: CardInfoEntity
+
+    var commandValue: String = ""
+    var pos_entrymode: String = ""
     val FINGERPRINT_MATCH_THRESHOLD = 60
     var tpdu: String? = "0000000001"
     var mRfCardType: Byte = 0
@@ -62,16 +66,16 @@ object Constants {
     var spvPinBlockOwn: String? = null
 
 //    card
-    public final var cardNum: String? = null
+    var cardNum: String? = null
     var spvCardNum: String? = null
     var field48data: String? = null
     var field48hex: String? = null
-    public final var track2hex: String = ""
+    var track2hex: String = ""
     var field55hex: String? = null
     var track2data: String? = null
     var track2datacustomer: String? = null
 
-    public final var aids = arrayOf(
+    var aids = arrayOf(
         "A000000333010101",
         "A000000333010102",
         "A000000333010103",
