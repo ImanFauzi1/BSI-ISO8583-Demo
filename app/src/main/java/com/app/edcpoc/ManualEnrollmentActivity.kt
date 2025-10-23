@@ -1,104 +1,124 @@
 package com.app.edcpoc
 
 import android.graphics.Bitmap
+import android.graphics.BitmapFactory
 import android.os.Bundle
-import android.view.ViewGroup
-import android.widget.*
-import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.setPadding
+import android.util.Base64
+import android.widget.Toast
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
+import androidx.activity.viewModels
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.lifecycle.lifecycleScope
+import com.app.edcpoc.data.model.KtpReq
+import com.app.edcpoc.ui.screens.ManualEnrollmentScreen
+import com.app.edcpoc.ui.viewmodel.ApiUiState
+import com.app.edcpoc.ui.viewmodel.ApiViewModel
+import com.app.edcpoc.ui.viewmodel.ManualEnrollmentUiState
+import com.app.edcpoc.utils.Constants.base64Finger
+import com.app.edcpoc.utils.Constants.feature64Kanan
+import com.app.edcpoc.utils.Constants.isTimeout
+import com.app.edcpoc.utils.Constants.mScanner
+import com.app.edcpoc.utils.EktpUtil.updateFingerprintImage
+import com.app.edcpoc.utils.KtpReaderManager.createFingerDialog
+import com.app.edcpoc.utils.LogUtils
+import com.idpay.victoriapoc.utils.fingerprint.FingerPrintTask
+import com.app.edcpoc.ui.viewmodel.ManualEnrollmentViewModel
+import com.simo.ektp.GlobalVars.fmd
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
-class ManualEnrollmentActivity : AppCompatActivity() {
-    private lateinit var nikEditText: EditText
-    private lateinit var namaEditText: EditText
-    private lateinit var fingerprintImageView: ImageView
-    private lateinit var scanFingerprintButton: Button
-    private lateinit var submitButton: Button
-    private var fingerprintBitmap: Bitmap? = null
+class ManualEnrollmentActivity : ComponentActivity() {
+    private val TAG = "ManualEnrollmentActivity"
+    private val viewModel: ManualEnrollmentViewModel by viewModels()
+    private val apiViewModel: ApiViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        // Root LinearLayout
-        val rootLayout = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(24)
-            layoutParams = LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.MATCH_PARENT
-            )
-            gravity = android.view.Gravity.CENTER_HORIZONTAL
-        }
-
-        nikEditText = EditText(this).apply {
-            hint = "NIK"
-            inputType = android.text.InputType.TYPE_CLASS_NUMBER
-            filters = arrayOf(android.text.InputFilter.LengthFilter(16))
-            layoutParams = LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-            ).apply { bottomMargin = 16.dp }
-        }
-        rootLayout.addView(nikEditText)
-
-        namaEditText = EditText(this).apply {
-            hint = "Nama"
-            inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_PERSON_NAME
-            layoutParams = LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-            ).apply { bottomMargin = 16.dp }
-        }
-        rootLayout.addView(namaEditText)
-
-        fingerprintImageView = ImageView(this).apply {
-            layoutParams = LinearLayout.LayoutParams(168.dp, 44.dp).apply { bottomMargin = 16.dp }
-            setBackgroundColor(0xFFDDDDDD.toInt())
-            contentDescription = "Fingerprint Preview"
-        }
-        rootLayout.addView(fingerprintImageView)
-
-        scanFingerprintButton = Button(this).apply {
-            text = "Scan Fingerprint"
-            layoutParams = LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-            ).apply { bottomMargin = 12.dp }
-        }
-        rootLayout.addView(scanFingerprintButton)
-
-        submitButton = Button(this).apply {
-            text = "Submit"
-            layoutParams = LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT
-            )
-        }
-        rootLayout.addView(submitButton)
-
-        setContentView(rootLayout)
-
-        scanFingerprintButton.setOnClickListener {
-            fingerprintBitmap = getPlaceholderFingerprintBitmap()
-            fingerprintImageView.setImageBitmap(fingerprintBitmap)
-        }
-
-        submitButton.setOnClickListener {
-            val nik = nikEditText.text.toString()
-            val nama = namaEditText.text.toString()
-            if (nik.isBlank() || nama.isBlank() || fingerprintBitmap == null) {
-                Toast.makeText(this, "Lengkapi data dan scan fingerprint!", Toast.LENGTH_SHORT).show()
-            } else {
-                Toast.makeText(this, "NIK: $nik\nNama: $nama\nFingerprint ready", Toast.LENGTH_LONG).show()
+        setContent {
+            MaterialTheme {
+                Surface(modifier = Modifier.fillMaxSize()) {
+                    ManualEnrollmentScreen(
+                        onBack = { finish() },
+                        onScanFingerprint = { startFingerprintCapture() },
+                        onSubmit = { nik, name ->
+                            submitManualEnrollment(nik, name)
+                        }
+                    )
+                }
             }
         }
     }
 
-    private fun getPlaceholderFingerprintBitmap(): Bitmap {
-        val bmp = Bitmap.createBitmap(168, 44, Bitmap.Config.ARGB_8888)
-        bmp.eraseColor(0xFFCCCCCC.toInt())
-        return bmp
+    override fun onStart() {
+        super.onStart()
+        observeKtpState()
     }
 
-    // Extension property for dp to px
-    private val Int.dp: Int get() = (this * resources.displayMetrics.density).toInt()
+    private fun startFingerprintCapture() {
+
+        LogUtils.i(TAG, "Fingerprint position tips: ")
+        createFingerDialog(this, "Letakkan jari anda di pembaca sidik jari...") { _, _ ->
+            handleFingerprintResult()
+        }
+    }
+
+    private fun handleFingerprintResult() {
+        if (isTimeout) {
+            viewModel.reset()
+            LogUtils.e("ManualEnrollmentActivity", "Fingerprint capture timed out")
+            mScanner?.setLedStatus(0, 1)
+            Toast.makeText(this@ManualEnrollmentActivity, "Fingerprint capture timed out", Toast.LENGTH_SHORT).show()
+        } else {
+            LogUtils.d("ManualEnrollmentActivity", "FEATURE64KANAN: $feature64Kanan")
+            LogUtils.i("ManualEnrollmentActivity", "Fingerprint match successful")
+            mScanner?.setLedStatus(1, 0)
+            feature64Kanan = base64Finger.toString()
+            updateFingerprintImage(FingerPrintTask.fi)
+
+            val imageBytes = Base64.decode(base64Finger, Base64.DEFAULT)
+            val bitmap = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.size)
+            viewModel.setFingerprintBitmap(bitmap)
+        }
+    }
+
+    private fun submitManualEnrollment(nik: String, name: String) {
+        if (nik.isBlank() || name.isBlank() || fmd == null) {
+            viewModel.setErrorState("Lengkapi data dan scan fingerprint!")
+            return
+        }
+        viewModel.setErrorState("")
+        viewModel.setLoadingState()
+
+        val body = KtpReq(
+            nik = nik,
+            nama = name,
+            sidikJari = Base64.encodeToString(fmd, Base64.NO_WRAP)
+        )
+        apiViewModel.sendKtpDataSpv(body)
+    }
+
+    private fun observeKtpState() {
+        lifecycleScope.launchWhenStarted {
+            apiViewModel.ktpSpvState.collect { state ->
+                when (state) {
+                    is ApiUiState.Success -> {
+                        Toast.makeText(this@ManualEnrollmentActivity, "Sukses submit KTP", Toast.LENGTH_SHORT).show()
+                        // Matikan loading dengan setSuccessState
+                        viewModel.setSuccessState("Sukses submit KTP")
+                    }
+                    is ApiUiState.Error -> {
+                        LogUtils.d(TAG, "Error submitting KTP: ${state.message}")
+                        Toast.makeText(this@ManualEnrollmentActivity, state.message, Toast.LENGTH_SHORT).show()
+                    }
+                    else -> {}
+                }
+            }
+        }
+    }
 }

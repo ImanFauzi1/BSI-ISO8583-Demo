@@ -36,6 +36,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.app.edcpoc.ui.components.LoadingDialog
 import com.app.edcpoc.ui.viewmodel.ApiUiState
 import com.app.edcpoc.ui.viewmodel.ApiViewModel
 import com.app.edcpoc.utils.Constants.KTP_READ
@@ -225,26 +226,6 @@ fun AppBarWithBackButton(title: String, onBack: () -> Unit) {
                 )
             }
         }
-    )
-}
-
-@Composable
-fun LoadingDialog() {
-    AlertDialog(
-        onDismissRequest = {},
-        confirmButton = {},
-        title = null,
-        text = {
-            Column(
-                modifier = Modifier.padding(24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                CircularProgressIndicator()
-                Spacer(modifier = Modifier.height(16.dp))
-                Text("Loading...", style = MaterialTheme.typography.bodyMedium)
-            }
-        },
-        properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false)
     )
 }
 
