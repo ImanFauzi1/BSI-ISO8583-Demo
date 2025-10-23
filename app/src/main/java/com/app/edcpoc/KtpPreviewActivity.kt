@@ -31,14 +31,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.app.edcpoc.data.model.KtpDataModel
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.window.DialogProperties
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.repeatOnLifecycle
 import com.app.edcpoc.ui.components.LoadingDialog
 import com.app.edcpoc.ui.viewmodel.ApiUiState
 import com.app.edcpoc.ui.viewmodel.ApiViewModel
+import com.app.edcpoc.utils.Constants.FACE_RECOGNIZE
 import com.app.edcpoc.utils.Constants.KTP_READ
 import com.app.edcpoc.utils.Constants.MANUAL_KTP_READ
 import com.app.edcpoc.utils.KtpReaderManager.payloadRequest
@@ -80,25 +80,23 @@ class KtpPreviewActivity : ComponentActivity() {
                 }
             }
         }
-    }
-
-    override fun onStart() {
-        super.onStart()
         observeKtpState()
     }
 
     private fun observeKtpState() {
-        lifecycleScope.launchWhenStarted {
-            apiViewModel.ktpState.collect { state ->
-                when (state) {
-                    is ApiUiState.Success -> {
-                        Toast.makeText(this@KtpPreviewActivity, "Sukses submit KTP", Toast.LENGTH_SHORT).show()
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                apiViewModel.ktpState.collect { state ->
+                    when (state) {
+                        is ApiUiState.Success -> {
+                            Toast.makeText(this@KtpPreviewActivity, "Sukses submit KTP", Toast.LENGTH_SHORT).show()
+                        }
+                        is ApiUiState.Error -> {
+                            LogUtils.d(TAG, "Error submitting KTP: ${state.message}")
+                            Toast.makeText(this@KtpPreviewActivity, state.message, Toast.LENGTH_SHORT).show()
+                        }
+                        else -> {}
                     }
-                    is ApiUiState.Error -> {
-                        LogUtils.d(TAG, "Error submitting KTP: ${state.message}")
-                        Toast.makeText(this@KtpPreviewActivity, state.message, Toast.LENGTH_SHORT).show()
-                    }
-                    else -> {}
                 }
             }
         }
@@ -106,7 +104,7 @@ class KtpPreviewActivity : ComponentActivity() {
 
     private fun handleSubmitKtp(data: KtpDataModel) {
         when(data.type) {
-            KTP_READ -> apiViewModel.sendKtpData(payloadRequest())
+            KTP_READ, FACE_RECOGNIZE -> apiViewModel.sendKtpData(payloadRequest())
             MANUAL_KTP_READ -> apiViewModel.sendKtpDataSpv(payloadRequest())
             else -> {
                 Toast.makeText(this, "Unknown KTP data type", Toast.LENGTH_SHORT).show()

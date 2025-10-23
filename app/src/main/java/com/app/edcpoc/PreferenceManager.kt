@@ -8,12 +8,16 @@ object PreferenceManager {
     private const val PREF_NAME = "svp_prefs"
     private const val SVP_CARD_NUM = "svp_card_num"
     private const val OFFICER_CARD_NUM = "officer_card_num"
+    private const val SVP_USER_ID = "svp_user_id"
 
     private fun getPrefs(context: Context): SharedPreferences =
         context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
 
     fun setPCID(context: Context, pcid: String){
         getPrefs(context).edit { putString("PCID", pcid) }
+    }
+    fun setSVPUserId(context: Context, userId: String){
+        getPrefs(context).edit { putString(SVP_USER_ID, userId) }
     }
 
     fun setConfigFile(context: Context, configFile: String){
@@ -27,6 +31,8 @@ object PreferenceManager {
     fun getSvpCardNum(context: Context): String? =
         getPrefs(context).getString(SVP_CARD_NUM, null)
 
+    fun getSvpUserId(context: Context): String? =
+        getPrefs(context).getString(SVP_USER_ID, null)
     fun setOfficerLoggedIn(context: Context, track2data: String?) {
         getPrefs(context).edit { putString(OFFICER_CARD_NUM, track2data) }
     }

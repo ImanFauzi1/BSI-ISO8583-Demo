@@ -38,6 +38,7 @@ object Constants {
     var commandValue: String = ""
     var pos_entrymode: String = ""
     val FINGERPRINT_MATCH_THRESHOLD = 60
+    val FACE_COMPARE_SCORE_THRESHOLD: Int = 70
     var tpdu: String? = "0000000001"
     var mRfCardType: Byte = 0
     const val READ_TIMEOUT = 30000

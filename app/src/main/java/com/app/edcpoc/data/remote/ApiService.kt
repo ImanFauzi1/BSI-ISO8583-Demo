@@ -5,6 +5,8 @@ import com.app.edcpoc.data.model.FaceCompareTencentResponse
 import com.app.edcpoc.data.model.KtpGetResp
 import com.app.edcpoc.data.model.KtpReq
 import com.app.edcpoc.data.model.KtpResp
+import com.app.edcpoc.data.model.LogResponse
+import retrofit2.Call
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -22,5 +24,11 @@ interface ApiService {
 
     @POST("facecompare/compare")
     suspend fun faceCompare(@Body body: FaceCompareRequest): Response<FaceCompareTencentResponse>
+
+    @POST("edcmid-central/log-ktp/fingerprint")
+    fun logFingerprint(@Body logonReq: KtpReq): Response<LogResponse>
+
+    @POST("edcmid-central/log-ktp/facecompare")
+    fun logFaceCompare(@Body logonReq: KtpReq): Response<LogResponse>
 }
 

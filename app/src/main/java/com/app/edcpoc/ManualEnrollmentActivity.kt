@@ -14,7 +14,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
 import com.app.edcpoc.data.model.KtpReq
 import com.app.edcpoc.ui.screens.ManualEnrollmentScreen
 import com.app.edcpoc.ui.viewmodel.ApiUiState
@@ -53,10 +55,6 @@ class ManualEnrollmentActivity : ComponentActivity() {
                 }
             }
         }
-    }
-
-    override fun onStart() {
-        super.onStart()
         observeKtpState()
     }
 
@@ -104,19 +102,21 @@ class ManualEnrollmentActivity : ComponentActivity() {
     }
 
     private fun observeKtpState() {
-        lifecycleScope.launchWhenStarted {
-            apiViewModel.ktpSpvState.collect { state ->
-                when (state) {
-                    is ApiUiState.Success -> {
-                        Toast.makeText(this@ManualEnrollmentActivity, "Sukses submit KTP", Toast.LENGTH_SHORT).show()
-                        // Matikan loading dengan setSuccessState
-                        viewModel.setSuccessState("Sukses submit KTP")
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                apiViewModel.ktpSpvState.collect { state ->
+                    when (state) {
+                        is ApiUiState.Success -> {
+                            Toast.makeText(this@ManualEnrollmentActivity, "Sukses submit KTP", Toast.LENGTH_SHORT).show()
+                            // Matikan loading dengan setSuccessState
+                            viewModel.setSuccessState("Sukses submit KTP")
+                        }
+                        is ApiUiState.Error -> {
+                            LogUtils.d(TAG, "Error submitting KTP: ${state.message}")
+                            Toast.makeText(this@ManualEnrollmentActivity, state.message, Toast.LENGTH_SHORT).show()
+                        }
+                        else -> {}
                     }
-                    is ApiUiState.Error -> {
-                        LogUtils.d(TAG, "Error submitting KTP: ${state.message}")
-                        Toast.makeText(this@ManualEnrollmentActivity, state.message, Toast.LENGTH_SHORT).show()
-                    }
-                    else -> {}
                 }
             }
         }

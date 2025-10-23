@@ -70,150 +70,139 @@ fun TransaksiCard(onTransaksiClick: () -> Unit) {
 
 @Composable
 fun EnrollmentCard(onEnrollmentClick: (String) -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    Column(
+        modifier = Modifier.padding(16.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
+        Row(
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Lock,
-                    contentDescription = null,
-                    tint = Color(0xFFBBDEFB),
-                    modifier = Modifier.size(24.dp)
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(
-                    text = "Enrollment",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF212121)
-                )
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                ActionButton(
-                    text = "KTP Read",
-                    icon = Icons.Default.AddCard,
-                    modifier = Modifier.weight(1f),
-                    iconColor = Color(0xFF8D6E63),
-                    onClick = {
-                        onEnrollmentClick(KTP_READ)
-                    }
-                )
-                ActionButton(
-                    text = "Manual KTP Read",
-                    icon = Icons.Default.AddCard,
-                    modifier = Modifier.weight(1f),
-                    iconColor = Color(0xFF8D6E63),
-                    onClick = {
-                        onEnrollmentClick(MANUAL_KTP_READ)
-                    }
-                )
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                ActionButton(
-                    text = "Face Recognize",
-                    icon = Icons.Default.AssignmentInd,
-                    modifier = Modifier.weight(1f),
-                    iconColor = Color(0xFF8D6E63),
-                    onClick = {
-                        onEnrollmentClick(FACE_RECOGNIZE)
-                    }
-                )
-            }
+            Icon(
+                imageVector = Icons.Default.Lock,
+                contentDescription = null,
+                tint = Color(0xFFBBDEFB),
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(
+                text = "Enrollment",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF212121)
+            )
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            ActionButton(
+                text = "KTP Read",
+                icon = Icons.Default.AddCard,
+                modifier = Modifier.weight(1f),
+                iconColor = Color(0xFF8D6E63),
+                onClick = {
+                    onEnrollmentClick(KTP_READ)
+                }
+            )
+            ActionButton(
+                text = "Manual KTP Read",
+                icon = Icons.Default.AddCard,
+                modifier = Modifier.weight(1f),
+                iconColor = Color(0xFF8D6E63),
+                onClick = {
+                    onEnrollmentClick(MANUAL_KTP_READ)
+                }
+            )
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            ActionButton(
+                text = "Face Recognize",
+                icon = Icons.Default.AssignmentInd,
+                modifier = Modifier.weight(1f),
+                iconColor = Color(0xFF8D6E63),
+                onClick = {
+                    onEnrollmentClick(FACE_RECOGNIZE)
+                }
+            )
         }
     }
+
 }
 
 @Composable
 fun ManajemenPINCard(onManajemenPINClick: () -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    Column(
+        modifier = Modifier.padding(16.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
+        Row(
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Lock,
-                    contentDescription = null,
-                    tint = Color(0xFFBBDEFB),
-                    modifier = Modifier.size(24.dp)
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(
-                    text = stringResource(R.string.manajemen_pin_title),
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF212121)
-                )
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                ActionButton(
-                    text = stringResource(R.string.btn_create_pin),
-                    icon = Icons.Default.Add,
-                    modifier = Modifier.weight(1f),
-                    onClick = {
-                        commandValue = "createPIN"
-                        onManajemenPINClick()
-                    }
-                )
-                ActionButton(
-                    text = stringResource(R.string.btn_change_pin),
-                    icon = Icons.Default.Lock,
-                    modifier = Modifier.weight(1f),
-                    iconColor = Color(0xFFFFC107),
-                    onClick = {
-                        commandValue = "changePIN"
-                        onManajemenPINClick()
-                    }
-                )
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                ActionButton(
-                    text = stringResource(R.string.btn_reissue_pin),
-                    icon = Icons.Default.Lock,
-                    modifier = Modifier.weight(1f),
-                    onClick = {
-                        commandValue = "reissuePIN"
-                        onManajemenPINClick()
-                    }
-                )
-                ActionButton(
-                    text = stringResource(R.string.btn_verification_pin),
-                    icon = Icons.Default.Check,
-                    modifier = Modifier.weight(1f),
-                    onClick = {
-                        commandValue = "verifyPIN"
-                        onManajemenPINClick()
-                    }
-                )
-            }
+            Icon(
+                imageVector = Icons.Default.Lock,
+                contentDescription = null,
+                tint = Color(0xFFBBDEFB),
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(
+                text = stringResource(R.string.manajemen_pin_title),
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF212121)
+            )
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            ActionButton(
+                text = stringResource(R.string.btn_create_pin),
+                icon = Icons.Default.Add,
+                modifier = Modifier.weight(1f),
+                onClick = {
+                    commandValue = "createPIN"
+                    onManajemenPINClick()
+                }
+            )
+            ActionButton(
+                text = stringResource(R.string.btn_change_pin),
+                icon = Icons.Default.Lock,
+                modifier = Modifier.weight(1f),
+                iconColor = Color(0xFFFFC107),
+                onClick = {
+                    commandValue = "changePIN"
+                    onManajemenPINClick()
+                }
+            )
+        }
+        Spacer(modifier = Modifier.height(8.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            ActionButton(
+                text = stringResource(R.string.btn_reissue_pin),
+                icon = Icons.Default.Lock,
+                modifier = Modifier.weight(1f),
+                onClick = {
+                    commandValue = "reissuePIN"
+                    onManajemenPINClick()
+                }
+            )
+            ActionButton(
+                text = stringResource(R.string.btn_verification_pin),
+                icon = Icons.Default.Check,
+                modifier = Modifier.weight(1f),
+                onClick = {
+                    commandValue = "verifyPIN"
+                    onManajemenPINClick()
+                }
+            )
         }
     }
 }

@@ -25,12 +25,19 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import androidx.compose.runtime.*
 import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.app.edcpoc.data.model.FaceCompareRequest
 import com.app.edcpoc.data.model.KtpDataModel
 import com.app.edcpoc.interfaces.EmvUtilInterface
 import com.app.edcpoc.ui.components.*
 import com.app.edcpoc.ui.theme.EdcpocTheme
+import com.app.edcpoc.ui.viewmodel.ApiUiState
+import com.app.edcpoc.ui.viewmodel.ApiViewModel
 import com.app.edcpoc.ui.viewmodel.ISOViewModel
+import com.app.edcpoc.utils.Constants.FACE_COMPARE_SCORE_THRESHOLD
 import com.app.edcpoc.utils.Constants.FACE_RECOGNIZE
 import com.app.edcpoc.utils.Constants.KTP_READ
 import com.app.edcpoc.utils.Constants.MANUAL_KTP_READ
@@ -53,10 +60,12 @@ import com.app.edcpoc.utils.EktpUtil.updateFingerprintImage
 import com.app.edcpoc.utils.KtpReaderManager.createFingerDialog
 import com.app.edcpoc.utils.KtpReaderManager.createReadingDialog
 import com.app.edcpoc.utils.KtpReaderManager.isMatchedFingerprint
+import com.app.edcpoc.utils.KtpReaderManager.payloadRequest
 import com.app.edcpoc.utils.LogUtils
 import com.app.edcpoc.utils.Utility.clearVar
 import com.app.edcpoc.utils.Utility.convertBmpToBase64
 import com.app.edcpoc.utils.Utility.readPsamConfigSuccess
+import com.google.gson.Gson
 import com.idpay.victoriapoc.utils.IsoManagement.IsoUtils
 import com.idpay.victoriapoc.utils.fingerprint.FingerPrintTask
 import com.simo.ektp.EktpSdkZ90
@@ -64,8 +73,6 @@ import com.simo.ektp.GlobalVars.CONFIG_FILE
 import com.simo.ektp.GlobalVars.PCID
 import com.simo.ektp.GlobalVars.VALUE_AGAMA
 import com.simo.ektp.GlobalVars.VALUE_ALAMAT
-import com.simo.ektp.GlobalVars.VALUE_BIOMETRIC_LEFT
-import com.simo.ektp.GlobalVars.VALUE_BIOMETRIC_RIGHT
 import com.simo.ektp.GlobalVars.VALUE_FOTO
 import com.simo.ektp.GlobalVars.VALUE_GOL_DARAH
 import com.simo.ektp.GlobalVars.VALUE_JNS_KELAMIN
@@ -88,6 +95,7 @@ import com.simo.ektp.GlobalVars.mHits
 import com.simo.ektp.Utils.getFingerPosTips
 import com.simo.ektp.Utils.getSignBitmap
 import com.zcs.sdk.util.StringUtils
+import kotlinx.coroutines.launch
 import java.util.Arrays
 import java.util.logging.Level.CONFIG
 
@@ -100,6 +108,7 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
     private val TAG = MainActivity::class.java.simpleName
     private val identityPermissions = arrayOf(Manifest.permission.CAMERA)
     private val isoViewModel: ISOViewModel by viewModels()
+    private val apiViewModel: ApiViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -122,14 +131,70 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
         checkPsamConfiguration()
         handleInitSdk()
 
+        observeKtpState()
+
         setContent {
             EdcpocTheme {
+                val ktpState by apiViewModel.ktpState.collectAsState()
+                val ktpSpvState by apiViewModel.ktpSpvState.collectAsState()
+                val faceCompareState by apiViewModel.faceCompareState.collectAsState()
+                val logData by apiViewModel.logData.collectAsState()
+                val isLoading = ktpState is ApiUiState.Loading ||
+                                ktpSpvState is ApiUiState.Loading ||
+                                faceCompareState is ApiUiState.Loading ||
+                                logData is ApiUiState.Loading
+                if (isLoading) {
+                    LoadingDialog()
+                }
                 EDCHomeApp(
                     this@MainActivity,
                     onEnrollmentClick = {onEnrollmentClick(it)},
                     isoViewModel = isoViewModel
                 )
             }
+        }
+    }
+
+    private fun observeKtpState() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                apiViewModel.faceCompareState.collect { state ->
+                    when (state) {
+                        is ApiUiState.Success -> {
+                            if (state.data.data.Score >= FACE_COMPARE_SCORE_THRESHOLD) {
+                                LogUtils.i(TAG, "Tencent face comparison passed with score: ${state.data.data.Score}")
+                                showToast("Success")
+                                handleSendLog("Success", "Face Compare Success", state.data.data.Score as Double)
+                                getData()
+                                apiViewModel.resetFaceCompareState()
+                            }
+                        }
+                        is ApiUiState.Error -> {
+                            LogUtils.d(TAG, "Error facing comparation: ${state.message}")
+                            Toast.makeText(this@MainActivity, state.message, Toast.LENGTH_SHORT).show()
+                            apiViewModel.resetFaceCompareState()
+                        }
+                        else -> {}
+                    }
+                }
+            }
+        }
+    }
+
+    private fun handleSendLog(status: String, message: String, similarity: Double? = 0.0) {
+        val payload = payloadRequest()
+
+        when(enrollType) {
+            KTP_READ -> {
+                val updatePayload = payload.copy(fingerprintVerification = status, reason = message, sidikJari = feature64Kanan)
+                LogUtils.e(TAG, "Gson Finger Log: ${Gson().toJson(updatePayload)}")
+                apiViewModel.sendFingerLogData(updatePayload)
+            }
+            FACE_RECOGNIZE -> {
+                val updatePayload = payload.copy(faceRecognitionVerification = status, reason = message, FaceRecognitionSimilarity = similarity)
+                apiViewModel.sendFaceLogData(updatePayload)
+            }
+            else -> LogUtils.e(TAG, "No log to send for enroll type: $enrollType")
         }
     }
 
@@ -247,6 +312,44 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
         startActivityForResult(intent, CAMERA_REQUEST_CODE)
     }
 
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+
+        if (requestCode == CAMERA_REQUEST_CODE && resultCode == RESULT_OK) {
+            handleCameraResult(data)
+        }
+    }
+
+    private fun handleCameraResult(data: Intent?) {
+        val photo = data?.extras?.get("data") as? Bitmap
+
+        if (photo != null) {
+            val photoBase64 = convertBmpToBase64(photo, Base64.NO_WRAP)
+            LogUtils.d(TAG, "Photo captured and converted to base64")
+
+            if (photoBase64 == null) {
+                showToast("Failed to convert bitmap to base64")
+                return
+            }
+
+            performTencentFaceComparison(photoBase64)
+        } else {
+            showToast("Failed to capture image")
+        }
+    }
+
+    private fun performTencentFaceComparison(photoBase64: String) {
+        val photoBytes = StringUtils.convertHexToBytes(VALUE_FOTO)
+        val face64 = Base64.encodeToString(photoBytes, Base64.NO_WRAP)
+
+        val body = FaceCompareRequest(
+            ImageA = photoBase64,
+            ImageB = face64
+        )
+
+        apiViewModel.faceCompare(body)
+    }
+
     private fun handleCardReadResult() {
         if (indonesianIdentityCard == null || indonesianIdentityCard?.id.isNullOrEmpty()) {
             EktpSdkZ90.instance().closePsamAndRfidReaders()
@@ -341,7 +444,7 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
             provinsi = VALUE_PROV ?: "",
             rt = VALUE_RT ?: "",
             rw = VALUE_RW ?: "",
-            sidikJariBytes = Base64.encodeToString(fmd, Base64.NO_WRAP),
+            sidikJariBytes = if (fmd != null) Base64.encodeToString(fmd, Base64.NO_WRAP) else "",
             sidikJari = base64Finger,
             statusPerkawinan = VALUE_STATUS ?: "",
             tandaTangan = sign64,
@@ -351,6 +454,7 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
         val intent = Intent(this, KtpPreviewActivity::class.java)
         intent.putExtra("ktpData", data)
         startActivity(intent)
+        // finish() DIHAPUS agar MainActivity tetap di back stack
     }
 
     private fun convertBitmap(photo: String?, offset: Int = 0, length: Int? = null): String? {

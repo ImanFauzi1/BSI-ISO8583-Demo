@@ -7,6 +7,7 @@ import com.app.edcpoc.data.model.FaceCompareRequest
 import com.app.edcpoc.data.model.FaceCompareTencentResponse
 import com.app.edcpoc.data.model.KtpReq
 import com.app.edcpoc.data.model.KtpResp
+import com.app.edcpoc.data.model.LogResponse
 import com.app.edcpoc.utils.LogUtils
 import com.google.gson.Gson
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,6 +32,9 @@ class ApiViewModel(
 
     private val _faceCompareState = MutableStateFlow<ApiUiState<FaceCompareTencentResponse>>(ApiUiState.Idle)
     val faceCompareState: StateFlow<ApiUiState<FaceCompareTencentResponse>> = _faceCompareState
+
+    private val _logData = MutableStateFlow<ApiUiState<LogResponse>>(ApiUiState.Idle)
+    val logData: StateFlow<ApiUiState<LogResponse>> = _logData
 
     fun sendKtpData(param: KtpReq) {
         _ktpState.value = ApiUiState.Loading
@@ -66,5 +70,31 @@ class ApiViewModel(
                 onFailure = { ApiUiState.Error(it.message ?: "Unknown error") }
             )
         }
+    }
+
+    fun sendFingerLogData(param: KtpReq) {
+        _logData.value = ApiUiState.Loading
+        viewModelScope.launch {
+            val result = repository.sendFingerLogData(param)
+            _logData.value = result.fold(
+                onSuccess = { ApiUiState.Success(it) },
+                onFailure = { ApiUiState.Error(it.message ?: "Unknown error") }
+            )
+        }
+    }
+
+    fun sendFaceLogData(param: KtpReq) {
+        _logData.value = ApiUiState.Loading
+        viewModelScope.launch {
+            val result = repository.sendFaceCompareLogData(param)
+            _logData.value = result.fold(
+                onSuccess = { ApiUiState.Success(it) },
+                onFailure = { ApiUiState.Error(it.message ?: "Unknown error") }
+            )
+        }
+    }
+
+    fun resetFaceCompareState() {
+        _faceCompareState.value = ApiUiState.Idle
     }
 }

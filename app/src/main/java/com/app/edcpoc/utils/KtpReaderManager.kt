@@ -45,12 +45,6 @@ object KtpReaderManager {
     private var fingerprintAttempt: Int = 0
     private var ktpAttempt: Int = 0
 
-    // Callback interfaces
-    interface AttemptCallback {
-        fun onSuccess()
-        fun onDeviceBlocked()
-    }
-
     fun createFingerDialog(context: Context, message: String? = "Please place your finger on the scanner.", fingerprintResult: (dialog: ProgressDialog?, dialog1: DialogInterface?) -> Unit?) {
         DialogUtil.createDialog(
             context = context,
@@ -353,7 +347,7 @@ object KtpReaderManager {
             statusPerkawinan = VALUE_STATUS,
             pekerjaan = VALUE_PEKERJAAN,
             tandaTangan = sign64,
-            sidikJari = Base64.encodeToString(fmd, Base64.NO_WRAP),
+            sidikJari = if(fmd != null) Base64.encodeToString(fmd, Base64.NO_WRAP) else "",
             provinsi = VALUE_PROV,
             tempatLahir = VALUE_TMP_LAHIR,
             jenisKelamin = VALUE_JNS_KELAMIN,
