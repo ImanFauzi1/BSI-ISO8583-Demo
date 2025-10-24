@@ -243,10 +243,14 @@ object KtpReaderManager {
     }
 
     fun isMatchedFingerprint(fmd1: ByteArray?, fmd2: ByteArray?, fmd3: ByteArray?): Boolean {
-        val matchScore1 = FingerPrintTask.instance.matchFingerprint(fmd1!!, fmd2!!)
-        val matchScore2 = FingerPrintTask.instance.matchFingerprint(fmd1, fmd3!!)
+        var matchScore = 0
+        matchScore = FingerPrintTask.instance.matchFingerprint(fmd1!!, fmd2!!)
 
-        return matchScore1 >= FINGERPRINT_MATCH_THRESHOLD || matchScore2 >= FINGERPRINT_MATCH_THRESHOLD
+        if (matchScore == 0 && fmd3 != null) {
+            matchScore = FingerPrintTask.instance.matchFingerprint(fmd1, fmd3!!)
+        }
+
+        return matchScore >= FINGERPRINT_MATCH_THRESHOLD
     }
     private fun isMatchedFingerprint2(fingerprintSvp: ByteArray): Boolean {
         return try {

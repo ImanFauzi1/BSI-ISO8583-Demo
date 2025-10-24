@@ -22,3 +22,16 @@ data class FaceCompareResult(
     val FaceModelVersion: String,
     val RequestId: String
 )
+
+@Serializable
+data class SvpResponse(
+    val status: Int,
+    val message: String,
+    val data: SvpData
+)
+
+@Serializable
+data class SvpData(
+    val id: Int?,
+    val sidikJari: String?
+)

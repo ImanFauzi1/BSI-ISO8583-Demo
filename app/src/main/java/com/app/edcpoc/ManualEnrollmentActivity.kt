@@ -59,7 +59,6 @@ class ManualEnrollmentActivity : ComponentActivity() {
     }
 
     private fun startFingerprintCapture() {
-
         LogUtils.i(TAG, "Fingerprint position tips: ")
         createFingerDialog(this, "Letakkan jari anda di pembaca sidik jari...") { _, _ ->
             handleFingerprintResult()

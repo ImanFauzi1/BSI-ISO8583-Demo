@@ -1,8 +1,11 @@
 package com.app.edcpoc
 
+import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
+import android.graphics.BitmapFactory
 import android.os.Bundle
+import android.util.Base64
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -29,19 +32,42 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.text.style.TextAlign
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import com.app.edcpoc.data.model.SvpRequestBody
 import com.app.edcpoc.interfaces.EmvUtilInterface
+import com.app.edcpoc.ui.components.LoadingDialog
+import com.app.edcpoc.ui.viewmodel.ApiUiState
+import com.app.edcpoc.ui.viewmodel.ApiViewModel
 import com.app.edcpoc.ui.viewmodel.ISOViewModel
+import com.app.edcpoc.ui.viewmodel.SvpViewModel
+import com.app.edcpoc.utils.Constants.FINGERPRINT_MESSAGE
+import com.app.edcpoc.utils.Constants.base64Finger
+import com.app.edcpoc.utils.Constants.cardNum
 import com.app.edcpoc.utils.Constants.commandValue
+import com.app.edcpoc.utils.Constants.feature64Kanan
+import com.app.edcpoc.utils.Constants.isTimeout
+import com.app.edcpoc.utils.Constants.mScanner
 import com.app.edcpoc.utils.Constants.track2data
 import com.app.edcpoc.utils.CoreUtils.initializeEmvUtil
 import com.app.edcpoc.utils.DialogUtil.createEmvDialog
+import com.app.edcpoc.utils.EktpUtil
+import com.app.edcpoc.utils.EktpUtil.updateFingerprintImage
+import com.app.edcpoc.utils.KtpReaderManager.createFingerDialog
+import com.app.edcpoc.utils.LogUtils
 import com.idpay.victoriapoc.utils.IsoManagement.IsoUtils.generateIsoStartEndDate
-import com.zcs.sdk.util.LogUtils
+import com.idpay.victoriapoc.utils.fingerprint.FingerPrintTask
+import com.simo.ektp.GlobalVars.fmd
 import com.zcs.sdk.util.StringUtils
+import kotlinx.coroutines.launch
 import kotlin.getValue
 
 class SvpActivity : ComponentActivity(), EmvUtilInterface {
+    private val TAG = "SvpActivity"
     private val ISOViewModel: ISOViewModel by viewModels()
+    private val svpViewModel: SvpViewModel by viewModels()
+    private val apiViewModel: ApiViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -54,12 +80,22 @@ class SvpActivity : ComponentActivity(), EmvUtilInterface {
 
         ISOViewModel.emvUtil = initializeEmvUtil(this@SvpActivity, this)
 
+        handleInitSdk()
+        observeState()
+
         setContent {
             EdcpocTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
+                    val svpState by apiViewModel.svpData.collectAsState()
+                    val isLoading = svpState is ApiUiState.Loading
+
+                    if (isLoading) {
+                        LoadingDialog()
+                    }
+
                     SvpLockedScreen(
                         ISOViewModel = ISOViewModel,
                         onActivate = {
@@ -67,7 +103,7 @@ class SvpActivity : ComponentActivity(), EmvUtilInterface {
                             ISOViewModel.emvUtil?.let { createEmvDialog(this, it)  }
                         },
                         onSuccess = { cardNum ->
-                            saveSession(cardNum)
+                            saveSession()
                         },
                         onError = {  }
                     )
@@ -76,7 +112,61 @@ class SvpActivity : ComponentActivity(), EmvUtilInterface {
         }
     }
 
-    private fun saveSession(cardNum: String) {
+    fun handleInitSdk() {
+        EktpUtil.initialize()
+        EktpUtil.ektpOpen()
+    }
+
+    private fun observeState() {
+        lifecycleScope.launch {
+            repeatOnLifecycle(Lifecycle.State.STARTED) {
+                launch {
+                    apiViewModel.getSvpData.collect { state ->
+                        when (state) {
+                            is ApiUiState.Success -> {
+                                val data = state.data.data
+                                LogUtils.d(TAG, "SVP Data Received: \\${data.id}")
+                                if (data.sidikJari != null) {
+                                    handleMatchingFingerprint(data.sidikJari)
+                                } else {
+                                    handleEnrollFingerprint()
+                                }
+                                apiViewModel.resetSvpDataState()
+                            }
+                            is ApiUiState.Error -> {
+                                LogUtils.d(TAG, "Error: \\${state.message}")
+                            }
+                            else -> {}
+                        }
+                    }
+                }
+                launch {
+                    apiViewModel.svpData.collect { state ->
+                        when(state) {
+                            is ApiUiState.Success -> {
+                                LogUtils.d(TAG, "SVP Data Sent Successfully")
+                                Toast.makeText(this@SvpActivity, "Sidik jari berhasil di-enroll.", Toast.LENGTH_SHORT).show()
+                                Thread.sleep(700)
+
+                                val body = SvpRequestBody(
+                                    pan = cardNum!!,
+                                )
+
+                                apiViewModel.getSvpData(body)
+                                apiViewModel.resetSvpDataState()
+                            }
+                            is ApiUiState.Error -> {
+                                LogUtils.d(TAG, "Error sending SVP Data: \\${state.message}")
+                                Toast.makeText(this@SvpActivity, state.message, Toast.LENGTH_SHORT).show()
+                            }
+                            else -> {}
+                        }
+                    }
+                }
+            }
+        }
+    }
+    private fun saveSession() {
         PreferenceManager.setSvpCardNum(this, track2data)
         Toast.makeText(this, "Aktivasi berhasil!", Toast.LENGTH_SHORT).show()
         startActivity(Intent(this, OfficerActivity::class.java))
@@ -85,17 +175,70 @@ class SvpActivity : ComponentActivity(), EmvUtilInterface {
         finish()
     }
 
-    override fun onDoSomething(context: Context) {
-        when(commandValue) {
-            "startDate" -> {
+    private fun isoSendMessage() {
+        try {
+            val body = SvpRequestBody(
+                pan = cardNum!!,
+            )
+            apiViewModel.getSvpData(body)
+        } catch (e: Exception) {
+            LogUtils.e(TAG, "ISO Send Message Error: ${e.message}")
+        }
+    }
+
+    private fun handleMatchingFingerprint(sidikJari: String) {
+        createFingerDialog(this, FINGERPRINT_MESSAGE) {_, _ ->
+            try {
+                svpViewModel.handleFingerprintResult(type = "MATCH_FINGERPRINT", Base64.decode(sidikJari, Base64.NO_WRAP))
+
+                Toast.makeText(this, "Sidik jari cocok. Aktivasi selesai.", Toast.LENGTH_SHORT).show()
+                Thread.sleep(700)
+//                saveSession()
+
                 val iso = generateIsoStartEndDate("0800", "910000")
                 ISOViewModel.isoSendMessage(commandValue, StringUtils.convertHexToBytes(iso))
+            } catch (e: Exception) {
+                LogUtils.e(TAG, "Fingerprint Matching Error: ${e.printStackTrace()}")
             }
+        }
+    }
+    private fun handleEnrollFingerprint() {
+        AlertDialog.Builder(this)
+            .setTitle("Fingerprint Enrollment")
+            .setMessage("Sidik jari belum terdaftar. Apakah Anda ingin enroll sidik jari sekarang?")
+            .setPositiveButton("Enroll") { dialog, _ ->
+                dialog.dismiss()
+                createFingerDialog(this, FINGERPRINT_MESSAGE) {_, _ ->
+                    try {
+                        svpViewModel.handleFingerprintResult(type = "ENROLLMENT", null)
+
+                        LogUtils.d(TAG, "FEATURE64KANAN: $feature64Kanan")
+                        val body = SvpRequestBody(
+                            pan = cardNum!!,
+                            sidikJari = Base64.encodeToString(fmd, Base64.NO_WRAP)
+                        )
+                        apiViewModel.sendSvpData(body)
+
+                    } catch (e: Exception) {
+                        LogUtils.e(TAG, "Fingerprint Enrollment Error: ${e.message}")
+                    }
+                }
+            }
+            .setNegativeButton("Cancel") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
+    }
+
+    override fun onDoSomething(context: Context) {
+        when(commandValue) {
+            "startDate" -> isoSendMessage()
+            else -> LogUtils.e(TAG, "Unknown command value: $commandValue")
         }
     }
 
     override fun onError(message: String) {
-
+        LogUtils.e(TAG, "EMV Error: $message")
     }
 }
 

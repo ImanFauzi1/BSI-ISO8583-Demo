@@ -201,4 +201,6 @@ object Constants {
         0x5F24,
         0x5F20
     )
+
+    val FINGERPRINT_MESSAGE = "Letakkan jari anda di pembaca sidik jari..."
 }

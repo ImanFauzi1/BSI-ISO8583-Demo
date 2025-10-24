@@ -20,6 +20,8 @@ import okhttp3.Interceptor
 import okhttp3.ResponseBody
 import retrofit2.Response
 import com.app.edcpoc.PreferenceManager
+import com.app.edcpoc.data.model.SvpRequestBody
+import com.app.edcpoc.data.model.SvpResponse
 import com.app.edcpoc.utils.Utility.getSn
 
 
@@ -130,6 +132,26 @@ class ApiRepository {
         val api = provideApiService(edcmid_base_url)
         try {
             val response = api.logFaceCompare(param)
+            responseApi(response)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getSvpData(param: SvpRequestBody): Result<SvpResponse> = withContext(Dispatchers.IO) {
+        val api = provideApiService(edcmid_base_url)
+        try {
+            val response = api.getSpvData(param)
+            responseApi(response)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun sendSvpData(param: SvpRequestBody): Result<SvpResponse> = withContext(Dispatchers.IO) {
+        val api = provideApiService(edcmid_base_url)
+        try {
+            val response = api.sendSpvData(param)
             responseApi(response)
         } catch (e: Exception) {
             Result.failure(e)

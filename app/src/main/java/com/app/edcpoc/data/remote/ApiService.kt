@@ -6,6 +6,8 @@ import com.app.edcpoc.data.model.KtpGetResp
 import com.app.edcpoc.data.model.KtpReq
 import com.app.edcpoc.data.model.KtpResp
 import com.app.edcpoc.data.model.LogResponse
+import com.app.edcpoc.data.model.SvpRequestBody
+import com.app.edcpoc.data.model.SvpResponse
 import retrofit2.Call
 import retrofit2.Response
 import retrofit2.http.Body
@@ -30,5 +32,10 @@ interface ApiService {
 
     @POST("edcmid-central/log-ktp/facecompare")
     fun logFaceCompare(@Body logonReq: KtpReq): Response<LogResponse>
-}
 
+    @POST("edcmid-central/spv-get")
+    suspend fun getSpvData(@Body ktpReq: SvpRequestBody): Response<SvpResponse>
+
+    @POST("edcmid-central/spv")
+    suspend fun sendSpvData(@Body ktpReq: SvpRequestBody): Response<SvpResponse>
+}

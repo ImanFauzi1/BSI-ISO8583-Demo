@@ -8,6 +8,8 @@ import com.app.edcpoc.data.model.FaceCompareTencentResponse
 import com.app.edcpoc.data.model.KtpReq
 import com.app.edcpoc.data.model.KtpResp
 import com.app.edcpoc.data.model.LogResponse
+import com.app.edcpoc.data.model.SvpRequestBody
+import com.app.edcpoc.data.model.SvpResponse
 import com.app.edcpoc.utils.LogUtils
 import com.google.gson.Gson
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -35,6 +37,12 @@ class ApiViewModel(
 
     private val _logData = MutableStateFlow<ApiUiState<LogResponse>>(ApiUiState.Idle)
     val logData: StateFlow<ApiUiState<LogResponse>> = _logData
+
+    private val _getSvpData = MutableStateFlow<ApiUiState<SvpResponse>>(ApiUiState.Idle)
+    val getSvpData: StateFlow<ApiUiState<SvpResponse>> = _getSvpData
+
+    private val _svpData = MutableStateFlow<ApiUiState<SvpResponse>>(ApiUiState.Idle)
+    val svpData: StateFlow<ApiUiState<SvpResponse>> = _svpData
 
     fun sendKtpData(param: KtpReq) {
         _ktpState.value = ApiUiState.Loading
@@ -94,7 +102,32 @@ class ApiViewModel(
         }
     }
 
+    fun sendSvpData(param: SvpRequestBody) {
+        _svpData.value = ApiUiState.Loading
+        viewModelScope.launch {
+            val result = repository.sendSvpData(param)
+            _svpData.value = result.fold(
+                onSuccess = { ApiUiState.Success(it) },
+                onFailure = { ApiUiState.Error(it.message ?: "Unknown error") }
+            )
+        }
+    }
+
+    fun getSvpData(param: SvpRequestBody) {
+        _getSvpData.value = ApiUiState.Loading
+        viewModelScope.launch {
+            val result = repository.getSvpData(param)
+            _getSvpData.value = result.fold(
+                onSuccess = { ApiUiState.Success(it) },
+                onFailure = { ApiUiState.Error(it.message ?: "Unknown error") }
+            )
+        }
+    }
+
     fun resetFaceCompareState() {
         _faceCompareState.value = ApiUiState.Idle
+    }
+    fun resetSvpDataState() {
+        _svpData.value = ApiUiState.Idle
     }
 }
