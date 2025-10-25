@@ -38,6 +38,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.app.edcpoc.data.model.SvpRequestBody
 import com.app.edcpoc.interfaces.EmvUtilInterface
 import com.app.edcpoc.ui.components.LoadingDialog
+import com.app.edcpoc.ui.screens.SvpLockedScreen
 import com.app.edcpoc.ui.viewmodel.ApiUiState
 import com.app.edcpoc.ui.viewmodel.ApiViewModel
 import com.app.edcpoc.ui.viewmodel.ISOViewModel
@@ -105,7 +106,10 @@ class SvpActivity : ComponentActivity(), EmvUtilInterface {
                         onSuccess = { cardNum ->
                             saveSession()
                         },
-                        onError = {  }
+                        onError = {  },
+                        onSettingClick = {
+                            startActivity(Intent(this@SvpActivity, Settings::class.java))
+                        }
                     )
                 }
             }
@@ -242,71 +246,3 @@ class SvpActivity : ComponentActivity(), EmvUtilInterface {
     }
 }
 
-@Composable
-fun SvpLockedScreen(
-    ISOViewModel: ISOViewModel,
-    onActivate: () -> Unit,
-    onSuccess: (String) -> Unit,
-    onError: (String) -> Unit
-) {
-    val currentOnSuccess by rememberUpdatedState(onSuccess)
-    val currentOnError by rememberUpdatedState(onError)
-
-    val uiState by ISOViewModel.uiState.collectAsState()
-
-    LaunchedEffect(uiState.cardNum, uiState.errorMessage) {
-        LogUtils.d("SvpLockedScreen", "UI State changed: $uiState")
-        if (!uiState.cardNum.isNullOrEmpty()) {
-            currentOnSuccess(uiState.cardNum!!)
-        }
-        if (!uiState.errorMessage.isNullOrEmpty()) {
-            currentOnError(uiState.errorMessage!!)
-            ISOViewModel.clearState()
-        }
-    }
-
-    Box(
-        modifier = Modifier
-            .fillMaxSize(),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-            modifier = Modifier
-                .padding(32.dp)
-                .fillMaxWidth(0.85f)
-        ) {
-            Icon(
-                imageVector = Icons.Default.Lock,
-                contentDescription = "Device Locked",
-                tint = Color(0xFFB71C1C),
-                modifier = Modifier
-                    .size(64.dp)
-                    .padding(bottom = 16.dp)
-            )
-            Text(
-                text = "Device Locked",
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFFB71C1C),
-                modifier = Modifier.padding(bottom = 12.dp)
-            )
-            Text(
-                text = "Perangkat ini terkunci. Silakan lakukan aktivasi untuk melanjutkan penggunaan aplikasi.",
-                fontSize = 16.sp,
-                color = Color(0xFF616161),
-                textAlign = TextAlign.Center,
-                modifier = Modifier.padding(bottom = 32.dp)
-            )
-            Button(
-                onClick = onActivate,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF2196F3)
-                )
-            ) {
-                Text(text = "Aktivasi", color = Color.White, fontWeight = FontWeight.Bold)
-            }
-        }
-    }
-}

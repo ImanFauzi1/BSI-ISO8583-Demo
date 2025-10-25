@@ -54,6 +54,9 @@
         <activity
             android:name=".KtpPreviewActivity"
             android:exported="false" />
+        <activity
+            android:name=".Settings"
+            android:exported="false" />
     </application>
 
 </manifest>

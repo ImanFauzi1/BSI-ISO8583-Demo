@@ -46,12 +46,19 @@ import com.simo.ektp.GlobalVars.VALUE_VALID_UNTIL
 import com.zcs.sdk.DriverManager
 import com.zcs.sdk.Sys
 import java.io.ByteArrayOutputStream
+import java.net.InetAddress
+import java.net.Socket
+import java.net.InetSocketAddress
 import java.security.MessageDigest
 import java.security.SecureRandom
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.io.BufferedReader
+import java.io.InputStreamReader
 
 object Utility {
 
@@ -314,5 +321,36 @@ object Utility {
         // You can implement your own logic to generate a unique STAN
         // For simplicity, this example generates a random number as STAN
         return (Math.random() * 1000000).toInt().toString()
+    }
+
+    /**
+     * Ping a host. Returns true if reachable, false otherwise. Logs the result and any exception.
+     */
+    suspend fun pingHost(host: String, timeoutMs: Int = 2000): Boolean = withContext(Dispatchers.IO) {
+        try {
+            val process = ProcessBuilder("ping", "-c", "1", host).start()
+            val reader = BufferedReader(InputStreamReader(process.inputStream))
+            val output = reader.readText()
+            val exitCode = process.waitFor()
+            Log.d(TAG, "Ping to $host result=$exitCode output=$output")
+            exitCode == 0
+        } catch (e: Exception) {
+            Log.e(TAG, "Ping to $host failed: ${e.message}", e)
+            false
+        }
+    }
+
+    /**
+     * Telnet (open socket) to a host:port. Returns true if successful, false otherwise. Logs the result and any exception.
+     */
+    suspend fun telnetHost(host: String, port: Int, timeoutMs: Int = 2000): Boolean = withContext(Dispatchers.IO) {
+        try {
+            Socket().use { socket ->
+                socket.connect(InetSocketAddress(host, port), timeoutMs)
+                true
+            }
+        } catch (e: Exception) {
+            false
+        }
     }
 }
