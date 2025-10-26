@@ -20,7 +20,29 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    flavorDimensions += "version"
+
+    productFlavors {
+        create("demo") {
+            dimension = "version"
+            applicationId = "com.app.edcpoc.demo"
+            resValue("string", "app_name", "MW Demo App")
+        }
+        create("integrate") {
+            dimension = "version"
+            applicationId = "com.app.edcpoc.integrate"
+            resValue("string", "app_name", "ISO Integrate App")
+        }
+    }
+
     buildTypes {
+        getByName("release") {
+            isMinifyEnabled = false
+        }
+        getByName("debug") {
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
+        }
         release {
             isMinifyEnabled = false
             proguardFiles(
