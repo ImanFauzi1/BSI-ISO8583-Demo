@@ -1,24 +1,14 @@
 package com.app.edcpoc.ui.viewmodel
 
-import android.content.Context
-import android.graphics.BitmapFactory
-import android.util.Base64
-import android.widget.Toast
 import androidx.lifecycle.ViewModel
-import com.app.edcpoc.utils.Constants.base64Finger
-import com.app.edcpoc.utils.Constants.feature64Kanan
 import com.app.edcpoc.utils.Constants.isTimeout
 import com.app.edcpoc.utils.Constants.mScanner
-import com.app.edcpoc.utils.EktpUtil.updateFingerprintImage
-import com.app.edcpoc.utils.KtpReaderManager.createFingerDialog
 import com.app.edcpoc.utils.KtpReaderManager.isMatchedFingerprint
-import com.idpay.victoriapoc.utils.fingerprint.FingerPrintTask
 import com.simo.ektp.GlobalVars.fmd
 import com.zcs.sdk.util.LogUtils
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlin.jvm.Throws
 
 data class SvpViewModelState(
     var isLoading: Boolean = false,

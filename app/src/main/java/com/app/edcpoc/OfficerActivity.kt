@@ -38,6 +38,8 @@ import com.app.edcpoc.utils.Constants.commandValue
 import com.app.edcpoc.utils.Constants.track2data
 import com.app.edcpoc.utils.CoreUtils.initializeEmvUtil
 import com.app.edcpoc.utils.DialogUtil.createEmvDialog
+import com.app.edcpoc.utils.IsoManager.ISO8583
+import com.app.edcpoc.utils.IsoManager.Iso8583Packer
 import com.idpay.victoriapoc.utils.IsoManagement.IsoUtils
 import com.idpay.victoriapoc.utils.IsoManagement.IsoUtils.generateIsoStartEndDate
 import com.zcs.sdk.util.LogUtils
@@ -110,11 +112,14 @@ class OfficerActivity : ComponentActivity(), EmvUtilInterface {
         when(commandValue) {
             LOGON -> {
                 val iso = IsoUtils.generateIsoLogonLogoff("0800", "810000", track2data!!)
-                ISOViewModel.isoSendMessage(commandValue, StringUtils.convertHexToBytes(iso))
+                val pack = ISO8583.packToHex(iso)
+                ISOViewModel.isoSendMessage(this@OfficerActivity, commandValue, StringUtils.convertHexToBytes(pack))
             }
             END_DATE -> {
                 val iso = generateIsoStartEndDate("0800", "920000")
-                ISOViewModel.isoSendMessage(commandValue, StringUtils.convertHexToBytes(iso))
+                val pack = ISO8583.packToHex(iso)
+
+                ISOViewModel.isoSendMessage(this@OfficerActivity,commandValue, StringUtils.convertHexToBytes(pack))
             }
         }
     }

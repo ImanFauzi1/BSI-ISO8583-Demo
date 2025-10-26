@@ -232,14 +232,14 @@ class EmvUtil(private val context: Context) {
             Log.d(TAG, "cardNo:  $cardNum")
 
             when(commandValue) {
-                "createPIN", "reissuePIN" -> {
+                CREATE_PIN, REISSUE_PIN -> {
                     if (step == 2) {
                         track2data = tk2
                         Log.d("Debug", "step=$step;commandValue=$commandValue;track2datasvp=$track2data")
                         inputPIN()
-                        return
+                    } else {
+                        inputNewPIN()
                     }
-                    inputNewPIN()
                 }
                 else -> {
                     track2data = tk2
@@ -248,26 +248,6 @@ class EmvUtil(private val context: Context) {
                     Log.d(TAG, "Input PIN result: $pinResult")
                 }
             }
-
-            track2hex = StringUtils.convertStringToHex(tk2)
-
-            Log.d("Debug", "commandValue=$commandValue")
-//            when(commandValue) {
-//                START_DATE, END_DATE, LOGON, LOGOFF, "verifyPIN" -> {
-//                }
-//            }
-            val pinResult = inputPIN()
-            Log.d(TAG, "Input PIN result: $pinResult")
-//            when (commandValue) {
-//                "cardActivation", "IBMBRegistration", "openAccount", "resetPIN" -> {
-//                    callback?.onDoSomething(appContext)
-//                }
-//                "InquiryBalance", "transaction", CREATE_PIN, "registrasiPIN", "Transfer", CHANGE_PIN -> {
-//                    val pinResult = inputPIN()
-//                    Log.d(TAG, "Input PIN result: $pinResult")
-//                }
-//                else -> null
-//            }
         } else {
             callback?.onError("Mag card read error: ${magReadData.resultcode}")
             Log.e(TAG, "Mag card read error:  " + magReadData.resultcode)
@@ -557,7 +537,7 @@ class EmvUtil(private val context: Context) {
             PinAlgorithmMode.ANSI_X_9_8,
             object : OnPinPadInputListener {
                 override fun onError(code: Int) {
-
+                    step = 1
                     Log.e(TAG, "error pin : $code")
                 }
 
@@ -593,15 +573,9 @@ class EmvUtil(private val context: Context) {
                             inputPINResult = EmvResult.EMV_OK
                         }
 
-//                        when (commandValue) {
-//                            "IBMBRegistration" -> mainActivity.verifyPIN()
-//                            "IBRegistration" -> mainActivity.ibmbRegistration()
-//                            "InquiryBalance", "transaction", "Transfer" -> callback?.onDoSomething(appContext)
-//                            "Settlement" -> mainActivity.settlement()
-//                            CREATE_PIN, "registrasiPIN", CHANGE_PIN -> inputNewPIN()
-//                        }
+
                         when(commandValue) {
-                            START_DATE, END_DATE, LOGON, LOGOFF, VERIFY_PIN -> {
+                            START_DATE, END_DATE, LOGON, LOGOFF, VERIFY_PIN, CREATE_PIN, REISSUE_PIN -> {
                                 callback?.onDoSomething(appContext)
                             }
 //                            CREATE_PIN, REISSUE_PIN -> {
@@ -613,7 +587,7 @@ class EmvUtil(private val context: Context) {
 //                                }
 //                                callback?.onDoSomething(appContext)
 //                            }
-                            CHANGE_PIN, CREATE_PIN, REISSUE_PIN -> inputNewPIN()
+                            CHANGE_PIN -> inputNewPIN()
                         }
                     }
                 }
@@ -717,6 +691,7 @@ class EmvUtil(private val context: Context) {
             PinAlgorithmMode.ANSI_X_9_8,
             object : OnPinPadInputListener {
                 override fun onError(code: Int) {
+                    step = 1
                     Log.d("Debug", "backCode=$code")
                     inputPINResult = when (code) {
                         SdkResult.SDK_PAD_ERR_NOPIN -> EmvResult.EMV_NO_PASSWORD

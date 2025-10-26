@@ -20,6 +20,8 @@ import com.app.edcpoc.utils.Constants.CREATE_PIN
 import com.app.edcpoc.utils.Constants.END_DATE
 import com.app.edcpoc.utils.Constants.FACE_RECOGNIZE
 import com.app.edcpoc.utils.Constants.KTP_READ
+import com.app.edcpoc.utils.Constants.LOGOFF
+import com.app.edcpoc.utils.Constants.LOGON
 import com.app.edcpoc.utils.Constants.MANUAL_KTP_READ
 import com.app.edcpoc.utils.Constants.REISSUE_PIN
 import com.app.edcpoc.utils.Constants.START_DATE
@@ -107,7 +109,7 @@ fun SecurityCard(onSecurityClick: () -> Unit) {
                 modifier = Modifier.weight(1f),
                 iconColor = Color(0xFFBBDEFB),
                 onClick = {
-                    commandValue = "logon"
+                    commandValue = LOGON
                     onSecurityClick()
                 }
             )
@@ -117,7 +119,7 @@ fun SecurityCard(onSecurityClick: () -> Unit) {
                 modifier = Modifier.weight(1f),
                 iconColor = Color(0xFFBBDEFB),
                 onClick = {
-                    commandValue = "logoff"
+                    commandValue = LOGOFF
                     onSecurityClick()
                 }
             )
@@ -290,29 +292,6 @@ fun SessionManagementCard(onSessionManagementClick: () -> Unit) {
                 )
             }
             Spacer(modifier = Modifier.height(16.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                ActionButton(
-                    text = "Start Date",
-                    icon = Icons.Default.DateRange,
-                    modifier = Modifier.weight(1f),
-                    onClick = {
-                        commandValue = START_DATE
-                        onSessionManagementClick()
-                    }
-                )
-                ActionButton(
-                    text = "Close Date",
-                    icon = Icons.Default.DateRange,
-                    modifier = Modifier.weight(1f),
-                    onClick = {
-                        commandValue = END_DATE
-                        onSessionManagementClick()
-                    }
-                )
-            }
         }
         Spacer(modifier = Modifier.height(16.dp))
         Row(
@@ -324,7 +303,7 @@ fun SessionManagementCard(onSessionManagementClick: () -> Unit) {
                 icon = Icons.Default.DateRange,
                 modifier = Modifier.weight(1f),
                 onClick = {
-                    commandValue = "startDate"
+                    commandValue = START_DATE
                     onSessionManagementClick()
                 }
             )
@@ -333,7 +312,7 @@ fun SessionManagementCard(onSessionManagementClick: () -> Unit) {
                 icon = Icons.Default.DateRange,
                 modifier = Modifier.weight(1f),
                 onClick = {
-                    commandValue = "closeDate"
+                    commandValue = END_DATE
                     onSessionManagementClick()
                 }
             )

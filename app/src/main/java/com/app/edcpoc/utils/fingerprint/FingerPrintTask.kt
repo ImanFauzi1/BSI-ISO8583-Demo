@@ -1,7 +1,6 @@
-package com.idpay.victoriapoc.utils.fingerprint
+package com.app.edcpoc.utils.fingerprint
 
 import android.app.ProgressDialog
-import android.content.Context
 import android.os.AsyncTask
 import android.util.Log
 import cn.com.aratek.fp.Bione
@@ -14,7 +13,6 @@ import com.app.edcpoc.utils.Constants.isTimeout
 import com.idpay.victoriapoc.utils.fingerprint.FingerprintError.getFingerprintErrorString
 import com.simo.ektp.GlobalVars.FP_DB_PATH
 import com.zcs.sdk.util.StringUtils
-import kotlin.dec
 
 class FingerPrintTask private constructor() {
     private val mScanner: FingerprintScanner = FingerprintScanner.getInstance(MyApp.getContext())

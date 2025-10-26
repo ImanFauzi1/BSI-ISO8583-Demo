@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.app.ProgressDialog
 import android.content.Context
-import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.SystemClock
@@ -29,7 +28,7 @@ import com.app.edcpoc.utils.Constants.mRfCard
 import com.app.edcpoc.utils.Constants.mRfCardType
 import com.app.edcpoc.utils.Constants.mScanner
 import com.app.edcpoc.utils.Utility.countDownTimer
-import com.idpay.victoriapoc.utils.fingerprint.FingerPrintTask
+import com.app.edcpoc.utils.fingerprint.FingerPrintTask
 import com.simo.ektp.EktpSdkZ90
 import com.simo.ektp.GlobalVars.VALUE_AGAMA
 import com.simo.ektp.GlobalVars.VALUE_ALAMAT
@@ -70,7 +69,6 @@ import com.zcs.sdk.card.CardReaderTypeEnum
 import com.zcs.sdk.listener.OnSearchCardListener
 import java.io.ByteArrayOutputStream
 import java.util.Arrays
-import java.util.concurrent.Executors
 
 object EktpUtil {
 

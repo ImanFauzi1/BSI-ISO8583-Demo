@@ -1,7 +1,6 @@
 package com.app.edcpoc
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -9,12 +8,8 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.os.SystemClock
 import android.provider.MediaStore
 import android.util.Base64
-import android.view.KeyEvent
-import android.widget.EditText
-import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -22,7 +17,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import android.app.AlertDialog
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import androidx.compose.runtime.*
 import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.Lifecycle
@@ -44,9 +38,9 @@ import com.app.edcpoc.utils.Constants.FACE_COMPARE_SCORE_THRESHOLD
 import com.app.edcpoc.utils.Constants.FACE_RECOGNIZE
 import com.app.edcpoc.utils.Constants.KTP_READ
 import com.app.edcpoc.utils.Constants.LOGOFF
+import com.app.edcpoc.utils.Constants.LOGON
 import com.app.edcpoc.utils.Constants.MANUAL_KTP_READ
 import com.app.edcpoc.utils.Constants.REISSUE_PIN
-import com.app.edcpoc.utils.Constants.VERIFY_PIN
 import com.app.edcpoc.utils.Constants.base64Finger
 import com.app.edcpoc.utils.Constants.cardNum
 import com.app.edcpoc.utils.Constants.commandValue
@@ -56,7 +50,6 @@ import com.app.edcpoc.utils.Constants.indonesianIdentityCard
 import com.app.edcpoc.utils.Constants.isTimeout
 import com.app.edcpoc.utils.Constants.mScanner
 import com.app.edcpoc.utils.Constants.pos_entrymode
-import com.app.edcpoc.utils.Constants.psamProfile
 import com.app.edcpoc.utils.Constants.sign64
 import com.app.edcpoc.utils.Constants.signBites
 import com.app.edcpoc.utils.Constants.signatureBitmap
@@ -76,13 +69,13 @@ import com.app.edcpoc.utils.KtpReaderManager.payloadRequest
 import com.app.edcpoc.utils.LogUtils
 import com.app.edcpoc.utils.Utility.clearVar
 import com.app.edcpoc.utils.Utility.convertBmpToBase64
-import com.app.edcpoc.utils.Utility.readPsamConfigSuccess
 import com.google.gson.Gson
 import com.idpay.victoriapoc.utils.IsoManagement.IsoUtils
-import com.idpay.victoriapoc.utils.fingerprint.FingerPrintTask
+import com.app.edcpoc.utils.fingerprint.FingerPrintTask
+import com.app.edcpoc.BuildConfig
+import com.app.edcpoc.utils.Constants.END_DATE
+import com.app.edcpoc.utils.Constants.START_DATE
 import com.simo.ektp.EktpSdkZ90
-import com.simo.ektp.GlobalVars.CONFIG_FILE
-import com.simo.ektp.GlobalVars.PCID
 import com.simo.ektp.GlobalVars.VALUE_AGAMA
 import com.simo.ektp.GlobalVars.VALUE_ALAMAT
 import com.simo.ektp.GlobalVars.VALUE_FOTO
@@ -103,13 +96,10 @@ import com.simo.ektp.GlobalVars.VALUE_STATUS
 import com.simo.ektp.GlobalVars.VALUE_TGL_LAHIR
 import com.simo.ektp.GlobalVars.VALUE_TMP_LAHIR
 import com.simo.ektp.GlobalVars.fmd
-import com.simo.ektp.GlobalVars.mHits
 import com.simo.ektp.Utils.getFingerPosTips
 import com.simo.ektp.Utils.getSignBitmap
 import com.zcs.sdk.util.StringUtils
 import kotlinx.coroutines.launch
-import java.util.Arrays
-import java.util.logging.Level.CONFIG
 
 class MainActivity : ComponentActivity(), EmvUtilInterface {
     companion object {
@@ -125,17 +115,18 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // comment untuk poc bsi doang
-//        if (PreferenceManager.getOfficerCardNum(this) == null) {
-//            startActivity(Intent(this, OfficerActivity::class.java))
-//            finish()
-//            return
-//        }
-//        if (PreferenceManager.getSvpCardNum(this) == null) {
-//            startActivity(Intent(this, SvpActivity::class.java))
-//            finish()
-//            return
-//        }
+        if (BuildConfig.FLAVOR == "demo") {
+            if (PreferenceManager.getOfficerCardNum(this) == null) {
+                startActivity(Intent(this, OfficerActivity::class.java))
+                finish()
+                return
+            }
+            if (PreferenceManager.getSvpCardNum(this) == null) {
+                startActivity(Intent(this, SvpActivity::class.java))
+                finish()
+                return
+            }
+        }
         enableEdgeToEdge()
 
         isoViewModel.emvUtil = initializeEmvUtil(this@MainActivity, this)
@@ -151,11 +142,12 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
                 val ktpState by apiViewModel.ktpState.collectAsState()
                 val ktpSpvState by apiViewModel.ktpSpvState.collectAsState()
                 val faceCompareState by apiViewModel.faceCompareState.collectAsState()
+                val isoState by isoViewModel.uiState.collectAsState()
                 val logData by apiViewModel.logData.collectAsState()
                 val isLoading = ktpState is ApiUiState.Loading ||
                                 ktpSpvState is ApiUiState.Loading ||
                                 faceCompareState is ApiUiState.Loading ||
-                                logData is ApiUiState.Loading
+                                logData is ApiUiState.Loading || isoState.isLoading
                 if (isLoading) {
                     LoadingDialog()
                 }
@@ -206,23 +198,28 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
                     isoViewModel.uiState.collect { state ->
                         if (state.isIsoHandled) {
                             if (state.errorMessage != null) {
-                                sendLogTransaction(
-                                    "Failed",
-                                    commandValue,
-                                    description = "Transaction failed",
-                                    remarks = state.errorMessage
+                                if (BuildConfig.FLAVOR == "demo") {
+                                    sendLogTransaction(
+                                        "Failed",
+                                        commandValue,
+                                        description = "Transaction failed",
+                                        remarks = state.errorMessage
                                     )
+                                }
+
                                 AlertDialog.Builder(this@MainActivity)
                                     .setTitle("ISO gagal dikirim")
                                     .setMessage(state.errorMessage)
                                     .setPositiveButton("Close") { dialog, _ -> dialog.dismiss() }
                                     .show()
                             } else {
-                                sendLogTransaction(
-                                    "Success",
-                                    commandValue,
-                                    description = "Transaction successful"
-                                )
+                                if (BuildConfig.FLAVOR == "demo") {
+                                    sendLogTransaction(
+                                        "Success",
+                                        commandValue,
+                                        description = "Transaction successful"
+                                    )
+                                }
                                 AlertDialog.Builder(this@MainActivity)
                                     .setTitle("ISO Start Date Success")
                                     .setMessage(state.iso)
@@ -500,18 +497,47 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
     // comment only for integrate bsi
     override fun onDoSomething(context: Context) {
         when(commandValue) {
-             LOGOFF -> {
-                 val officerCardNum = PreferenceManager.getOfficerCardNum(context)
-                 if (officerCardNum == null) {
-                     LogUtils.e(TAG, "SVP Card Number is null")
-                     Toast.makeText(context, "SVP Card Number not found.", Toast.LENGTH_LONG).show()
-                     return
-                 }
-                val proc = when(commandValue) {
-                    "startDate" -> "910000"
-                    "closeDate" -> "920000"
-                    else -> "000000"
+            START_DATE, END_DATE -> {
+                LogUtils.i(TAG, "commandValue=$commandValue, FLAVOR=${BuildConfig.FLAVOR}")
+                if (BuildConfig.FLAVOR == "demo") return
+
+                val iso = IsoUtils.generateIsoStartEndDate("0800", if (commandValue == START_DATE) "910000" else "920000")
+                val pack = ISO8583.packToHex(iso)
+                try {
+                    val result = ISO8583.unpackFromHex(pack, iso)
+                    LogUtils.d(TAG, "Unpacked ISO8583 Message: ${Gson().toJson(result)}")
+                } catch (e: Exception) {
+                    LogUtils.e(TAG, "Error unpacking ISO8583 message: ${e.printStackTrace()}")
                 }
+                isoViewModel.isoSendMessage(context, commandValue, StringUtils.convertHexToBytes(pack))
+            }
+            LOGON -> {
+                if (BuildConfig.FLAVOR == "integrate") {
+                    val iso = IsoUtils.generateIsoLogonLogoff("0800", "810000", track2data!!)
+                    val pack = ISO8583.packToHex(iso)
+                    try {
+                        val result = ISO8583.unpackFromHex(pack, iso)
+                        LogUtils.d(TAG, "Unpacked ISO8583 Message: ${Gson().toJson(result)}")
+                    } catch (e: Exception) {
+                        LogUtils.e(TAG, "Error unpacking ISO8583 message: ${e.printStackTrace()}")
+                    }
+
+                    isoViewModel.isoSendMessage(context, commandValue, StringUtils.convertHexToBytes(pack))
+                }
+            }
+             LOGOFF -> {
+                 var officerCardNum = PreferenceManager.getOfficerCardNum(context)
+
+                 if (BuildConfig.FLAVOR == "demo") {
+                     if (officerCardNum == null) {
+                         LogUtils.e(TAG, "SVP Card Number is null")
+                         Toast.makeText(context, "SVP Card Number not found.", Toast.LENGTH_LONG).show()
+                         return
+                     }
+                 } else {
+                     officerCardNum = track2data!!
+                 }
+
                 val iso = IsoUtils.generateIsoLogonLogoff("0800", "820000", officerCardNum)
                 val pack = ISO8583.packToHex(iso)
                 try {
@@ -524,11 +550,8 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
                 isoViewModel.isoSendMessage(context, commandValue, StringUtils.convertHexToBytes(pack))
             }
             CREATE_PIN -> {
-                val svpCardNumber = PreferenceManager.getSvpCardNum(context)
-                if (svpCardNumber == null) {
-                    LogUtils.e(TAG, "SVP Card Number is null")
-                    Toast.makeText(context, "SVP Card Number not found.", Toast.LENGTH_LONG).show()
-                }
+                var spvCardNumber = PreferenceManager.getSvpCardNum(context)
+
                 if (step == 1) {
                     LogUtils.i(TAG, "Creating PIN Step 1")
                     LogUtils.i(TAG, "commandValue=$commandValue")
@@ -539,18 +562,23 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
                 }
 
                 step = 1
-                val iso = IsoUtils.generateIsoCreatePIN(track2data!!)
+                if (BuildConfig.FLAVOR == "demo") {
+                    if (spvCardNumber == null) {
+                        LogUtils.e(TAG, "SVP Card Number is null")
+                        Toast.makeText(context, "SVP Card Number not found.", Toast.LENGTH_LONG).show()
+                        return
+                    }
+                } else {
+                    spvCardNumber = track2data!!
+                }
+                val iso = IsoUtils.generateIsoCreatePIN(spvCardNumber)
                 val pack = ISO8583.packToHex(iso)
 
                 isoViewModel.isoSendMessage(context, commandValue, StringUtils.convertHexToBytes(pack))
             }
             REISSUE_PIN -> {
-                val svpCardNumber = PreferenceManager.getSvpCardNum(context)
-                if (svpCardNumber == null) {
-                    LogUtils.e(TAG, "SVP Card Number is null")
-                    Toast.makeText(context, "SVP Card Number not found.", Toast.LENGTH_LONG).show()
-                    return
-                }
+                var spvCardNumber = PreferenceManager.getSvpCardNum(context)
+
                 if (step == 1) {
                     LogUtils.i(TAG, "Reissuing PIN Step 1")
                     LogUtils.i(TAG, "commandValue=$commandValue")
@@ -561,7 +589,17 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
                 }
 
                 step = 1
-                val iso = IsoUtils.generateIsoReissuePIN(track2data!!)
+                if (BuildConfig.FLAVOR == "demo") {
+                    if (spvCardNumber == null) {
+                        LogUtils.e(TAG, "SVP Card Number is null")
+                        Toast.makeText(context, "SVP Card Number not found.", Toast.LENGTH_LONG).show()
+                        return
+                    }
+                } else {
+                    spvCardNumber = track2data!!
+                }
+
+                val iso = IsoUtils.generateIsoReissuePIN(spvCardNumber)
                 val pack = ISO8583.packToHex(iso)
 
                 isoViewModel.isoSendMessage(context, commandValue, StringUtils.convertHexToBytes(pack))
@@ -584,6 +622,7 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
     }
 
     override fun onError(message: String) {
+        showToast(message)
         LogUtils.e("EmvUtilInterface", "Error: $message")
     }
 }

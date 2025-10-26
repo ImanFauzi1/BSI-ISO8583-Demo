@@ -6,6 +6,8 @@ plugins {
     id("dagger.hilt.android.plugin") // Added Hilt Gradle plugin
 }
 
+// .\gradlew assembleDemoDebug
+
 android {
     namespace = "com.app.edcpoc"
     compileSdk = 36
@@ -59,6 +61,7 @@ android {
         jvmTarget = "11"
     }
     buildFeatures {
+        buildConfig = true
         compose = true
     }
     composeOptions {

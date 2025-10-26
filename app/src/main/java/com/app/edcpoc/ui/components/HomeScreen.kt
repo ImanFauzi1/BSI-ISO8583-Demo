@@ -11,6 +11,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.app.edcpoc.ui.theme.EdcpocTheme
 import androidx.compose.material3.*
 import com.app.edcpoc.ui.viewmodel.DialogState
+import com.app.edcpoc.BuildConfig
 
 @Composable
 fun EDCHomeScreen(
@@ -59,20 +60,27 @@ fun EDCHomeScreen(
 //        item {
 //            Spacer(modifier = Modifier.height(16.dp))
 //        }
-//        item {
-//            EnrollmentCard(onEnrollmentClick = onEnrollmentClick)
-//        }
-        item {
-            SessionManagementCard { onSessionManagementClick() }
+        if(BuildConfig.FLAVOR == "demo") {
+            item {
+                EnrollmentCard(onEnrollmentClick = onEnrollmentClick)
+            }
+            item {
+                Spacer(modifier = Modifier.height(16.dp))
+            }
         }
-        item {
-            Spacer(modifier = Modifier.height(32.dp))
-        }
-        item {
-            SecurityCard { onSecurityClick() }
-        }
-        item {
-            Spacer(modifier = Modifier.height(32.dp))
+        if (BuildConfig.FLAVOR == "integrate") {
+            item {
+                SessionManagementCard { onSessionManagementClick() }
+            }
+            item {
+                Spacer(modifier = Modifier.height(32.dp))
+            }
+            item {
+                SecurityCard { onSecurityClick() }
+            }
+            item {
+                Spacer(modifier = Modifier.height(32.dp))
+            }
         }
         item {
             ManajemenPINCard(onManajemenPINClick = onManajemenPINClick)

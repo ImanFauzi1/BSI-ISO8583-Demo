@@ -17,7 +17,7 @@ import com.app.edcpoc.utils.Constants.sign64
 import com.app.edcpoc.utils.EktpUtil.searchBankCard
 import com.app.edcpoc.utils.EktpUtil.setData
 import com.app.edcpoc.utils.EktpUtil.updateFingerprintImage
-import com.idpay.victoriapoc.utils.fingerprint.FingerPrintTask
+import com.app.edcpoc.utils.fingerprint.FingerPrintTask
 import com.simo.ektp.EktpSdkZ90
 import com.simo.ektp.GlobalVars.VALUE_AGAMA
 import com.simo.ektp.GlobalVars.VALUE_ALAMAT

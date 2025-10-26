@@ -26,8 +26,9 @@ class ISOViewModel : ViewModel() {
 
     fun isoSendMessage(context: Context, type: String? = null, isoBuilder: ByteArray?) {
         viewModelScope.launch {
+            _uiState.update { it.copy(isLoading = true) } // Set loading true
             if (isoBuilder == null) {
-                _uiState.update { it.copy(errorMessage = "Failed to send ISO, please contact developer.", isIsoHandled = true) }
+                _uiState.update { it.copy(errorMessage = "Failed to send ISO, please contact developer.", isIsoHandled = true, isLoading = false) }
                 LogUtils.e(TAG, "Failed to create ISO message $type")
                 return@launch
             }
@@ -38,7 +39,7 @@ class ISOViewModel : ViewModel() {
             IsoClient.sendMessage(context, isoBuilder) { response, error ->
                 if (error != null) {
                     LogUtils.e(TAG, "ISO $type Error: $error")
-                    _uiState.update { it.copy(errorMessage = "Gagal kirim ISO $type: $error", isIsoHandled = true) }
+                    _uiState.update { it.copy(errorMessage = "Gagal kirim ISO $type: $error", isIsoHandled = true, isLoading = false) }
                     return@sendMessage
                 }
 
@@ -46,7 +47,7 @@ class ISOViewModel : ViewModel() {
 
                 if (response == null) {
                     LogUtils.e(TAG, "Failed to receive ISO $type response")
-                    _uiState.update { it.copy(errorMessage = "Gagal kirim ISO $type") }
+                    _uiState.update { it.copy(errorMessage = "Gagal kirim ISO $type", isLoading = false) }
                     return@sendMessage
                 }
 
@@ -60,7 +61,7 @@ class ISOViewModel : ViewModel() {
                     else -> "ISO sukses dikirim"
                 }
                 val detail = fields.entries.joinToString("\n") { "${it.key}: ${it.value}" }
-                _uiState.update { it.copy(cardNum = cardNum, iso = detail, errorMessage = null, isIsoHandled = true)  }
+                _uiState.update { it.copy(cardNum = cardNum, iso = detail, errorMessage = null, isIsoHandled = true, isLoading = false)  }
 
                 LogUtils.i(TAG, "ISO $type Successfully sent message.")
             }
@@ -88,6 +89,4 @@ data class SvpUiState(
     val iso: String? = null,
     val cardNum: String? = null,
     val errorMessage: String? = null,
-    val iso: String? = null,
-    val isIsoHandled: Boolean = false
 )

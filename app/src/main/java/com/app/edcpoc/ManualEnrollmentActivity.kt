@@ -1,6 +1,5 @@
 package com.app.edcpoc
 
-import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.util.Base64
@@ -11,8 +10,6 @@ import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
@@ -21,7 +18,6 @@ import com.app.edcpoc.data.model.KtpReq
 import com.app.edcpoc.ui.screens.ManualEnrollmentScreen
 import com.app.edcpoc.ui.viewmodel.ApiUiState
 import com.app.edcpoc.ui.viewmodel.ApiViewModel
-import com.app.edcpoc.ui.viewmodel.ManualEnrollmentUiState
 import com.app.edcpoc.utils.Constants.base64Finger
 import com.app.edcpoc.utils.Constants.feature64Kanan
 import com.app.edcpoc.utils.Constants.isTimeout
@@ -29,10 +25,9 @@ import com.app.edcpoc.utils.Constants.mScanner
 import com.app.edcpoc.utils.EktpUtil.updateFingerprintImage
 import com.app.edcpoc.utils.KtpReaderManager.createFingerDialog
 import com.app.edcpoc.utils.LogUtils
-import com.idpay.victoriapoc.utils.fingerprint.FingerPrintTask
+import com.app.edcpoc.utils.fingerprint.FingerPrintTask
 import com.app.edcpoc.ui.viewmodel.ManualEnrollmentViewModel
 import com.simo.ektp.GlobalVars.fmd
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class ManualEnrollmentActivity : ComponentActivity() {
