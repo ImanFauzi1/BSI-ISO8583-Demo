@@ -41,6 +41,7 @@ import com.app.edcpoc.utils.Constants.track2data
 import com.app.edcpoc.utils.CoreUtils.initializeEmvUtil
 import com.app.edcpoc.utils.DialogUtil.createEmvDialog
 import com.app.edcpoc.utils.EktpUtil
+import com.app.edcpoc.utils.IsoManager.ISO8583
 import com.app.edcpoc.utils.KtpReaderManager.createFingerDialog
 import com.app.edcpoc.utils.LogUtils
 import com.idpay.victoriapoc.utils.IsoManagement.IsoUtils.generateIsoStartEndDate
@@ -181,11 +182,16 @@ class SvpActivity : ComponentActivity(), EmvUtilInterface {
                 svpViewModel.handleFingerprintResult(type = "MATCH_FINGERPRINT", Base64.decode(sidikJari, Base64.NO_WRAP))
 
                 Toast.makeText(this, "Sidik jari cocok. Aktivasi selesai.", Toast.LENGTH_SHORT).show()
+
+                // TODO(refactor): remove this if possible
                 Thread.sleep(700)
-//                saveSession()
+                saveSession()
+                // End TODO
 
                 val iso = generateIsoStartEndDate("0800", "910000")
-//                ISOViewModel.isoSendMessage(commandValue, StringUtils.convertHexToBytes(iso))
+                val pack = ISO8583.packToHex(iso)
+
+                ISOViewModel.isoSendMessage(this, commandValue, StringUtils.convertHexToBytes(pack))
             } catch (e: Exception) {
                 LogUtils.e(TAG, "Fingerprint Matching Error: ${e.printStackTrace()}")
             }

@@ -125,7 +125,7 @@ class OfficerActivity : ComponentActivity(), EmvUtilInterface {
     }
 
     override fun onError(message: String) {
-        TODO("Not yet implemented")
+        Toast.makeText(this@OfficerActivity, message, Toast.LENGTH_LONG).show()
     }
 }
 

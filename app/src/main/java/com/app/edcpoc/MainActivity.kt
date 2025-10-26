@@ -75,6 +75,7 @@ import com.app.edcpoc.utils.fingerprint.FingerPrintTask
 import com.app.edcpoc.BuildConfig
 import com.app.edcpoc.utils.Constants.END_DATE
 import com.app.edcpoc.utils.Constants.START_DATE
+import com.app.edcpoc.utils.Constants.VERIFY_PIN
 import com.simo.ektp.EktpSdkZ90
 import com.simo.ektp.GlobalVars.VALUE_AGAMA
 import com.simo.ektp.GlobalVars.VALUE_ALAMAT
@@ -604,7 +605,7 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
 
                 isoViewModel.isoSendMessage(context, commandValue, StringUtils.convertHexToBytes(pack))
             }
-            "verifyPIN" -> {
+            VERIFY_PIN -> {
                 val iso = IsoUtils.generateIsoVerificationPIN()
                 val pack = ISO8583.packToHex(iso)
 
