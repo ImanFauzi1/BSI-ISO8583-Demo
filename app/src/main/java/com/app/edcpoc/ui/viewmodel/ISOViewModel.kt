@@ -75,6 +75,8 @@ data class DialogState(
 data class SvpUiState(
     val isLoading: Boolean = false,
     val stateType: String? = null,
+    val isIsoHandled: Boolean = false,
+    val iso: String? = null,
     val cardNum: String? = null,
     val errorMessage: String? = null
 )
