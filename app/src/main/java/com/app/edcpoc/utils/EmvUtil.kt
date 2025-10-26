@@ -7,7 +7,15 @@ import android.os.Looper
 import android.util.Log
 import android.widget.Toast
 import com.app.edcpoc.interfaces.EmvUtilInterface
+import com.app.edcpoc.utils.Constants.CHANGE_PIN
+import com.app.edcpoc.utils.Constants.CREATE_PIN
+import com.app.edcpoc.utils.Constants.END_DATE
+import com.app.edcpoc.utils.Constants.LOGOFF
+import com.app.edcpoc.utils.Constants.LOGON
 import com.app.edcpoc.utils.Constants.READ_TIMEOUT
+import com.app.edcpoc.utils.Constants.REISSUE_PIN
+import com.app.edcpoc.utils.Constants.START_DATE
+import com.app.edcpoc.utils.Constants.VERIFY_PIN
 import com.app.edcpoc.utils.Constants.cardInfoEntity
 import com.app.edcpoc.utils.Constants.cardNum
 import com.app.edcpoc.utils.Constants.commandValue
@@ -173,7 +181,7 @@ class EmvUtil(private val context: Context) {
     fun cancelSearchCard() {
         mCardReadManager.cancelSearchCard()
         Log.d(TAG, "cancelSearchCard:  ")
-//        if (commandValue.equals("createPIN") || commandValue.equals("changePIN")) {
+//        if (commandValue.equals(CREATE_PIN) || commandValue.equals(CHANGE_PIN)) {
 //            PinFragment.mReaderEmvProcessDialog.dismiss()
 //        } else {
 //            TransaksiFragment.mReaderTrxProcessDialog.dismiss()
@@ -229,7 +237,7 @@ class EmvUtil(private val context: Context) {
 
             Log.d("Debug", "commandValue=$commandValue")
 //            when(commandValue) {
-//                "startDate", "closeDate", "logon", "logoff", "verifyPIN" -> {
+//                START_DATE, END_DATE, LOGON, LOGOFF, "verifyPIN" -> {
 //                }
 //            }
             val pinResult = inputPIN()
@@ -238,7 +246,7 @@ class EmvUtil(private val context: Context) {
 //                "cardActivation", "IBMBRegistration", "openAccount", "resetPIN" -> {
 //                    callback?.onDoSomething(appContext)
 //                }
-//                "InquiryBalance", "transaction", "createPIN", "registrasiPIN", "Transfer", "changePIN" -> {
+//                "InquiryBalance", "transaction", CREATE_PIN, "registrasiPIN", "Transfer", CHANGE_PIN -> {
 //                    val pinResult = inputPIN()
 //                    Log.d(TAG, "Input PIN result: $pinResult")
 //                }
@@ -346,11 +354,11 @@ class EmvUtil(private val context: Context) {
                         callback?.onDoSomething(appContext)
                         EmvResult.EMV_OK
                     }
-                    "InquiryBalance", "transaction", "createPIN", "registrasiPIN", "Transfer", "changePIN" -> {
+                    "InquiryBalance", "transaction", CREATE_PIN, "registrasiPIN", "Transfer", CHANGE_PIN -> {
                         Log.d("Debug", "commandValue=$commandValue")
                         inputPIN()
                     }
-                    "startDate", "closeDate", "logon", "logoff" -> {
+                    START_DATE, END_DATE, LOGON, LOGOFF -> {
                         Log.d("Debug", "commandValue=$commandValue")
                         inputPIN()
                     }
@@ -460,7 +468,7 @@ class EmvUtil(private val context: Context) {
                     callback?.onDoSomething(appContext)
                 }
             }
-            "changePIN", "IBMBRegistration" -> {
+            CHANGE_PIN, "IBMBRegistration" -> {
                 mainHandler.post {
                     // showDialogUtils.dialogBeforePIN(mainActivity)
                 }
@@ -471,7 +479,7 @@ class EmvUtil(private val context: Context) {
                     callback?.onDoSomething(appContext)
                 }
             }
-            "startDate", "closeDate", "logon", "logoff" -> {
+            START_DATE, END_DATE, LOGON, LOGOFF -> {
                 Log.d("EmvUtil", "getEmvData: $commandValue")
                 mainHandler.post {
                     callback?.onDoSomething(appContext)
@@ -499,10 +507,10 @@ class EmvUtil(private val context: Context) {
 
 
 //            System.out.println("stateCard Name: $stateCard")
-//            if (commandValue.equals("changePIN")) {
+//            if (commandValue.equals(CHANGE_PIN)) {
 //                PinFragment.sendTrxLog("Change PIN")
 //                nputNewPIN()
-//            } else if (commandValue.equals("createPIN")) {
+//            } else if (commandValue.equals(CREATE_PIN)) {
 //                EmvUtil.inputConfirmPIN()
 //            } else if (commandValue.equals("sendTrx")) {
 //                try {
@@ -573,13 +581,13 @@ class EmvUtil(private val context: Context) {
 //                            "IBRegistration" -> mainActivity.ibmbRegistration()
 //                            "InquiryBalance", "transaction", "Transfer" -> callback?.onDoSomething(appContext)
 //                            "Settlement" -> mainActivity.settlement()
-//                            "createPIN", "registrasiPIN", "changePIN" -> inputNewPIN()
+//                            CREATE_PIN, "registrasiPIN", CHANGE_PIN -> inputNewPIN()
 //                        }
                         when(commandValue) {
-                            "startDate", "closeDate", "logon", "logoff", "verifyPIN" -> {
+                            START_DATE, END_DATE, LOGON, LOGOFF, VERIFY_PIN -> {
                                 callback?.onDoSomething(appContext)
                             }
-//                            "createPIN", "reissuePIN" -> {
+//                            CREATE_PIN, REISSUE_PIN -> {
 //                                Log.d("Debug", "createPIN step=$step")
 //                                if (step == 1) {
 //                                    spvPinBlockOwn = pinBlockOwn
@@ -588,7 +596,7 @@ class EmvUtil(private val context: Context) {
 //                                }
 //                                callback?.onDoSomething(appContext)
 //                            }
-                            "changePIN", "createPIN", "reissuePIN" -> inputNewPIN()
+                            CHANGE_PIN, CREATE_PIN, REISSUE_PIN -> inputNewPIN()
                         }
                     }
                 }
@@ -596,8 +604,8 @@ class EmvUtil(private val context: Context) {
         Log.d("Debug", "inputPIN: selesai panggil inputPIN $commandValue")
 
         when(commandValue) {
-            "changePIN" -> mPinPadManager?.setInputPinTitle("Masukkan PIN anda")
-            "createPIN", "reissuePIN" -> mPinPadManager?.setInputPinTitle("Masukkan PIN SVP")
+            CHANGE_PIN -> mPinPadManager?.setInputPinTitle("Masukkan PIN anda")
+            CREATE_PIN, REISSUE_PIN -> mPinPadManager?.setInputPinTitle("Masukkan PIN SVP")
             else -> mPinPadManager?.setInputPinTitle("Masukkan PIN anda")
         }
         return inputPINResult
@@ -666,13 +674,13 @@ class EmvUtil(private val context: Context) {
             })
 
         when(commandValue) {
-            "changePIN" -> mPinPadManager?.setInputPinTitle("Masukkan PIN baru anda")
-            "createPIN", "registrasiPIN" -> mPinPadManager?.setInputPinTitle("Masukkan PIN baru anda")
+            CHANGE_PIN -> mPinPadManager?.setInputPinTitle("Masukkan PIN baru anda")
+            CREATE_PIN, "registrasiPIN" -> mPinPadManager?.setInputPinTitle("Masukkan PIN baru anda")
             else -> mPinPadManager?.setInputPinTitle("Masukkan PIN baru anda")
         }
 //        if (commandValue == "IBMBRegistration") {
 //            mPinPadManager?.setInputPinTitle("Masukkan PIN Internet Banking/Mobile Banking anda")
-//        } else if (commandValue == "createPIN" || commandValue == "registrasiPIN") {
+//        } else if (commandValue == CREATE_PIN || commandValue == "registrasiPIN") {
 //            mPinPadManager?.setInputPinTitle("Masukkan PIN baru anda")
 //        } else {
 //            mPinPadManager?.setInputPinTitle("Masukkan PIN baru anda")
@@ -716,14 +724,14 @@ class EmvUtil(private val context: Context) {
                     }
 
                     when(commandValue) {
-                        "createPIN", "reissuePIN" -> {
+                        CREATE_PIN, REISSUE_PIN -> {
                             field48data = "$cardNum$pinBlockConfirm"
                             Log.d("Debug", "field48data=$field48data")
                         }
                     }
 
 //                    when(commandValue) {
-//                        "reissuePIN" -> {
+//                        REISSUE_PIN -> {
 //                            if (step == 1) {
 //                                spvPinBlockOwn = pinBlockOwn
 //                                field48data = "$cardNum$spvPinBlockOwn"
@@ -735,17 +743,17 @@ class EmvUtil(private val context: Context) {
                     callback?.onDoSomething(appContext)
 
 //                    when (commandValue) {
-//                        "changePIN" -> {
+//                        CHANGE_PIN -> {
 //
 //                        }
 //                    }
-//                    if (commandValue == "changePIN") {
+//                    if (commandValue == CHANGE_PIN) {
 //
 //                        if (pinBlockNew == pinBlockConfirm) {
 ////                            mainActivity.changePIN()
 //                            callback?.onDoSomething(appContext)
 //                        }
-//                    } else if (commandValue == "createPIN") {
+//                    } else if (commandValue == CREATE_PIN) {
 //                        if (pinBlockNew == pinBlockConfirm) {
 ////                            mainActivity.changePIN()
 //                            callback?.onDoSomething(appContext)
@@ -766,9 +774,9 @@ class EmvUtil(private val context: Context) {
 
 //                    Log.d("Debug", "pinBlockConfirm=$pinBlockConfirm")
 //                    Log.d("Debug", "backCode= $commandValue")
-//                    if (commandValue == "createPIN") {
+//                    if (commandValue == CREATE_PIN) {
 //                        mainActivity.createPIN()
-//                    } else if (commandValue == "changePIN") {+
+//                    } else if (commandValue == CHANGE_PIN) {+
 //                        mainActivity.changePIN()
 //                    }
                 }

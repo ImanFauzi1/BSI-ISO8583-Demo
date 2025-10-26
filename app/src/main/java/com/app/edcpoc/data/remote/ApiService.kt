@@ -6,6 +6,7 @@ import com.app.edcpoc.data.model.KtpGetResp
 import com.app.edcpoc.data.model.KtpReq
 import com.app.edcpoc.data.model.KtpResp
 import com.app.edcpoc.data.model.LogResponse
+import com.app.edcpoc.data.model.LogTransactionRequest
 import com.app.edcpoc.data.model.SvpRequestBody
 import com.app.edcpoc.data.model.SvpResponse
 import retrofit2.Call
@@ -38,4 +39,7 @@ interface ApiService {
 
     @POST("edcmid-central/spv")
     suspend fun sendSpvData(@Body ktpReq: SvpRequestBody): Response<SvpResponse>
+
+    @POST("edcmid-central/log-transaction")
+    suspend fun logTransaction(@Body transaction: LogTransactionRequest): Response<LogResponse>
 }

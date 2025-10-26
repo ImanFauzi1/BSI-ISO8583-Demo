@@ -20,6 +20,7 @@ import okhttp3.Interceptor
 import okhttp3.ResponseBody
 import retrofit2.Response
 import com.app.edcpoc.PreferenceManager
+import com.app.edcpoc.data.model.LogTransactionRequest
 import com.app.edcpoc.data.model.SvpRequestBody
 import com.app.edcpoc.data.model.SvpResponse
 import com.app.edcpoc.utils.Utility.getSn
@@ -152,6 +153,17 @@ class ApiRepository {
         val api = provideApiService(edcmid_base_url)
         try {
             val response = api.sendSpvData(param)
+            responseApi(response)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun sendLogTransaction(param: LogTransactionRequest): Result<LogResponse> = withContext(
+        Dispatchers.IO) {
+        val api = provideApiService(edcmid_base_url)
+        try {
+            val response = api.logTransaction(param)
             responseApi(response)
         } catch (e: Exception) {
             Result.failure(e)

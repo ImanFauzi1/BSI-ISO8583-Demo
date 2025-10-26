@@ -31,23 +31,31 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.app.edcpoc.data.model.FaceCompareRequest
 import com.app.edcpoc.data.model.KtpDataModel
+import com.app.edcpoc.data.model.LogTransactionRequest
 import com.app.edcpoc.interfaces.EmvUtilInterface
 import com.app.edcpoc.ui.components.*
 import com.app.edcpoc.ui.theme.EdcpocTheme
 import com.app.edcpoc.ui.viewmodel.ApiUiState
 import com.app.edcpoc.ui.viewmodel.ApiViewModel
 import com.app.edcpoc.ui.viewmodel.ISOViewModel
+import com.app.edcpoc.utils.Constants.CHANGE_PIN
+import com.app.edcpoc.utils.Constants.CREATE_PIN
 import com.app.edcpoc.utils.Constants.FACE_COMPARE_SCORE_THRESHOLD
 import com.app.edcpoc.utils.Constants.FACE_RECOGNIZE
 import com.app.edcpoc.utils.Constants.KTP_READ
+import com.app.edcpoc.utils.Constants.LOGOFF
 import com.app.edcpoc.utils.Constants.MANUAL_KTP_READ
+import com.app.edcpoc.utils.Constants.REISSUE_PIN
+import com.app.edcpoc.utils.Constants.VERIFY_PIN
 import com.app.edcpoc.utils.Constants.base64Finger
+import com.app.edcpoc.utils.Constants.cardNum
 import com.app.edcpoc.utils.Constants.commandValue
 import com.app.edcpoc.utils.Constants.face64
 import com.app.edcpoc.utils.Constants.feature64Kanan
 import com.app.edcpoc.utils.Constants.indonesianIdentityCard
 import com.app.edcpoc.utils.Constants.isTimeout
 import com.app.edcpoc.utils.Constants.mScanner
+import com.app.edcpoc.utils.Constants.pos_entrymode
 import com.app.edcpoc.utils.Constants.psamProfile
 import com.app.edcpoc.utils.Constants.sign64
 import com.app.edcpoc.utils.Constants.signBites
@@ -55,6 +63,7 @@ import com.app.edcpoc.utils.Constants.signatureBitmap
 import com.app.edcpoc.utils.CoreUtils.initializeEmvUtil
 import com.app.edcpoc.utils.DialogUtil.createEmvDialog
 import com.app.edcpoc.utils.EktpUtil
+import com.app.edcpoc.utils.EktpUtil.checkPsamConfiguration
 import com.app.edcpoc.utils.EktpUtil.setData
 import com.app.edcpoc.utils.EktpUtil.updateFingerprintImage
 import com.app.edcpoc.utils.KtpReaderManager.createFingerDialog
@@ -128,7 +137,7 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
         isoViewModel.emvUtil = initializeEmvUtil(this@MainActivity, this)
 
         handlePermissions()
-        checkPsamConfiguration()
+        checkPsamConfiguration(this@MainActivity)
         handleInitSdk()
 
         observeKtpState()
@@ -225,86 +234,6 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
         createReadingDialog(this@MainActivity, "Reading KTP, Please wait...") { _, _ ->
             handleCardReadResult()
         }
-    }
-
-    private fun checkPsamConfiguration() {
-        if (!readPsamConfigSuccess(this)) {
-            showPsamConfigurationDialog()
-        }
-    }
-
-    private fun showPsamConfigurationDialog() {
-        AlertDialog.Builder(this)
-            .setTitle("Reading $psamProfile Failed")
-            .setMessage("Reading \"$psamProfile\" failed. \n\n Please put $psamProfile in SD card root directory and import it.")
-            .setIcon(R.drawable.ic_dialog_alert_yellow)
-            .setOnKeyListener { _, keyCode, keyEvent ->
-                handlePsamDialogKeyPress(keyCode, keyEvent)
-            }
-            .setPositiveButton("Import") { _, _ ->
-                showManualPsamInputDialog()
-            }
-            .setNegativeButton("Exit") { _, _ ->
-                finish()
-            }
-            .setCancelable(false)
-            .show()
-    }
-
-    private fun handlePsamDialogKeyPress(keyCode: Int, keyEvent: KeyEvent): Boolean {
-        if (keyCode == KeyEvent.KEYCODE_6 && keyEvent.action == KeyEvent.ACTION_DOWN) {
-            System.arraycopy(mHits, 1, mHits, 0, mHits.size - 1)
-            mHits[mHits.size - 1] = SystemClock.uptimeMillis()
-            LogUtils.d(TAG, "System time: ${SystemClock.uptimeMillis()}")
-            if (mHits[0] >= SystemClock.uptimeMillis() - 5000) {
-                Arrays.fill(mHits, 0)
-            }
-        }
-        return false
-    }
-
-    @SuppressLint("NewApi")
-    private fun showManualPsamInputDialog() {
-        val inputLayout = LinearLayout(this).apply {
-            orientation = LinearLayout.VERTICAL
-            setPadding(32, 16, 32, 16)
-        }
-        val pcidEditText = EditText(this).apply {
-            hint = "PCID"
-            setText("2024BB12121100000000000000095067")
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            ).apply { bottomMargin = 16 }
-        }
-        val configEditText = EditText(this).apply {
-            hint = "Config"
-            setText("E743E49AC5FD1A180D28AB938B1F3F6FC6F008D3BE955670BE598C9E084837F1")
-            layoutParams = LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.WRAP_CONTENT
-            )
-        }
-        inputLayout.addView(pcidEditText)
-        inputLayout.addView(configEditText)
-
-        AlertDialog.Builder(this)
-            .setTitle("Manual PSAM Input")
-            .setView(inputLayout)
-            .setMessage("Masukkan PCID dan Config secara manual.")
-            .setPositiveButton("OK") { dialog, _ ->
-                PCID = pcidEditText.text.toString()
-                CONFIG_FILE = configEditText.text.toString()
-
-                PreferenceManager.setPCID(this@MainActivity,PCID)
-                PreferenceManager.setConfigFile(this@MainActivity, CONFIG_FILE)
-                dialog.dismiss()
-            }
-            .setNegativeButton("Cancel") { dialog, _ ->
-                dialog.dismiss()
-                finish()
-            }
-            .show()
     }
 
     private fun openCamera() {
@@ -504,11 +433,26 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
         return requestPerms
     }
 
+    private fun sendLogTransaction(status: String, transactionType: String, description: String, remarks: String = "") {
+        try {
+            val payload = LogTransactionRequest(
+                card_number = cardNum!!,
+                transaction_type = transactionType,
+                pos_entrymode = pos_entrymode,
+                status = status,
+                response_code_description = description,
+                remarks = remarks,
+            )
+            apiViewModel.sendLogTransaction(payload)
+        } catch (e: Exception) {
+            LogUtils.e(TAG, "Log Transaction Error: ${e.message}")
+        }
+    }
 
     // EmvUtilInterface implementation
     override fun onDoSomething(context: Context) {
         when(commandValue) {
-             "logoff" -> {
+             LOGOFF -> {
                  val officerCardNum = PreferenceManager.getOfficerCardNum(context)
                  if (officerCardNum == null) {
                      LogUtils.e(TAG, "SVP Card Number is null")
@@ -518,7 +462,7 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
                 val iso = IsoUtils.generateIsoLogonLogoff("0800", "820000", officerCardNum)
                 isoViewModel.isoSendMessage(commandValue, StringUtils.convertHexToBytes(iso))
             }
-            "createPIN" -> {
+            CREATE_PIN -> {
                 val svpCardNumber = PreferenceManager.getSvpCardNum(context)
                 if (svpCardNumber == null) {
                     LogUtils.e(TAG, "SVP Card Number is null")
@@ -528,7 +472,7 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
                 val iso = IsoUtils.generateIsoCreatePIN(svpCardNumber)
                 isoViewModel.isoSendMessage(commandValue, StringUtils.convertHexToBytes(iso))
             }
-            "reissuePIN" -> {
+            REISSUE_PIN -> {
                 val svpCardNumber = PreferenceManager.getSvpCardNum(context)
                 if (svpCardNumber == null) {
                     LogUtils.e(TAG, "SVP Card Number is null")
@@ -539,11 +483,11 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
                 val iso = IsoUtils.generateIsoReissuePIN(svpCardNumber)
                 isoViewModel.isoSendMessage(commandValue, StringUtils.convertHexToBytes(iso))
             }
-            "verifyPIN" -> {
+            VERIFY_PIN -> {
                 val iso = IsoUtils.generateIsoVerificationPIN()
                 isoViewModel.isoSendMessage(commandValue, StringUtils.convertHexToBytes(iso))
             }
-            "changePIN" -> {
+            CHANGE_PIN -> {
                 val iso = IsoUtils.generateIsoChangePIN()
                 isoViewModel.isoSendMessage(commandValue, StringUtils.convertHexToBytes(iso))
             }
@@ -567,7 +511,7 @@ fun EDCHomeApp(
     val authState by isoViewModel.uiState.collectAsState()
 
     LaunchedEffect(authState) {
-        if (commandValue == "logoff") {
+        if (commandValue == LOGOFF) {
             PreferenceManager.setOfficerLoggedIn(context, null)
             context.startActivity(Intent(context, OfficerActivity::class.java))
             return@LaunchedEffect
@@ -581,7 +525,7 @@ fun EDCHomeApp(
             onManajemenPINClick = { isoViewModel.emvUtil?.let { createEmvDialog(context, it)} },
             onSessionManagementClick = { isoViewModel.emvUtil?.let { createEmvDialog(context, it)} },
             onLogoutClick = {
-                commandValue = "logoff"
+                commandValue = LOGOFF
                 isoViewModel.emvUtil?.let { createEmvDialog(context, it) }
             },
             dialogState = isoViewModel.dialogState.collectAsState().value,

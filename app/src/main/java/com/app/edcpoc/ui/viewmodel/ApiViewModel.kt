@@ -8,6 +8,7 @@ import com.app.edcpoc.data.model.FaceCompareTencentResponse
 import com.app.edcpoc.data.model.KtpReq
 import com.app.edcpoc.data.model.KtpResp
 import com.app.edcpoc.data.model.LogResponse
+import com.app.edcpoc.data.model.LogTransactionRequest
 import com.app.edcpoc.data.model.SvpRequestBody
 import com.app.edcpoc.data.model.SvpResponse
 import com.app.edcpoc.utils.LogUtils
@@ -118,6 +119,17 @@ class ApiViewModel(
         viewModelScope.launch {
             val result = repository.getSvpData(param)
             _getSvpData.value = result.fold(
+                onSuccess = { ApiUiState.Success(it) },
+                onFailure = { ApiUiState.Error(it.message ?: "Unknown error") }
+            )
+        }
+    }
+
+    fun sendLogTransaction(param: LogTransactionRequest) {
+        _logData.value = ApiUiState.Loading
+        viewModelScope.launch {
+            val result = repository.sendLogTransaction(param)
+            _logData.value = result.fold(
                 onSuccess = { ApiUiState.Success(it) },
                 onFailure = { ApiUiState.Error(it.message ?: "Unknown error") }
             )

@@ -35,6 +35,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
+import com.app.edcpoc.data.model.LogTransactionRequest
 import com.app.edcpoc.data.model.SvpRequestBody
 import com.app.edcpoc.interfaces.EmvUtilInterface
 import com.app.edcpoc.ui.components.LoadingDialog
@@ -44,12 +45,14 @@ import com.app.edcpoc.ui.viewmodel.ApiViewModel
 import com.app.edcpoc.ui.viewmodel.ISOViewModel
 import com.app.edcpoc.ui.viewmodel.SvpViewModel
 import com.app.edcpoc.utils.Constants.FINGERPRINT_MESSAGE
+import com.app.edcpoc.utils.Constants.START_DATE
 import com.app.edcpoc.utils.Constants.base64Finger
 import com.app.edcpoc.utils.Constants.cardNum
 import com.app.edcpoc.utils.Constants.commandValue
 import com.app.edcpoc.utils.Constants.feature64Kanan
 import com.app.edcpoc.utils.Constants.isTimeout
 import com.app.edcpoc.utils.Constants.mScanner
+import com.app.edcpoc.utils.Constants.pos_entrymode
 import com.app.edcpoc.utils.Constants.track2data
 import com.app.edcpoc.utils.CoreUtils.initializeEmvUtil
 import com.app.edcpoc.utils.DialogUtil.createEmvDialog
@@ -100,7 +103,7 @@ class SvpActivity : ComponentActivity(), EmvUtilInterface {
                     SvpLockedScreen(
                         ISOViewModel = ISOViewModel,
                         onActivate = {
-                            commandValue = "startDate"
+                            commandValue = START_DATE
                             ISOViewModel.emvUtil?.let { createEmvDialog(this, it)  }
                         },
                         onSuccess = { cardNum ->
@@ -236,7 +239,7 @@ class SvpActivity : ComponentActivity(), EmvUtilInterface {
 
     override fun onDoSomething(context: Context) {
         when(commandValue) {
-            "startDate" -> isoSendMessage()
+            START_DATE -> isoSendMessage()
             else -> LogUtils.e(TAG, "Unknown command value: $commandValue")
         }
     }

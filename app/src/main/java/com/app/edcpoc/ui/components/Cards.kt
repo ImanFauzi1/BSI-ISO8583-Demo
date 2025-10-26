@@ -15,9 +15,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.font.FontWeight
 import com.app.edcpoc.R
+import com.app.edcpoc.utils.Constants.CHANGE_PIN
+import com.app.edcpoc.utils.Constants.CREATE_PIN
+import com.app.edcpoc.utils.Constants.END_DATE
 import com.app.edcpoc.utils.Constants.FACE_RECOGNIZE
 import com.app.edcpoc.utils.Constants.KTP_READ
 import com.app.edcpoc.utils.Constants.MANUAL_KTP_READ
+import com.app.edcpoc.utils.Constants.REISSUE_PIN
+import com.app.edcpoc.utils.Constants.START_DATE
+import com.app.edcpoc.utils.Constants.VERIFY_PIN
 import com.app.edcpoc.utils.Constants.commandValue
 
 @Composable
@@ -165,7 +171,7 @@ fun ManajemenPINCard(onManajemenPINClick: () -> Unit) {
                 icon = Icons.Default.Add,
                 modifier = Modifier.weight(1f),
                 onClick = {
-                    commandValue = "createPIN"
+                    commandValue = CREATE_PIN
                     onManajemenPINClick()
                 }
             )
@@ -175,7 +181,7 @@ fun ManajemenPINCard(onManajemenPINClick: () -> Unit) {
                 modifier = Modifier.weight(1f),
                 iconColor = Color(0xFFFFC107),
                 onClick = {
-                    commandValue = "changePIN"
+                    commandValue = CHANGE_PIN
                     onManajemenPINClick()
                 }
             )
@@ -190,7 +196,7 @@ fun ManajemenPINCard(onManajemenPINClick: () -> Unit) {
                 icon = Icons.Default.Lock,
                 modifier = Modifier.weight(1f),
                 onClick = {
-                    commandValue = "reissuePIN"
+                    commandValue = REISSUE_PIN
                     onManajemenPINClick()
                 }
             )
@@ -199,7 +205,7 @@ fun ManajemenPINCard(onManajemenPINClick: () -> Unit) {
                 icon = Icons.Default.Check,
                 modifier = Modifier.weight(1f),
                 onClick = {
-                    commandValue = "verifyPIN"
+                    commandValue = VERIFY_PIN
                     onManajemenPINClick()
                 }
             )
@@ -244,7 +250,7 @@ fun SessionManagementCard(onSessionManagementClick: () -> Unit) {
                     icon = Icons.Default.DateRange,
                     modifier = Modifier.weight(1f),
                     onClick = {
-                        commandValue = "startDate"
+                        commandValue = START_DATE
                         onSessionManagementClick()
                     }
                 )
@@ -253,7 +259,7 @@ fun SessionManagementCard(onSessionManagementClick: () -> Unit) {
                     icon = Icons.Default.DateRange,
                     modifier = Modifier.weight(1f),
                     onClick = {
-                        commandValue = "closeDate"
+                        commandValue = END_DATE
                         onSessionManagementClick()
                     }
                 )

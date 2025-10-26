@@ -1,14 +1,22 @@
 package com.app.edcpoc.utils
 
+import android.annotation.SuppressLint
+import android.app.AlertDialog
 import android.app.ProgressDialog
+import android.content.Context
 import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.os.SystemClock
 import android.util.Base64
 import android.util.Log
+import android.view.KeyEvent
+import android.widget.EditText
+import android.widget.LinearLayout
 import cn.com.aratek.fp.FingerprintImage
 import cn.com.aratek.fp.FingerprintScanner
 import com.app.edcpoc.MyApp
+import com.app.edcpoc.PreferenceManager
 import com.app.edcpoc.R
 import com.app.edcpoc.utils.Constants.READ_TIMEOUT
 import com.app.edcpoc.utils.Constants.cardInfoEntity
@@ -46,7 +54,12 @@ import com.simo.ektp.GlobalVars.VALUE_TGL_LAHIR
 import com.simo.ektp.GlobalVars.VALUE_TMP_LAHIR
 import com.simo.ektp.GlobalVars.VALUE_VALID_UNTIL
 import com.app.edcpoc.utils.Constants.base64Finger
+import com.app.edcpoc.utils.Constants.psamProfile
+import com.app.edcpoc.utils.Utility.readPsamConfigSuccess
 import com.app.edcpoc.utils.Utility.startCountDownTimer
+import com.simo.ektp.GlobalVars.CONFIG_FILE
+import com.simo.ektp.GlobalVars.PCID
+import com.simo.ektp.GlobalVars.mHits
 import com.simo.ektp.IndonesianIdentityCard
 import com.zcs.sdk.DriverManager
 import com.zcs.sdk.SdkData
@@ -56,6 +69,7 @@ import com.zcs.sdk.card.CardInfoEntity
 import com.zcs.sdk.card.CardReaderTypeEnum
 import com.zcs.sdk.listener.OnSearchCardListener
 import java.io.ByteArrayOutputStream
+import java.util.Arrays
 import java.util.concurrent.Executors
 
 object EktpUtil {
@@ -215,5 +229,89 @@ object EktpUtil {
         bitmap?.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream)
         val byteArray = byteArrayOutputStream.toByteArray()
         base64Finger = Base64.encodeToString(byteArray, Base64.NO_WRAP)
+    }
+
+    fun checkPsamConfiguration(context: Context) {
+        if (!readPsamConfigSuccess(context)) {
+            showPsamConfigurationDialog(context)
+        }
+    }
+
+    private fun showPsamConfigurationDialog(context: Context) {
+        AlertDialog.Builder(context)
+            .setTitle("Reading $psamProfile Failed")
+            .setMessage("Reading \"$psamProfile\" failed. \n\n Please put $psamProfile in SD card root directory and import it.")
+            .setIcon(R.drawable.ic_dialog_alert_yellow)
+            .setOnKeyListener { _, keyCode, keyEvent ->
+                handlePsamDialogKeyPress(keyCode, keyEvent)
+            }
+            .setPositiveButton("Import") { _, _ ->
+                showManualPsamInputDialog(context)
+            }
+            .setNegativeButton("Exit") { dialog, _ ->
+                if (context is android.app.Activity) {
+                    context.finish()
+                }
+                dialog.dismiss()
+            }
+            .setCancelable(false)
+            .show()
+    }
+
+    private fun handlePsamDialogKeyPress(keyCode: Int, keyEvent: KeyEvent): Boolean {
+        if (keyCode == KeyEvent.KEYCODE_6 && keyEvent.action == KeyEvent.ACTION_DOWN) {
+            System.arraycopy(mHits, 1, mHits, 0, mHits.size - 1)
+            mHits[mHits.size - 1] = SystemClock.uptimeMillis()
+            LogUtils.d(TAG, "System time: ${SystemClock.uptimeMillis()}")
+            if (mHits[0] >= SystemClock.uptimeMillis() - 5000) {
+                Arrays.fill(mHits, 0)
+            }
+        }
+        return false
+    }
+
+    @SuppressLint("NewApi")
+    private fun showManualPsamInputDialog(context: Context) {
+        val inputLayout = LinearLayout(context).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(32, 16, 32, 16)
+        }
+        val pcidEditText = EditText(context).apply {
+            hint = "PCID"
+            setText("2024BB12121100000000000000095067")
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            ).apply { bottomMargin = 16 }
+        }
+        val configEditText = EditText(context).apply {
+            hint = "Config"
+            setText("E743E49AC5FD1A180D28AB938B1F3F6FC6F008D3BE955670BE598C9E084837F1")
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+        }
+        inputLayout.addView(pcidEditText)
+        inputLayout.addView(configEditText)
+
+        AlertDialog.Builder(context)
+            .setTitle("Manual PSAM Input")
+            .setView(inputLayout)
+            .setMessage("Masukkan PCID dan Config secara manual.")
+            .setPositiveButton("OK") { dialog, _ ->
+                PCID = pcidEditText.text.toString()
+                CONFIG_FILE = configEditText.text.toString()
+                PreferenceManager.setPCID(context, PCID)
+                PreferenceManager.setConfigFile(context, CONFIG_FILE)
+                dialog.dismiss()
+            }
+            .setNegativeButton("Cancel") { dialog, _ ->
+                dialog.dismiss()
+                if (context is android.app.Activity) {
+                    context.finish()
+                }
+            }
+            .show()
     }
 }

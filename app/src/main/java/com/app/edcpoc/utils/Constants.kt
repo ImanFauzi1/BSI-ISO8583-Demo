@@ -203,4 +203,14 @@ object Constants {
     )
 
     val FINGERPRINT_MESSAGE = "Letakkan jari anda di pembaca sidik jari..."
+
+    // commandValue
+    const val START_DATE = "START_DATE"
+    const val END_DATE = "END_DATE"
+    const val LOGON = "LOGON"
+    const val LOGOFF = "LOGOFF"
+    const val CREATE_PIN = "CREATE_PIN"
+    const val CHANGE_PIN = "CHANGE_PIN"
+    const val VERIFY_PIN = "VERIFY_PIN"
+    const val REISSUE_PIN = "REISSUE_PIN"
 }

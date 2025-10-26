@@ -31,6 +31,8 @@ import androidx.compose.ui.unit.sp
 import com.app.edcpoc.interfaces.EmvUtilInterface
 import com.app.edcpoc.ui.theme.EdcpocTheme
 import com.app.edcpoc.ui.viewmodel.ISOViewModel
+import com.app.edcpoc.utils.Constants.END_DATE
+import com.app.edcpoc.utils.Constants.LOGON
 import com.app.edcpoc.utils.Constants.cardNum
 import com.app.edcpoc.utils.Constants.commandValue
 import com.app.edcpoc.utils.Constants.track2data
@@ -71,7 +73,7 @@ class OfficerActivity : ComponentActivity(), EmvUtilInterface {
                     OfficerLoginScreen(
                         ISOViewModel = ISOViewModel,
                         onLogin = {
-                            commandValue = "logon"
+                            commandValue = LOGON
                             ISOViewModel.emvUtil?.let { createEmvDialog(this, it)  }
                         },
                         onError = { message ->
@@ -79,11 +81,11 @@ class OfficerActivity : ComponentActivity(), EmvUtilInterface {
                         },
                         onCloseDate = {
                             LogUtils.d("test", "Close Date clicked")
-                            commandValue = "closeDate"
+                            commandValue = END_DATE
                             ISOViewModel.emvUtil?.let { createEmvDialog(this, it) }
                         },
                         onSuccess = {
-                            if (commandValue == "closeDate") {
+                            if (commandValue == END_DATE) {
                                 onCloseDate()
                                 return@OfficerLoginScreen
                             }
@@ -106,11 +108,11 @@ class OfficerActivity : ComponentActivity(), EmvUtilInterface {
 
     override fun onDoSomething(context: Context) {
         when(commandValue) {
-            "logon" -> {
+            LOGON -> {
                 val iso = IsoUtils.generateIsoLogonLogoff("0800", "810000", track2data!!)
                 ISOViewModel.isoSendMessage(commandValue, StringUtils.convertHexToBytes(iso))
             }
-            "closeDate" -> {
+            END_DATE -> {
                 val iso = generateIsoStartEndDate("0800", "920000")
                 ISOViewModel.isoSendMessage(commandValue, StringUtils.convertHexToBytes(iso))
             }
