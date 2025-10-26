@@ -140,7 +140,7 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
         checkPsamConfiguration(this@MainActivity)
         handleInitSdk()
 
-        observeKtpState()
+        observeState()
 
         setContent {
             EdcpocTheme {
@@ -164,26 +164,69 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
         }
     }
 
-    private fun observeKtpState() {
+    private fun observeState() {
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
-                apiViewModel.faceCompareState.collect { state ->
-                    when (state) {
-                        is ApiUiState.Success -> {
-                            if (state.data.data.Score >= FACE_COMPARE_SCORE_THRESHOLD) {
-                                LogUtils.i(TAG, "Tencent face comparison passed with score: ${state.data.data.Score}")
-                                showToast("Success")
-                                handleSendLog("Success", "Face Compare Success", state.data.data.Score as Double)
-                                getData()
+                launch {
+                    apiViewModel.faceCompareState.collect { state ->
+                        when (state) {
+                            is ApiUiState.Success -> {
+                                if (state.data.data.Score >= FACE_COMPARE_SCORE_THRESHOLD) {
+                                    LogUtils.i(
+                                        TAG,
+                                        "Tencent face comparison passed with score: ${state.data.data.Score}"
+                                    )
+                                    showToast("Success")
+                                    handleSendLog(
+                                        "Success",
+                                        "Face Compare Success",
+                                        state.data.data.Score as Double
+                                    )
+                                    getData()
+                                    apiViewModel.resetFaceCompareState()
+                                }
+                            }
+
+                            is ApiUiState.Error -> {
+                                LogUtils.d(TAG, "Error facing comparation: ${state.message}")
+                                Toast.makeText(this@MainActivity, state.message, Toast.LENGTH_SHORT)
+                                    .show()
                                 apiViewModel.resetFaceCompareState()
                             }
+
+                            else -> {}
                         }
-                        is ApiUiState.Error -> {
-                            LogUtils.d(TAG, "Error facing comparation: ${state.message}")
-                            Toast.makeText(this@MainActivity, state.message, Toast.LENGTH_SHORT).show()
-                            apiViewModel.resetFaceCompareState()
+                    }
+                }
+                launch {
+                    isoViewModel.uiState.collect { state ->
+                        if (state.isIsoHandled) {
+                            if (state.errorMessage != null) {
+                                sendLogTransaction(
+                                    "Failed",
+                                    commandValue,
+                                    description = "Transaction failed",
+                                    remarks = state.errorMessage
+                                    )
+                                AlertDialog.Builder(this@MainActivity)
+                                    .setTitle("ISO gagal dikirim")
+                                    .setMessage(state.errorMessage)
+                                    .setPositiveButton("Close") { dialog, _ -> dialog.dismiss() }
+                                    .show()
+                            } else {
+                                sendLogTransaction(
+                                    "Success",
+                                    commandValue,
+                                    description = "Transaction successful"
+                                )
+                                AlertDialog.Builder(this@MainActivity)
+                                    .setTitle("ISO Start Date Success")
+                                    .setMessage(state.iso)
+                                    .setPositiveButton("Close") { dialog, _ -> dialog.dismiss() }
+                                    .show()
+                            }
+                            isoViewModel.clearState()
                         }
-                        else -> {}
                     }
                 }
             }
