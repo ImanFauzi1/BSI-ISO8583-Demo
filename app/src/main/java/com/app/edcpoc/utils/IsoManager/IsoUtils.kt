@@ -155,12 +155,12 @@ object IsoUtils {
                 52,
                 "PIN Data",
                 ISO8583.LEN_0,
-                32
+                16
             )
         )
         return specs
     }
-    fun generateIsoStartEndDate(mti: String, processingCode: String): String? {
+    fun generateIsoStartEndDate(mti: String, processingCode: String): Model8583Request? {
         try {
             val model8583Request: Model8583Request = generateBaseRequest(mti)
             Log.d(TAG, "Generating ISO message with Processing Code: $processingCode")
@@ -225,11 +225,8 @@ object IsoUtils {
                 )
             )
 
-            val specs = model8583Request.setSpecs(getSpecs())
-            val packed = ISO8583.packToHex(specs)
-            LogUtils.d(TAG, "ISO Data: ${Gson().toJson(packed)}")
-
-            return packed
+            model8583Request.setSpecs(getSpecs())
+            return model8583Request
         } catch (e: Exception) {
             LogUtils.e(TAG, "Error creating ISO message", e)
             return null
@@ -293,7 +290,7 @@ object IsoUtils {
         }
     }
 
-    fun generateIsoLogonLogoff(mti: String, processingCode: String, officerTrack2data: String): String? {
+    fun generateIsoLogonLogoff(mti: String, processingCode: String, officerTrack2data: String): Model8583Request? {
         try {
             val model8583Request: Model8583Request = generateBaseRequest(mti)
             Log.d(TAG, "Generating ISO message with Processing Code: $processingCode")
@@ -357,8 +354,7 @@ object IsoUtils {
             )
 
             model8583Request.setSpecs(getSpecs())
-            LogUtils.d(TAG, "ISO Data: ${Gson().toJson(ISO8583.packToHex(model8583Request))}")
-            return ISO8583.packToHex(model8583Request)
+            return model8583Request
         } catch (e: Exception) {
             LogUtils.e(TAG, "Error creating ISO message", e)
             return null
@@ -390,7 +386,7 @@ object IsoUtils {
         }
     }
 
-    fun generateIsoCreatePIN(svpCardNumber: String): String? {
+    fun generateIsoCreatePIN(svpCardNumber: String): Model8583Request? {
         try {
             val model8583Request = generateBaseRequest("0100")
 
@@ -463,15 +459,14 @@ object IsoUtils {
             )
 
             model8583Request.setSpecs(getSpecs())
-            LogUtils.d(TAG, "ISO Data: ${Gson().toJson(ISO8583.packToHex(model8583Request))}")
-            return ISO8583.packToHex(model8583Request)
+            return model8583Request
         } catch (e: Exception) {
             LogUtils.e(TAG, "Error creating ISO Create PIN message", e)
             return null
         }
     }
 
-    fun generateIsoReissuePIN(svpCardNumber: String): String? {
+    fun generateIsoReissuePIN(svpCardNumber: String): Model8583Request? {
         try {
             val model8583Request = generateBaseRequest("0100")
 
@@ -544,8 +539,7 @@ object IsoUtils {
             )
 
             model8583Request.setSpecs(getSpecs())
-            LogUtils.d(TAG, "ISO Data: ${Gson().toJson(ISO8583.packToHex(model8583Request))}")
-            return ISO8583.packToHex(model8583Request)
+            return model8583Request
         } catch (e: Exception) {
             LogUtils.e(TAG, "Error creating ISO Create PIN message", e)
             return null
@@ -594,7 +588,7 @@ object IsoUtils {
         }
     }
 
-    fun generateIsoChangePIN(): String? {
+    fun generateIsoChangePIN(): Model8583Request? {
         try {
             val model8583Request = generateBaseRequest("0100")
 
@@ -653,7 +647,7 @@ object IsoUtils {
                 Model8583Bit(
                     48,
                     "Add. Data - Private",
-                    ISO8583.LEN_4HALF,
+                    ISO8583.LEN_4FULL,
                     pinBlockConfirm
                 )
             )
@@ -667,8 +661,7 @@ object IsoUtils {
             )
 
             model8583Request.setSpecs(getSpecs())
-            LogUtils.d(TAG, "ISO Data: ${Gson().toJson(ISO8583.packToHex(model8583Request))}")
-            return ISO8583.packToHex(model8583Request)
+            return model8583Request
         } catch (e: Exception) {
             LogUtils.e(TAG, "Error creating ISO Create PIN message", e)
             return null
@@ -696,7 +689,7 @@ object IsoUtils {
         }
     }
 
-    fun generateIsoVerificationPIN(): String? {
+    fun generateIsoVerificationPIN(): Model8583Request? {
         try {
             val model8583Request = generateBaseRequest("0100")
 
@@ -761,8 +754,7 @@ object IsoUtils {
             )
 
             model8583Request.setSpecs(getSpecs())
-            LogUtils.d(TAG, "ISO Data: ${Gson().toJson(ISO8583.packToHex(model8583Request))}")
-            return ISO8583.packToHex(model8583Request)
+            return model8583Request
         } catch (e: Exception) {
             LogUtils.e(TAG, "Error creating ISO Create PIN message", e)
             return null

@@ -60,12 +60,15 @@ import com.app.edcpoc.utils.Constants.psamProfile
 import com.app.edcpoc.utils.Constants.sign64
 import com.app.edcpoc.utils.Constants.signBites
 import com.app.edcpoc.utils.Constants.signatureBitmap
+import com.app.edcpoc.utils.Constants.step
+import com.app.edcpoc.utils.Constants.track2data
 import com.app.edcpoc.utils.CoreUtils.initializeEmvUtil
 import com.app.edcpoc.utils.DialogUtil.createEmvDialog
 import com.app.edcpoc.utils.EktpUtil
 import com.app.edcpoc.utils.EktpUtil.checkPsamConfiguration
 import com.app.edcpoc.utils.EktpUtil.setData
 import com.app.edcpoc.utils.EktpUtil.updateFingerprintImage
+import com.app.edcpoc.utils.IsoManager.ISO8583
 import com.app.edcpoc.utils.KtpReaderManager.createFingerDialog
 import com.app.edcpoc.utils.KtpReaderManager.createReadingDialog
 import com.app.edcpoc.utils.KtpReaderManager.isMatchedFingerprint
@@ -122,16 +125,17 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        if (PreferenceManager.getOfficerCardNum(this) == null) {
-            startActivity(Intent(this, OfficerActivity::class.java))
-            finish()
-            return
-        }
-        if (PreferenceManager.getSvpCardNum(this) == null) {
-            startActivity(Intent(this, SvpActivity::class.java))
-            finish()
-            return
-        }
+        // comment untuk poc bsi doang
+//        if (PreferenceManager.getOfficerCardNum(this) == null) {
+//            startActivity(Intent(this, OfficerActivity::class.java))
+//            finish()
+//            return
+//        }
+//        if (PreferenceManager.getSvpCardNum(this) == null) {
+//            startActivity(Intent(this, SvpActivity::class.java))
+//            finish()
+//            return
+//        }
         enableEdgeToEdge()
 
         isoViewModel.emvUtil = initializeEmvUtil(this@MainActivity, this)
@@ -493,6 +497,7 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
     }
 
     // EmvUtilInterface implementation
+    // comment only for integrate bsi
     override fun onDoSomething(context: Context) {
         when(commandValue) {
              LOGOFF -> {
@@ -502,18 +507,42 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
                      Toast.makeText(context, "SVP Card Number not found.", Toast.LENGTH_LONG).show()
                      return
                  }
+                val proc = when(commandValue) {
+                    "startDate" -> "910000"
+                    "closeDate" -> "920000"
+                    else -> "000000"
+                }
                 val iso = IsoUtils.generateIsoLogonLogoff("0800", "820000", officerCardNum)
-                isoViewModel.isoSendMessage(commandValue, StringUtils.convertHexToBytes(iso))
+                val pack = ISO8583.packToHex(iso)
+                try {
+                    val result = ISO8583.unpackFromHex(pack, iso)
+                    LogUtils.d(TAG, "Unpacked ISO8583 Message: ${Gson().toJson(result)}")
+                } catch (e: Exception) {
+                    LogUtils.e(TAG, "Error unpacking ISO8583 message: ${e.printStackTrace()}")
+                }
+
+                isoViewModel.isoSendMessage(context, commandValue, StringUtils.convertHexToBytes(pack))
             }
             CREATE_PIN -> {
                 val svpCardNumber = PreferenceManager.getSvpCardNum(context)
                 if (svpCardNumber == null) {
                     LogUtils.e(TAG, "SVP Card Number is null")
                     Toast.makeText(context, "SVP Card Number not found.", Toast.LENGTH_LONG).show()
+                }
+                if (step == 1) {
+                    LogUtils.i(TAG, "Creating PIN Step 1")
+                    LogUtils.i(TAG, "commandValue=$commandValue")
+                    LogUtils.i(TAG, "Opening EMV Dialog for Create PIN Step 1")
+                    isoViewModel.emvUtil?.let { createEmvDialog(this@MainActivity, it, title = "Authorisation", message = "Insert or Swipe Authorisation Card") }
+                    step++
                     return
                 }
-                val iso = IsoUtils.generateIsoCreatePIN(svpCardNumber)
-                isoViewModel.isoSendMessage(commandValue, StringUtils.convertHexToBytes(iso))
+
+                step = 1
+                val iso = IsoUtils.generateIsoCreatePIN(track2data!!)
+                val pack = ISO8583.packToHex(iso)
+
+                isoViewModel.isoSendMessage(context, commandValue, StringUtils.convertHexToBytes(pack))
             }
             REISSUE_PIN -> {
                 val svpCardNumber = PreferenceManager.getSvpCardNum(context)
@@ -522,17 +551,33 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
                     Toast.makeText(context, "SVP Card Number not found.", Toast.LENGTH_LONG).show()
                     return
                 }
+                if (step == 1) {
+                    LogUtils.i(TAG, "Reissuing PIN Step 1")
+                    LogUtils.i(TAG, "commandValue=$commandValue")
+                    LogUtils.i(TAG, "Opening EMV Dialog for Reissue PIN Step 1")
+                    isoViewModel.emvUtil?.let { createEmvDialog(this@MainActivity, it, title = "Authorisation", message = "Insert or Swipe Authorisation Card") }
+                    step++
+                    return
+                }
 
-                val iso = IsoUtils.generateIsoReissuePIN(svpCardNumber)
-                isoViewModel.isoSendMessage(commandValue, StringUtils.convertHexToBytes(iso))
+                step = 1
+                val iso = IsoUtils.generateIsoReissuePIN(track2data!!)
+                val pack = ISO8583.packToHex(iso)
+
+                isoViewModel.isoSendMessage(context, commandValue, StringUtils.convertHexToBytes(pack))
             }
-            VERIFY_PIN -> {
+            "verifyPIN" -> {
                 val iso = IsoUtils.generateIsoVerificationPIN()
-                isoViewModel.isoSendMessage(commandValue, StringUtils.convertHexToBytes(iso))
+                val pack = ISO8583.packToHex(iso)
+
+                isoViewModel.isoSendMessage(context, commandValue, StringUtils.convertHexToBytes(pack))
             }
             CHANGE_PIN -> {
                 val iso = IsoUtils.generateIsoChangePIN()
-                isoViewModel.isoSendMessage(commandValue, StringUtils.convertHexToBytes(iso))
+                val pack = ISO8583.packToHex(iso)
+
+                isoViewModel.isoSendMessage(context, commandValue, StringUtils.convertHexToBytes(pack))
+
             }
         }
         LogUtils.i("AuthViewModel", "commandValue=$commandValue")
@@ -561,22 +606,24 @@ fun EDCHomeApp(
         }
     }
 
+    fun onSettingClick() {
+        context.startActivity(Intent(context, SettingsActivity::class.java))
+    }
+
     when (currentScreen) {
         "home" -> EDCHomeScreen(
             onTransaksiClick = { isoViewModel.emvUtil?.let { createEmvDialog(context, it)} },
             onEnrollmentClick = { onEnrollmentClick(it) },
-            onManajemenPINClick = { isoViewModel.emvUtil?.let { createEmvDialog(context, it)} },
-            onSessionManagementClick = { isoViewModel.emvUtil?.let { createEmvDialog(context, it)} },
+            onManajemenPINClick = { isoViewModel.emvUtil?.let { createEmvDialog(context, it, message = "Insert or Swipe Customer Card")} },
+            onSessionManagementClick = { isoViewModel.emvUtil?.let { createEmvDialog(context, it, message = "Insert or Swipe Supervisor Card")} },
+            onSecurityClick = { isoViewModel.emvUtil?.let { createEmvDialog(context, it, message = "Insert or Swipe Officer Card")} },
             onLogoutClick = {
                 commandValue = LOGOFF
                 isoViewModel.emvUtil?.let { createEmvDialog(context, it) }
             },
             dialogState = isoViewModel.dialogState.collectAsState().value,
-            dismissDialog = { isoViewModel.dismissDialog() }
+            dismissDialog = { isoViewModel.dismissDialog() },
+            onClickSettings = { onSettingClick() }
         )
     }
-}
-
-object DialogTriggerHelper {
-    var dialogTrigger: ((KtpDataModel) -> Unit)? = null
 }

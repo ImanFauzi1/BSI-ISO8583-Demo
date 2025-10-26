@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -14,11 +15,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import com.app.edcpoc.R
+import com.app.edcpoc.ui.theme.EdcpocTheme
+import com.app.edcpoc.ui.viewmodel.DialogState
 
 @Composable
 fun HeaderSection(
-    onLogoutClick: () -> Unit
+    onLogoutClick: () -> Unit,
+    onClickSettings: () -> Unit
 ) {
     Box(
         modifier = Modifier
@@ -43,8 +48,16 @@ fun HeaderSection(
         Row(
             modifier = Modifier
                 .align(Alignment.TopEnd),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
         ) {
+            IconButton(onClick = onClickSettings) {
+                Icon(
+                    imageVector = Icons.Default.Settings,
+                    contentDescription = "Settings",
+                    tint = Color.White
+                )
+            }
             IconButton(onClick = onLogoutClick) {
                 Icon(
                     imageVector = Icons.Default.ExitToApp,
@@ -53,5 +66,16 @@ fun HeaderSection(
                 )
             }
         }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+fun HeaderSectionPreview() {
+    EdcpocTheme {
+        HeaderSection(
+            onLogoutClick = {},
+            onClickSettings = {}
+        )
     }
 }

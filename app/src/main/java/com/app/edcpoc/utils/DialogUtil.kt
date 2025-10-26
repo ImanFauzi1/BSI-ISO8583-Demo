@@ -4,17 +4,16 @@ import android.app.ProgressDialog
 import android.content.Context
 import android.content.DialogInterface
 import com.app.edcpoc.utils.Constants.cardType
-import com.zcs.sdk.util.StringUtils
 
 object DialogUtil {
     private const val TAG = "DialogUtil"
 
     fun createDialog(
         context: Context,
-        title: String = "Processing...",
+        title: String? = "Processing...",
         message: String?,
-        showListener: (dialog: ProgressDialog, dialog1: DialogInterface) -> Unit,
-        cancelListener: (dialog: ProgressDialog, dialog1: DialogInterface) -> Unit
+        showListener: (ProgressDialog, DialogInterface) -> Unit,
+        cancelListener: (ProgressDialog, DialogInterface) -> Unit
     ): ProgressDialog {
         val dialog = ProgressDialog(context)
         dialog.setTitle(title)
@@ -27,10 +26,10 @@ object DialogUtil {
         return dialog
     }
 
-    fun createEmvDialog(context: Context, emvUtil: EmvUtil, message: String? = "Reading Card, Please wait...") {
+    fun createEmvDialog(context: Context, emvUtil: EmvUtil, title: String? = "Insert Card", message: String? = "Insert or Swipe Card") {
         createDialog(
             context = context,
-            title = "Reading...",
+            title = title,
             message = message,
             showListener = { dialog, dialog1 ->
                 LogUtils.d(TAG, "createEmvDialog: showListener")

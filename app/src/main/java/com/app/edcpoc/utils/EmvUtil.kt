@@ -231,7 +231,23 @@ class EmvUtil(private val context: Context) {
             Log.d(TAG, "expiredDate:  $expiredDate")
             Log.d(TAG, "cardNo:  $cardNum")
 
-            track2data = tk2
+            when(commandValue) {
+                "createPIN", "reissuePIN" -> {
+                    if (step == 2) {
+                        track2data = tk2
+                        Log.d("Debug", "step=$step;commandValue=$commandValue;track2datasvp=$track2data")
+                        inputPIN()
+                        return
+                    }
+                    inputNewPIN()
+                }
+                else -> {
+                    track2data = tk2
+                    track2hex = StringUtils.convertStringToHex(tk2)
+                    val pinResult = inputPIN()
+                    Log.d(TAG, "Input PIN result: $pinResult")
+                }
+            }
 
             track2hex = StringUtils.convertStringToHex(tk2)
 
@@ -253,6 +269,7 @@ class EmvUtil(private val context: Context) {
 //                else -> null
 //            }
         } else {
+            callback?.onError("Mag card read error: ${magReadData.resultcode}")
             Log.e(TAG, "Mag card read error:  " + magReadData.resultcode)
         }
     }
@@ -605,7 +622,7 @@ class EmvUtil(private val context: Context) {
 
         when(commandValue) {
             CHANGE_PIN -> mPinPadManager?.setInputPinTitle("Masukkan PIN anda")
-            CREATE_PIN, REISSUE_PIN -> mPinPadManager?.setInputPinTitle("Masukkan PIN SVP")
+            CREATE_PIN, REISSUE_PIN -> mPinPadManager?.setInputPinTitle("Masukkan PIN Supervisor")
             else -> mPinPadManager?.setInputPinTitle("Masukkan PIN anda")
         }
         return inputPINResult
