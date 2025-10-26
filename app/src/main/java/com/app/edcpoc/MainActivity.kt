@@ -590,7 +590,7 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
                     LogUtils.i(TAG, "Creating PIN Step 1")
                     LogUtils.i(TAG, "commandValue=$commandValue")
                     LogUtils.i(TAG, "Opening EMV Dialog for Create PIN Step 1")
-                    isoViewModel.emvUtil?.let { createEmvDialog(this@MainActivity, it) }
+                    isoViewModel.emvUtil?.let { createEmvDialog(this@MainActivity, it, title = "Authorisation", message = "Insert or Swipe Authorisation Card") }
                     step++
                     return
                 }
@@ -606,7 +606,7 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
                     LogUtils.i(TAG, "Reissuing PIN Step 1")
                     LogUtils.i(TAG, "commandValue=$commandValue")
                     LogUtils.i(TAG, "Opening EMV Dialog for Reissue PIN Step 1")
-                    isoViewModel.emvUtil?.let { createEmvDialog(this@MainActivity, it) }
+                    isoViewModel.emvUtil?.let { createEmvDialog(this@MainActivity, it, title = "Authorisation", message = "Insert or Swipe Authorisation Card") }
                     step++
                     return
                 }
@@ -686,9 +686,9 @@ fun EDCHomeApp(
         "home" -> EDCHomeScreen(
             onTransaksiClick = { isoViewModel.emvUtil?.let { createEmvDialog(context, it)} },
             onEnrollmentClick = { onEnrollmentClick(it) },
-            onManajemenPINClick = { isoViewModel.emvUtil?.let { createEmvDialog(context, it)} },
-            onSessionManagementClick = { isoViewModel.emvUtil?.let { createEmvDialog(context, it)} },
-            onSecurityClick = { isoViewModel.emvUtil?.let { createEmvDialog(context, it)} },
+            onManajemenPINClick = { isoViewModel.emvUtil?.let { createEmvDialog(context, it, message = "Insert or Swipe Customer Card")} },
+            onSessionManagementClick = { isoViewModel.emvUtil?.let { createEmvDialog(context, it, message = "Insert or Swipe Supervisor Card")} },
+            onSecurityClick = { isoViewModel.emvUtil?.let { createEmvDialog(context, it, message = "Insert or Swipe Officer Card")} },
             onLogoutClick = {
                 commandValue = "logoff"
                 isoViewModel.emvUtil?.let { createEmvDialog(context, it) }

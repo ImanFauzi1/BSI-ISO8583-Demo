@@ -606,7 +606,7 @@ class EmvUtil(private val context: Context) {
 
         when(commandValue) {
             "changePIN" -> mPinPadManager?.setInputPinTitle("Masukkan PIN anda")
-            "createPIN", "reissuePIN" -> mPinPadManager?.setInputPinTitle("Masukkan PIN SVP")
+            "createPIN", "reissuePIN" -> mPinPadManager?.setInputPinTitle("Masukkan PIN Supervisor")
             else -> mPinPadManager?.setInputPinTitle("Masukkan PIN anda")
         }
         return inputPINResult
