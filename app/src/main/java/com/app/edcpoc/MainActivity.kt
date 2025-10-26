@@ -77,6 +77,7 @@ import com.app.edcpoc.utils.Constants.END_DATE
 import com.app.edcpoc.utils.Constants.FINGERPRINT_MESSAGE
 import com.app.edcpoc.utils.Constants.START_DATE
 import com.app.edcpoc.utils.Constants.VERIFY_PIN
+import com.app.edcpoc.utils.EmvUtil
 import com.idpay.victoriapoc.utils.IsoManagement.IsoUtils.generateIsoStartEndDate
 import com.simo.ektp.EktpSdkZ90
 import com.simo.ektp.GlobalVars.VALUE_AGAMA
@@ -132,7 +133,10 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
         }
         enableEdgeToEdge()
 
-        isoViewModel.emvUtil = initializeEmvUtil(this@MainActivity, this)
+        isoViewModel.emvUtil = EmvUtil()
+        isoViewModel.emvUtil?.initialize()
+        isoViewModel.emvUtil?.emvOpen()
+        isoViewModel.emvUtil?.setCallback(this)
 
         handlePermissions()
         checkPsamConfiguration(this@MainActivity)

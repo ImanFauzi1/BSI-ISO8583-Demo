@@ -10,11 +10,11 @@ object CoreUtils {
         val number = rnd.nextInt(1_000_000)
         return String.format("%06d", number)
     }
-    fun initializeEmvUtil(context: Context, emvUtilInterface: EmvUtilInterface): EmvUtil {
-        return EmvUtil(context.applicationContext).apply {
-            initialize()
-            emvOpen()
-            setCallback(emvUtilInterface)
-        }
+    fun initializeEmvUtil(emvUtilInterface: EmvUtilInterface): EmvUtil {
+        val emvUtil = EmvUtil()
+        emvUtil.initialize()
+        emvUtil.emvOpen()
+        emvUtil.setCallback(emvUtilInterface)
+        return emvUtil
     }
 }

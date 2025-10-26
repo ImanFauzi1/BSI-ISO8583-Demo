@@ -72,13 +72,13 @@ import com.zcs.sdk.util.StringUtils
 import java.io.File
 import java.io.IOException
 import java.util.Locale
-import kotlin.collections.set
+import javax.inject.Inject
 
 /**
- * Utility class for EMV operations. Pass an Activity or Fragment context if you need to show dialogs or UI elements.
+ * Utility class for EMV operations. Pass an Activity or Fragment appContext if you need to show dialogs or UI elements.
  * For non-UI operations, applicationContext will be used automatically.
  */
-class EmvUtil(private val context: Context) {
+class EmvUtil @Inject constructor() {
     private val TAG = "EmvUtil"
     private val appContext = MyApp.getContext()
     private var dialog: ProgressDialog? = null
@@ -98,15 +98,6 @@ class EmvUtil(private val context: Context) {
         mRfCard = mCardReadManager.rfCard
         cardInfoEntity = CardInfoEntity()
         emvHandler = EmvHandler.getInstance()
-    }
-
-    private fun showProgressDialog(message: String) {
-        // Use passed context for UI elements
-        dialog = ProgressDialog(context).apply {
-            setMessage(message)
-            setCancelable(false)
-            show()
-        }
     }
 
     fun emvOpen() {
@@ -348,22 +339,35 @@ class EmvUtil(private val context: Context) {
                 }
 
                 Log.d(TAG, "onInputPIN")
-                val iRet = when (commandValue) {
-                    "cardActivation", "IBMBRegistration", "openAccount", "resetPIN" -> {
+                val iRet = when(commandValue) {
+                    CREATE_PIN, REISSUE_PIN -> {
+                        Log.d("Debug", "onInputPIN commandValue=$commandValue;step=$step")
+                        if (step == 2) {
+                            inputPIN()
+                        } else {
+                            inputNewPIN()
+                        }
+                    }
+                    else -> {
                         Log.d("Debug", "onInputPIN commandValue=$commandValue")
-                        callback?.onDoSomething(appContext)
-                        EmvResult.EMV_OK
-                    }
-                    "InquiryBalance", "transaction", CREATE_PIN, "registrasiPIN", "Transfer", CHANGE_PIN -> {
-                        Log.d("Debug", "commandValue=$commandValue")
                         inputPIN()
                     }
-                    START_DATE, END_DATE, LOGON, LOGOFF -> {
-                        Log.d("Debug", "commandValue=$commandValue")
-                        inputPIN()
-                    }
-                    else -> null
                 }
+//                val iRet = when (commandValue) {
+//                    "cardActivation", "IBMBRegistration", "openAccount", "resetPIN" -> {
+//                        Log.d("Debug", "onInputPIN commandValue=$commandValue")
+//                        callback?.onDoSomething(appContext)
+//                    }
+//                    "InquiryBalance", "transaction", CREATE_PIN, "registrasiPIN", "Transfer", CHANGE_PIN -> {
+//                        Log.d("Debug", "commandValue=$commandValue")
+//                        inputPIN()
+//                    }
+//                    START_DATE, END_DATE, LOGON, LOGOFF -> {
+//                        Log.d("Debug", "commandValue=$commandValue")
+//                        inputPIN()
+//                    }
+//                    else -> null
+//                }
 //                var iRet: Int = inputPIN(pinType)
 
                 //                iRet = inputPIN();
@@ -374,7 +378,7 @@ class EmvUtil(private val context: Context) {
                     emvHandler?.setPinBlock(mPinBlock)
                 }
 //                return iRet
-                return iRet ?: 0
+                return (iRet ?: 0) as Int
             }
 
             override fun onCertVerify(certType: Int, certNo: String): Int {
@@ -535,7 +539,7 @@ class EmvUtil(private val context: Context) {
     fun inputPIN(): Int {
 
         mPinPadManager?.inputOnlinePin(
-            context,
+            appContext,
             6.toByte(),
             12.toByte(),
             60,
