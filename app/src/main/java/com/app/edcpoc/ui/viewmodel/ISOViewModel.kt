@@ -8,6 +8,7 @@ import com.app.edcpoc.utils.EmvUtil
 import com.app.edcpoc.utils.LogUtils
 import com.idpay.victoriapoc.utils.IsoManagement.IsoClient
 import com.idpay.victoriapoc.utils.IsoManagement.IsoUtils.parseIsoResponse
+import com.zcs.sdk.util.StringUtils
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -30,9 +31,15 @@ class ISOViewModel : ViewModel() {
             }
 
             Thread.sleep(1000)
-            _uiState.update { it.copy(stateType = commandValue, cardNum = cardNum, errorMessage = null) }
+            _uiState.update { it.copy(stateType = commandValue, cardNum = cardNum, iso = StringUtils.convertBytesToHex(isoBuilder), errorMessage = null) }
 
-            IsoClient.sendMessage(isoBuilder) {response ->
+            IsoClient.sendMessage(isoBuilder) { response, error ->
+                if (error != null) {
+                    LogUtils.e(TAG, "ISO $type Error: $error")
+                    _uiState.update { it.copy(errorMessage = "Gagal kirim ISO $type: $error") }
+                    return@sendMessage
+                }
+
                 LogUtils.i(TAG, "ISO $type Response: $response")
 
                 if (response == null) {
@@ -51,7 +58,7 @@ class ISOViewModel : ViewModel() {
                     else -> "ISO sukses dikirim"
                 }
                 val detail = fields.entries.joinToString("\n") { "${it.key}: ${it.value}" }
-                _uiState.update { it.copy(cardNum = cardNum, errorMessage = null)  }
+                _uiState.update { it.copy(cardNum = cardNum, iso = detail, errorMessage = null)  }
 
                 LogUtils.i(TAG, "ISO $type Successfully sent message.")
             }
@@ -76,5 +83,6 @@ data class SvpUiState(
     val isLoading: Boolean = false,
     val stateType: String? = null,
     val cardNum: String? = null,
+    val iso: String? = null,
     val errorMessage: String? = null
 )

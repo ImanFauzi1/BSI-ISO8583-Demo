@@ -55,7 +55,7 @@
             android:name=".KtpPreviewActivity"
             android:exported="false" />
         <activity
-            android:name=".Settings"
+            android:name=".SettingsActivity"
             android:exported="false" />
     </application>
 

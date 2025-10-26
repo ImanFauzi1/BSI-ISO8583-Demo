@@ -69,6 +69,57 @@ fun TransaksiCard(onTransaksiClick: () -> Unit) {
 }
 
 @Composable
+fun SecurityCard(onSecurityClick: () -> Unit) {
+    Column(
+        modifier = Modifier.padding(16.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                imageVector = Icons.Default.Security,
+                contentDescription = null,
+                tint = Color(0xFFBBDEFB),
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(
+                text = "SECURITY",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF212121)
+            )
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            ActionButton(
+                text = "Logon",
+                icon = Icons.Default.Aod,
+                modifier = Modifier.weight(1f),
+                iconColor = Color(0xFFBBDEFB),
+                onClick = {
+                    commandValue = "logon"
+                    onSecurityClick()
+                }
+            )
+            ActionButton(
+                text = "Logoff",
+                icon = Icons.Default.Aod,
+                modifier = Modifier.weight(1f),
+                iconColor = Color(0xFFBBDEFB),
+                onClick = {
+                    commandValue = "logoff"
+                    onSecurityClick()
+                }
+            )
+        }
+    }
+}
+
+@Composable
 fun EnrollmentCard(onEnrollmentClick: (String) -> Unit) {
     Column(
         modifier = Modifier.padding(16.dp)
@@ -209,55 +260,49 @@ fun ManajemenPINCard(onManajemenPINClick: () -> Unit) {
 
 @Composable
 fun SessionManagementCard(onSessionManagementClick: () -> Unit) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(12.dp),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    Column(
+        modifier = Modifier.padding(16.dp)
     ) {
-        Column(
-            modifier = Modifier.padding(16.dp)
+        Row(
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Default.DateRange,
-                    contentDescription = null,
-                    tint = Color(0xFFBBDEFB),
-                    modifier = Modifier.size(24.dp)
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(
-                    text = "SESSION MANAGEMENT",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF212121)
-                )
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                ActionButton(
-                    text = "Start Date",
-                    icon = Icons.Default.DateRange,
-                    modifier = Modifier.weight(1f),
-                    onClick = {
-                        commandValue = "startDate"
-                        onSessionManagementClick()
-                    }
-                )
-                ActionButton(
-                    text = "Close Date",
-                    icon = Icons.Default.DateRange,
-                    modifier = Modifier.weight(1f),
-                    onClick = {
-                        commandValue = "closeDate"
-                        onSessionManagementClick()
-                    }
-                )
-            }
+            Icon(
+                imageVector = Icons.Default.DateRange,
+                contentDescription = null,
+                tint = Color(0xFFBBDEFB),
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(modifier = Modifier.width(12.dp))
+            Text(
+                text = "SESSION MANAGEMENT",
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color(0xFF212121)
+            )
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            ActionButton(
+                text = "Start Date",
+                icon = Icons.Default.DateRange,
+                modifier = Modifier.weight(1f),
+                onClick = {
+                    commandValue = "startDate"
+                    onSessionManagementClick()
+                }
+            )
+            ActionButton(
+                text = "Close Date",
+                icon = Icons.Default.DateRange,
+                modifier = Modifier.weight(1f),
+                onClick = {
+                    commandValue = "closeDate"
+                    onSessionManagementClick()
+                }
+            )
         }
     }
 }

@@ -3,7 +3,6 @@ package com.app.edcpoc
 import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
-import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.util.Base64
 import android.widget.Toast
@@ -11,27 +10,12 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.app.edcpoc.ui.theme.EdcpocTheme
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Lock
-import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.ui.text.style.TextAlign
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
@@ -44,21 +28,16 @@ import com.app.edcpoc.ui.viewmodel.ApiViewModel
 import com.app.edcpoc.ui.viewmodel.ISOViewModel
 import com.app.edcpoc.ui.viewmodel.SvpViewModel
 import com.app.edcpoc.utils.Constants.FINGERPRINT_MESSAGE
-import com.app.edcpoc.utils.Constants.base64Finger
 import com.app.edcpoc.utils.Constants.cardNum
 import com.app.edcpoc.utils.Constants.commandValue
 import com.app.edcpoc.utils.Constants.feature64Kanan
-import com.app.edcpoc.utils.Constants.isTimeout
-import com.app.edcpoc.utils.Constants.mScanner
 import com.app.edcpoc.utils.Constants.track2data
 import com.app.edcpoc.utils.CoreUtils.initializeEmvUtil
 import com.app.edcpoc.utils.DialogUtil.createEmvDialog
 import com.app.edcpoc.utils.EktpUtil
-import com.app.edcpoc.utils.EktpUtil.updateFingerprintImage
 import com.app.edcpoc.utils.KtpReaderManager.createFingerDialog
 import com.app.edcpoc.utils.LogUtils
 import com.idpay.victoriapoc.utils.IsoManagement.IsoUtils.generateIsoStartEndDate
-import com.idpay.victoriapoc.utils.fingerprint.FingerPrintTask
 import com.simo.ektp.GlobalVars.fmd
 import com.zcs.sdk.util.StringUtils
 import kotlinx.coroutines.launch
@@ -108,7 +87,7 @@ class SvpActivity : ComponentActivity(), EmvUtilInterface {
                         },
                         onError = {  },
                         onSettingClick = {
-                            startActivity(Intent(this@SvpActivity, Settings::class.java))
+                            startActivity(Intent(this@SvpActivity, SettingsActivity::class.java))
                         }
                     )
                 }
@@ -200,7 +179,7 @@ class SvpActivity : ComponentActivity(), EmvUtilInterface {
 //                saveSession()
 
                 val iso = generateIsoStartEndDate("0800", "910000")
-                ISOViewModel.isoSendMessage(commandValue, StringUtils.convertHexToBytes(iso))
+//                ISOViewModel.isoSendMessage(commandValue, StringUtils.convertHexToBytes(iso))
             } catch (e: Exception) {
                 LogUtils.e(TAG, "Fingerprint Matching Error: ${e.printStackTrace()}")
             }

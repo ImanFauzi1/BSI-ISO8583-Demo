@@ -106,14 +106,14 @@ class OfficerActivity : ComponentActivity(), EmvUtilInterface {
 
     override fun onDoSomething(context: Context) {
         when(commandValue) {
-            "logon" -> {
-                val iso = IsoUtils.generateIsoLogonLogoff("0800", "810000", track2data!!)
-                ISOViewModel.isoSendMessage(commandValue, StringUtils.convertHexToBytes(iso))
-            }
-            "closeDate" -> {
-                val iso = generateIsoStartEndDate("0800", "920000")
-                ISOViewModel.isoSendMessage(commandValue, StringUtils.convertHexToBytes(iso))
-            }
+//            "logon" -> {
+//                val iso = IsoUtils.generateIsoLogonLogoff("0800", "810000", track2data!!)
+//                ISOViewModel.isoSendMessage(commandValue, StringUtils.convertHexToBytes(iso))
+//            }
+//            "closeDate" -> {
+//                val iso = generateIsoStartEndDate("0800", "920000")
+//                ISOViewModel.isoSendMessage(commandValue, StringUtils.convertHexToBytes(iso))
+//            }
         }
     }
 

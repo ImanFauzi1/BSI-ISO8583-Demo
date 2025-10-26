@@ -9,7 +9,7 @@ import java.net.Socket
 object IsoClient {
     private val TAG = "ISOClient"
 
-    fun sendMessage(isoMsg: ByteArray, onResult: (Map<String, Any>?) -> Unit) {
+    fun sendMessage(isoMsg: ByteArray, onResult: (Map<String, Any>?, error: String?) -> Unit) {
         Thread {
             var socket: Socket? = null
             var outStream: DataOutputStream? = null
@@ -45,10 +45,11 @@ object IsoClient {
                         "hex" to responseBytes.joinToString("") { "%02X".format(it) },
                         "string" to stringIso,
                         "parsed" to (Iso8583Packer.unpack(responseBytes) ?: emptyMap<String, Any>())
-                    )
+                    ),
+                    null
                 )
             } catch (e: Exception) {
-                onResult(null)
+                onResult(null, e.message)
                 LogUtils.e(TAG, "Error sending ISO message: ${e.message}")
                 LogUtils.e(TAG, "Stacktrace: ${e.stackTraceToString()}")
             } finally {

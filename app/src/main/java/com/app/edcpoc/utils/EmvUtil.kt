@@ -223,17 +223,24 @@ class EmvUtil(private val context: Context) {
             Log.d(TAG, "expiredDate:  $expiredDate")
             Log.d(TAG, "cardNo:  $cardNum")
 
-            track2data = tk2
+            when(commandValue) {
+                "createPIN", "reissuePIN" -> {
+                    if (step == 2) {
+                        track2data = tk2
+                        Log.d("Debug", "step=$step;commandValue=$commandValue;track2datasvp=$track2data")
+                        inputPIN()
+                        return
+                    }
+                    inputNewPIN()
+                }
+                else -> {
+                    track2data = tk2
+                    track2hex = StringUtils.convertStringToHex(tk2)
+                    val pinResult = inputPIN()
+                    Log.d(TAG, "Input PIN result: $pinResult")
+                }
+            }
 
-            track2hex = StringUtils.convertStringToHex(tk2)
-
-            Log.d("Debug", "commandValue=$commandValue")
-//            when(commandValue) {
-//                "startDate", "closeDate", "logon", "logoff", "verifyPIN" -> {
-//                }
-//            }
-            val pinResult = inputPIN()
-            Log.d(TAG, "Input PIN result: $pinResult")
 //            when (commandValue) {
 //                "cardActivation", "IBMBRegistration", "openAccount", "resetPIN" -> {
 //                    callback?.onDoSomething(appContext)
@@ -245,6 +252,7 @@ class EmvUtil(private val context: Context) {
 //                else -> null
 //            }
         } else {
+            callback?.onError("Mag card read error: ${magReadData.resultcode}")
             Log.e(TAG, "Mag card read error:  " + magReadData.resultcode)
         }
     }
@@ -576,7 +584,7 @@ class EmvUtil(private val context: Context) {
 //                            "createPIN", "registrasiPIN", "changePIN" -> inputNewPIN()
 //                        }
                         when(commandValue) {
-                            "startDate", "closeDate", "logon", "logoff", "verifyPIN" -> {
+                            "startDate", "closeDate", "logon", "logoff", "verifyPIN", "createPIN", "reissuePIN" -> {
                                 callback?.onDoSomething(appContext)
                             }
 //                            "createPIN", "reissuePIN" -> {
@@ -588,7 +596,8 @@ class EmvUtil(private val context: Context) {
 //                                }
 //                                callback?.onDoSomething(appContext)
 //                            }
-                            "changePIN", "createPIN", "reissuePIN" -> inputNewPIN()
+//                            "changePIN", "createPIN", "reissuePIN" -> inputNewPIN()
+                            "changePIN" -> inputNewPIN()
                         }
                     }
                 }
@@ -667,7 +676,7 @@ class EmvUtil(private val context: Context) {
 
         when(commandValue) {
             "changePIN" -> mPinPadManager?.setInputPinTitle("Masukkan PIN baru anda")
-            "createPIN", "registrasiPIN" -> mPinPadManager?.setInputPinTitle("Masukkan PIN baru anda")
+            "createPIN", "reissuePIN" -> mPinPadManager?.setInputPinTitle("Masukkan PIN baru anda")
             else -> mPinPadManager?.setInputPinTitle("Masukkan PIN baru anda")
         }
 //        if (commandValue == "IBMBRegistration") {

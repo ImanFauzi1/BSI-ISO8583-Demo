@@ -16,6 +16,8 @@ import com.app.edcpoc.ui.viewmodel.DialogState
 fun EDCHomeScreen(
     onTransaksiClick: () -> Unit,
     onEnrollmentClick: (String) -> Unit,
+    onSecurityClick: () -> Unit,
+    onClickSettings: () -> Unit,
     onManajemenPINClick: () -> Unit,
     onSessionManagementClick: () -> Unit,
     onLogoutClick: () -> Unit,
@@ -44,7 +46,8 @@ fun EDCHomeScreen(
     ) {
         item {
             HeaderSection(
-                onLogoutClick = onLogoutClick
+                onLogoutClick = onLogoutClick,
+                onClickSettings = onClickSettings
             )
         }
         item {
@@ -53,25 +56,33 @@ fun EDCHomeScreen(
 //        item {
 //            TransaksiCard(onTransaksiClick = onTransaksiClick)
 //        }
+//        item {
+//            Spacer(modifier = Modifier.height(16.dp))
+//        }
+//        item {
+//            EnrollmentCard(onEnrollmentClick = onEnrollmentClick)
+//        }
         item {
-            Spacer(modifier = Modifier.height(16.dp))
+            SessionManagementCard { onSessionManagementClick() }
         }
         item {
-            EnrollmentCard(onEnrollmentClick = onEnrollmentClick)
+            Spacer(modifier = Modifier.height(32.dp))
         }
         item {
-            Spacer(modifier = Modifier.height(16.dp))
+            SecurityCard { onSecurityClick() }
+        }
+        item {
+            Spacer(modifier = Modifier.height(32.dp))
         }
         item {
             ManajemenPINCard(onManajemenPINClick = onManajemenPINClick)
         }
-        // SessionManagementCard bisa tetap tampil jika perlu, atau dihapus jika tidak ada user
         item {
             Spacer(modifier = Modifier.height(16.dp))
         }
-        item {
-            FooterSection()
-        }
+//        item {
+//            FooterSection()
+//        }
     }
 }
 
@@ -86,7 +97,9 @@ fun EDCHomeScreenPreview() {
             onSessionManagementClick = {},
             onLogoutClick = {},
             dialogState = DialogState(),
-            dismissDialog = {}
+            dismissDialog = {},
+            onSecurityClick = {},
+            onClickSettings = {}
         )
     }
 }
