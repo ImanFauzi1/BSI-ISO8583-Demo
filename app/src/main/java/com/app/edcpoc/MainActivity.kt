@@ -74,8 +74,10 @@ import com.idpay.victoriapoc.utils.IsoManagement.IsoUtils
 import com.app.edcpoc.utils.fingerprint.FingerPrintTask
 import com.app.edcpoc.BuildConfig
 import com.app.edcpoc.utils.Constants.END_DATE
+import com.app.edcpoc.utils.Constants.FINGERPRINT_MESSAGE
 import com.app.edcpoc.utils.Constants.START_DATE
 import com.app.edcpoc.utils.Constants.VERIFY_PIN
+import com.idpay.victoriapoc.utils.IsoManagement.IsoUtils.generateIsoStartEndDate
 import com.simo.ektp.EktpSdkZ90
 import com.simo.ektp.GlobalVars.VALUE_AGAMA
 import com.simo.ektp.GlobalVars.VALUE_ALAMAT
@@ -575,7 +577,15 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
                 val iso = IsoUtils.generateIsoCreatePIN(spvCardNumber)
                 val pack = ISO8583.packToHex(iso)
 
-                isoViewModel.isoSendMessage(context, commandValue, StringUtils.convertHexToBytes(pack))
+                handleMatchingFingerprint() { success, error ->
+                    if (success != null) {
+                        isoViewModel.isoSendMessage(context, commandValue, StringUtils.convertHexToBytes(pack))
+                    } else {
+                        isoViewModel.setLoading(false)
+                        LogUtils.e(TAG, "Fingerprint verification failed: $error")
+                        showToast(error ?: "Fingerprint verification failed")
+                    }
+                }
             }
             REISSUE_PIN -> {
                 var spvCardNumber = PreferenceManager.getSvpCardNum(context)
@@ -603,7 +613,16 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
                 val iso = IsoUtils.generateIsoReissuePIN(spvCardNumber)
                 val pack = ISO8583.packToHex(iso)
 
-                isoViewModel.isoSendMessage(context, commandValue, StringUtils.convertHexToBytes(pack))
+                handleMatchingFingerprint { success, error ->
+                    if (success != null) {
+                        isoViewModel.isoSendMessage(context, commandValue, StringUtils.convertHexToBytes(pack))
+                    } else {
+                        isoViewModel.setLoading(false)
+                        LogUtils.e(TAG, "Fingerprint verification failed: $error")
+                        showToast(error ?: "Fingerprint verification failed")
+                    }
+
+                }
             }
             VERIFY_PIN -> {
                 val iso = IsoUtils.generateIsoVerificationPIN()
@@ -620,6 +639,37 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
             }
         }
         LogUtils.i("AuthViewModel", "commandValue=$commandValue")
+    }
+
+    private fun handleMatchingFingerprint(result: (String?, String?) -> Unit) {
+        createFingerDialog(this, FINGERPRINT_MESSAGE) {_, _ ->
+            try {
+                val fp = PreferenceManager.getFingerprintData(this@MainActivity)
+                val fpByte = Base64.decode(fp, Base64.NO_WRAP)
+
+                when {
+                    isTimeout -> {
+                        LogUtils.e(TAG, "Fingerprint Matching Timeout")
+                        showToast("Capture fingerprint timeout.")
+                        result(null, "TIMEOUT")
+                    }
+
+                    isMatchedFingerprint(fmd, fpByte, null) -> {
+                        LogUtils.i(TAG, "Fingerprint Matching Success")
+                        showToast("Sidik jari cocok. Aktivasi selesai.")
+                        result("PASS", null)
+                    }
+
+                    else -> {
+                        LogUtils.w(TAG, "Fingerprint Matching Failed")
+                        showToast("Sidik jari tidak cocok.")
+                        result(null, "FAILED")
+                    }
+                }
+            } catch (e: Exception) {
+                LogUtils.e(TAG, "Fingerprint Matching Error: ${e.printStackTrace()}")
+            }
+        }
     }
 
     override fun onError(message: String) {

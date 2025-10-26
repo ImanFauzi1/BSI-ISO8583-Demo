@@ -15,6 +15,7 @@ object PreferenceManager {
     private const val HOST_PORT = "host_port"
     private const val TMS = "tms"
     private const val TMS_PORT = "tms_port"
+    private const val FINGERPRINT_DATA = "fingerprint_data"
 
     private fun getPrefs(context: Context): SharedPreferences =
         context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
@@ -25,6 +26,12 @@ object PreferenceManager {
     fun setSVPUserId(context: Context, userId: String){
         getPrefs(context).edit { putString(SVP_USER_ID, userId) }
     }
+
+    fun setFingerprintData(context: Context, fingerprintData: String){
+        getPrefs(context).edit { putString(FINGERPRINT_DATA, fingerprintData) }
+    }
+    fun getFingerprintData(context: Context): String? =
+        getPrefs(context).getString(FINGERPRINT_DATA, null)
 
     fun setConfigFile(context: Context, configFile: String){
         getPrefs(context).edit { putString("CONFIG_FILE", configFile) }

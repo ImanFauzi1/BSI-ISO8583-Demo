@@ -68,6 +68,10 @@ class ISOViewModel : ViewModel() {
         }
     }
 
+    fun setLoading(isLoading: Boolean) {
+        _uiState.update { it.copy(isLoading = isLoading) }
+    }
+
     fun clearState() {
         _uiState.value = SvpUiState()
         cardNum = null

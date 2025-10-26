@@ -10,16 +10,15 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-data class SvpViewModelState(
+data class SpvViewModelState(
     var isLoading: Boolean = false,
     var errorMessage: String? = null,
     var successMessage: String? = null
 )
-class SvpViewModel() : ViewModel() {
+class SpvViewModel() : ViewModel() {
     private val TAG = "SvpViewModel"
-    private val _uiState = MutableStateFlow(SvpViewModelState())
-    val uiState: StateFlow<SvpViewModelState> = _uiState.asStateFlow()
-
+    private val _uiState = MutableStateFlow(SpvViewModelState())
+    val uiState: StateFlow<SpvViewModelState> = _uiState.asStateFlow()
 
     fun handleFingerprintResult(type: String, fmd2: ByteArray? = null) {
         if (isTimeout) {
@@ -49,6 +48,6 @@ class SvpViewModel() : ViewModel() {
     }
 
     fun clearState() {
-        _uiState.value = SvpViewModelState()
+        _uiState.value = SpvViewModelState()
     }
 }

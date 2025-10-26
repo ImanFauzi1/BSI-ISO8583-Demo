@@ -6,6 +6,7 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import android.widget.Toast
+import com.app.edcpoc.MyApp
 import com.app.edcpoc.interfaces.EmvUtilInterface
 import com.app.edcpoc.utils.Constants.CHANGE_PIN
 import com.app.edcpoc.utils.Constants.CREATE_PIN
@@ -48,6 +49,8 @@ import com.app.edcpoc.utils.Constants.step
 import com.app.edcpoc.utils.Constants.tags
 import com.app.edcpoc.utils.Constants.track2data
 import com.app.edcpoc.utils.Constants.track2datacustomer
+import com.google.gson.Gson
+import com.simo.ektp.Utils
 import com.zcs.sdk.SdkData
 import com.zcs.sdk.SdkResult
 import com.zcs.sdk.card.CardInfoEntity
@@ -77,7 +80,7 @@ import kotlin.collections.set
  */
 class EmvUtil(private val context: Context) {
     private val TAG = "EmvUtil"
-    private val appContext = context.applicationContext
+    private val appContext = MyApp.getContext()
     private var dialog: ProgressDialog? = null
     private var callback: EmvUtilInterface? = null
 
@@ -381,7 +384,7 @@ class EmvUtil(private val context: Context) {
 
             override fun onExchangeApdu(send: ByteArray): ByteArray? {
                 Log.e(TAG, "apdu send = " + StringUtils.convertBytesToHex(send))
-//                Log.d("Debug", "onExchangeApdu=${Utils.bytesToHexString(send)}")
+                Log.d("Debug", "onExchangeApdu=${Utils.bytesToHexString(send)}")
                 Log.d("Debug", "realCardType=$realCardType")
 
                 if (realCardType === CardReaderTypeEnum.IC_CARD) {
@@ -416,6 +419,7 @@ class EmvUtil(private val context: Context) {
         // for the emv result, plz refer to emv doc.
         // for the emv result, plz refer to emv doc.
         // for the emv result, plz refer to emv doc.
+        LogUtils.d(TAG, "mICCard=$mICCard, mRfCard=$mRfCard")
         val ret = emvHandler!!.emvTrans(
             emvTransParam,
             onEmvListener,
@@ -423,6 +427,10 @@ class EmvUtil(private val context: Context) {
             pucBalance,
             pucTransResult
         )
+        LogUtils.d(TAG, "emvTransParam: " + Gson().toJson(emvTransParam))
+        LogUtils.d(TAG, "pucIsEcTrans before emvTrans: " + StringUtils.convertBytesToHex(pucIsEcTrans))
+        LogUtils.d(TAG, "pucBalance before emvTrans: " + StringUtils.convertBytesToHex(pucBalance))
+        LogUtils.d(TAG, "pucTransResult before emvTrans: " + StringUtils.convertBytesToHex(pucTransResult))
         Log.e(TAG, "Emv trans end, ret = $ret")
 
         val str = when (pucTransResult[0]) {

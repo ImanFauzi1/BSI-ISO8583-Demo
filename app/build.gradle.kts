@@ -7,6 +7,7 @@ plugins {
 }
 
 // .\gradlew assembleDemoDebug
+// .\gradlew assembleIntegrateDebug
 
 android {
     namespace = "com.app.edcpoc"

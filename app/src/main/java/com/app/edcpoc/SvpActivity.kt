@@ -19,7 +19,6 @@ import com.app.edcpoc.ui.theme.EdcpocTheme
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
-import com.app.edcpoc.data.model.LogTransactionRequest
 import com.app.edcpoc.data.model.SvpRequestBody
 import com.app.edcpoc.interfaces.EmvUtilInterface
 import com.app.edcpoc.ui.components.LoadingDialog
@@ -27,16 +26,12 @@ import com.app.edcpoc.ui.screens.SvpLockedScreen
 import com.app.edcpoc.ui.viewmodel.ApiUiState
 import com.app.edcpoc.ui.viewmodel.ApiViewModel
 import com.app.edcpoc.ui.viewmodel.ISOViewModel
-import com.app.edcpoc.ui.viewmodel.SvpViewModel
+import com.app.edcpoc.ui.viewmodel.SpvViewModel
 import com.app.edcpoc.utils.Constants.FINGERPRINT_MESSAGE
 import com.app.edcpoc.utils.Constants.START_DATE
-import com.app.edcpoc.utils.Constants.base64Finger
 import com.app.edcpoc.utils.Constants.cardNum
 import com.app.edcpoc.utils.Constants.commandValue
 import com.app.edcpoc.utils.Constants.feature64Kanan
-import com.app.edcpoc.utils.Constants.isTimeout
-import com.app.edcpoc.utils.Constants.mScanner
-import com.app.edcpoc.utils.Constants.pos_entrymode
 import com.app.edcpoc.utils.Constants.track2data
 import com.app.edcpoc.utils.CoreUtils.initializeEmvUtil
 import com.app.edcpoc.utils.DialogUtil.createEmvDialog
@@ -53,7 +48,7 @@ import kotlin.getValue
 class SvpActivity : ComponentActivity(), EmvUtilInterface {
     private val TAG = "SvpActivity"
     private val ISOViewModel: ISOViewModel by viewModels()
-    private val svpViewModel: SvpViewModel by viewModels()
+    private val spvViewModel: SpvViewModel by viewModels()
     private val apiViewModel: ApiViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -117,6 +112,8 @@ class SvpActivity : ComponentActivity(), EmvUtilInterface {
                                 val data = state.data.data
                                 LogUtils.d(TAG, "SVP Data Received: \\${data.id}")
                                 if (data.sidikJari != null) {
+                                    PreferenceManager.setSVPUserId(this@SvpActivity, data.id.toString())
+                                    PreferenceManager.setFingerprintData(this@SvpActivity, data.sidikJari)
                                     handleMatchingFingerprint(data.sidikJari)
                                 } else {
                                     handleEnrollFingerprint()
@@ -179,7 +176,7 @@ class SvpActivity : ComponentActivity(), EmvUtilInterface {
     private fun handleMatchingFingerprint(sidikJari: String) {
         createFingerDialog(this, FINGERPRINT_MESSAGE) {_, _ ->
             try {
-                svpViewModel.handleFingerprintResult(type = "MATCH_FINGERPRINT", Base64.decode(sidikJari, Base64.NO_WRAP))
+                spvViewModel.handleFingerprintResult(type = "MATCH_FINGERPRINT", Base64.decode(sidikJari, Base64.NO_WRAP))
 
                 Toast.makeText(this, "Sidik jari cocok. Aktivasi selesai.", Toast.LENGTH_SHORT).show()
 
@@ -205,7 +202,7 @@ class SvpActivity : ComponentActivity(), EmvUtilInterface {
                 dialog.dismiss()
                 createFingerDialog(this, FINGERPRINT_MESSAGE) {_, _ ->
                     try {
-                        svpViewModel.handleFingerprintResult(type = "ENROLLMENT", null)
+                        spvViewModel.handleFingerprintResult(type = "ENROLLMENT", null)
 
                         LogUtils.d(TAG, "FEATURE64KANAN: $feature64Kanan")
                         val body = SvpRequestBody(
