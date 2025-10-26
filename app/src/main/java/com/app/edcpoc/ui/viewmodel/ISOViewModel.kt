@@ -26,6 +26,7 @@ class ISOViewModel : ViewModel() {
     fun isoSendMessage(type: String? = null, isoBuilder: ByteArray?) {
         viewModelScope.launch {
             if (isoBuilder == null) {
+                _uiState.update { it.copy(errorMessage = "Failed to send ISO, please contact developer.", isIsoHandled = true) }
                 LogUtils.e(TAG, "Failed to create ISO message $type")
                 return@launch
             }
@@ -36,7 +37,7 @@ class ISOViewModel : ViewModel() {
             IsoClient.sendMessage(isoBuilder) { response, error ->
                 if (error != null) {
                     LogUtils.e(TAG, "ISO $type Error: $error")
-                    _uiState.update { it.copy(errorMessage = "Gagal kirim ISO $type: $error") }
+                    _uiState.update { it.copy(errorMessage = "Gagal kirim ISO $type: $error", isIsoHandled = true) }
                     return@sendMessage
                 }
 
@@ -58,7 +59,7 @@ class ISOViewModel : ViewModel() {
                     else -> "ISO sukses dikirim"
                 }
                 val detail = fields.entries.joinToString("\n") { "${it.key}: ${it.value}" }
-                _uiState.update { it.copy(cardNum = cardNum, iso = detail, errorMessage = null)  }
+                _uiState.update { it.copy(cardNum = cardNum, iso = detail, errorMessage = null, isIsoHandled = true)  }
 
                 LogUtils.i(TAG, "ISO $type Successfully sent message.")
             }
@@ -83,6 +84,7 @@ data class SvpUiState(
     val isLoading: Boolean = false,
     val stateType: String? = null,
     val cardNum: String? = null,
+    val errorMessage: String? = null,
     val iso: String? = null,
-    val errorMessage: String? = null
+    val isIsoHandled: Boolean = false
 )

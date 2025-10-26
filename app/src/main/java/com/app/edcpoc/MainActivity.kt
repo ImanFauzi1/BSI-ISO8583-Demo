@@ -167,43 +167,53 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
                         when (state) {
                             is ApiUiState.Success -> {
                                 if (state.data.data.Score >= FACE_COMPARE_SCORE_THRESHOLD) {
-                                    LogUtils.i(TAG, "Tencent face comparison passed with score: ${state.data.data.Score}")
+                                    LogUtils.i(
+                                        TAG,
+                                        "Tencent face comparison passed with score: ${state.data.data.Score}"
+                                    )
                                     showToast("Success")
-                                    handleSendLog("Success", "Face Compare Success", state.data.data.Score as Double)
+                                    handleSendLog(
+                                        "Success",
+                                        "Face Compare Success",
+                                        state.data.data.Score as Double
+                                    )
                                     getData()
                                     apiViewModel.resetFaceCompareState()
                                 }
                             }
+
                             is ApiUiState.Error -> {
                                 LogUtils.d(TAG, "Error facing comparation: ${state.message}")
-                                Toast.makeText(this@MainActivity, state.message, Toast.LENGTH_SHORT).show()
+                                Toast.makeText(this@MainActivity, state.message, Toast.LENGTH_SHORT)
+                                    .show()
                                 apiViewModel.resetFaceCompareState()
                             }
+
                             else -> {}
                         }
                     }
                 }
                 launch {
                     isoViewModel.uiState.collect { state ->
-                        state.errorMessage?.let {
-                            AlertDialog.Builder(this@MainActivity)
-                                .setTitle("ISO gagal dikirim")
-                                .setMessage(it)
-                                .setPositiveButton("Close") { dialog, _ -> dialog.dismiss() }
-                                .show()
+                        if (state.isIsoHandled) {
+                            if (state.errorMessage != null) {
+                                AlertDialog.Builder(this@MainActivity)
+                                    .setTitle("ISO gagal dikirim")
+                                    .setMessage(state.errorMessage)
+                                    .setPositiveButton("Close") { dialog, _ -> dialog.dismiss() }
+                                    .show()
+                            } else {
+                                AlertDialog.Builder(this@MainActivity)
+                                    .setTitle("ISO Start Date Success")
+                                    .setMessage(state.iso)
+                                    .setPositiveButton("Close") { dialog, _ -> dialog.dismiss() }
+                                    .show()
+                            }
+                            // Reset flag supaya dialog tidak muncul berulang
+                            isoViewModel.clearState()
                         }
-
-                        if (state.errorMessage == null) {
-                            AlertDialog.Builder(this@MainActivity)
-                                .setTitle("ISO Start Date Success")
-                                .setMessage(state.iso)
-                                .setPositiveButton("Close") { dialog, _ -> dialog.dismiss() }
-                                .show()
-                        }
-
                     }
                 }
-
             }
         }
     }
