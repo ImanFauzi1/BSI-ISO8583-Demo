@@ -554,7 +554,7 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
 //                     return
 //                 }
 //                val iso = IsoUtils.generateIsoLogonLogoff("0800", "820000", officerCardNum)
-//                isoViewModel.isoSendMessage(commandValue, StringUtils.convertHexToBytes(iso))
+//                isoViewModel.isoSendMessage(context, commandValue, StringUtils.convertHexToBytes(iso))
 //            }
             "startDate", "closeDate" -> {
                 val proc = when(commandValue) {
@@ -572,7 +572,7 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
                     LogUtils.e(TAG, "Error unpacking ISO8583 message: ${e.printStackTrace()}")
                 }
 
-                isoViewModel.isoSendMessage(commandValue, StringUtils.convertHexToBytes(pack))
+                isoViewModel.isoSendMessage(context, commandValue, StringUtils.convertHexToBytes(pack))
             }
             "logoff", "logon" -> {
                 val proc = when(commandValue) {
@@ -583,7 +583,7 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
                 val iso = IsoUtils.generateIsoLogonLogoff("0800", proc, track2data!!)
                 val pack = ISO8583.packToHex(iso)
 
-                isoViewModel.isoSendMessage(commandValue, StringUtils.convertHexToBytes(pack))
+                isoViewModel.isoSendMessage(context, commandValue, StringUtils.convertHexToBytes(pack))
             }
             "createPIN" -> {
                 if (step == 1) {
@@ -599,7 +599,7 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
                 val iso = IsoUtils.generateIsoCreatePIN(track2data!!)
                 val pack = ISO8583.packToHex(iso)
 
-                isoViewModel.isoSendMessage(commandValue, StringUtils.convertHexToBytes(pack))
+                isoViewModel.isoSendMessage(context, commandValue, StringUtils.convertHexToBytes(pack))
             }
             "reissuePIN" -> {
                 if (step == 1) {
@@ -615,7 +615,7 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
                 val iso = IsoUtils.generateIsoReissuePIN(track2data!!)
                 val pack = ISO8583.packToHex(iso)
 
-                isoViewModel.isoSendMessage(commandValue, StringUtils.convertHexToBytes(pack))
+                isoViewModel.isoSendMessage(context, commandValue, StringUtils.convertHexToBytes(pack))
             }
 //            "createPIN" -> {
 //                val svpCardNumber = PreferenceManager.getSvpCardNum(context)
@@ -625,7 +625,7 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
 //                    return
 //                }
 //                val iso = IsoUtils.generateIsoCreatePIN(svpCardNumber)
-//                isoViewModel.isoSendMessage(commandValue, StringUtils.convertHexToBytes(iso))
+//                isoViewModel.isoSendMessage(context, commandValue, StringUtils.convertHexToBytes(iso))
 //            }
 //            "reissuePIN" -> {
 //                val svpCardNumber = PreferenceManager.getSvpCardNum(context)
@@ -636,19 +636,19 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
 //                }
 //
 //                val iso = IsoUtils.generateIsoReissuePIN(svpCardNumber)
-//                isoViewModel.isoSendMessage(commandValue, StringUtils.convertHexToBytes(iso))
+//                isoViewModel.isoSendMessage(context, commandValue, StringUtils.convertHexToBytes(iso))
 //            }
             "verifyPIN" -> {
                 val iso = IsoUtils.generateIsoVerificationPIN()
                 val pack = ISO8583.packToHex(iso)
 
-                isoViewModel.isoSendMessage(commandValue, StringUtils.convertHexToBytes(pack))
+                isoViewModel.isoSendMessage(context, commandValue, StringUtils.convertHexToBytes(pack))
             }
             "changePIN" -> {
                 val iso = IsoUtils.generateIsoChangePIN()
                 val pack = ISO8583.packToHex(iso)
 
-                isoViewModel.isoSendMessage(commandValue, StringUtils.convertHexToBytes(pack))
+                isoViewModel.isoSendMessage(context, commandValue, StringUtils.convertHexToBytes(pack))
 
             }
         }

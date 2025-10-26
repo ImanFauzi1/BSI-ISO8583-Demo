@@ -1,5 +1,6 @@
 package com.app.edcpoc.ui.viewmodel
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.app.edcpoc.utils.Constants.cardNum
@@ -23,7 +24,7 @@ class ISOViewModel : ViewModel() {
     private val _dialogState = MutableStateFlow(DialogState())
     val dialogState: StateFlow<DialogState> = _dialogState.asStateFlow()
 
-    fun isoSendMessage(type: String? = null, isoBuilder: ByteArray?) {
+    fun isoSendMessage(context: Context, type: String? = null, isoBuilder: ByteArray?) {
         viewModelScope.launch {
             if (isoBuilder == null) {
                 _uiState.update { it.copy(errorMessage = "Failed to send ISO, please contact developer.", isIsoHandled = true) }
@@ -34,7 +35,7 @@ class ISOViewModel : ViewModel() {
             Thread.sleep(1000)
             _uiState.update { it.copy(stateType = commandValue, cardNum = cardNum, iso = StringUtils.convertBytesToHex(isoBuilder), errorMessage = null) }
 
-            IsoClient.sendMessage(isoBuilder) { response, error ->
+            IsoClient.sendMessage(context, isoBuilder) { response, error ->
                 if (error != null) {
                     LogUtils.e(TAG, "ISO $type Error: $error")
                     _uiState.update { it.copy(errorMessage = "Gagal kirim ISO $type: $error", isIsoHandled = true) }

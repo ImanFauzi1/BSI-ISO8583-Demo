@@ -1,5 +1,7 @@
 package com.idpay.victoriapoc.utils.IsoManagement
 
+import android.content.Context
+import com.app.edcpoc.PreferenceManager
 import com.app.edcpoc.utils.IsoManager.Iso8583Packer
 import com.app.edcpoc.utils.LogUtils
 import java.io.DataInputStream
@@ -9,13 +11,20 @@ import java.net.Socket
 object IsoClient {
     private val TAG = "ISOClient"
 
-    fun sendMessage(isoMsg: ByteArray, onResult: (Map<String, Any>?, error: String?) -> Unit) {
+    fun sendMessage(context: Context, isoMsg: ByteArray, onResult: (Map<String, Any>?, error: String?) -> Unit) {
         Thread {
             var socket: Socket? = null
             var outStream: DataOutputStream? = null
             var inStream: DataInputStream? = null
             try {
-                socket  = Socket(IsoConfig.HOST, IsoConfig.PORT)
+                val host = PreferenceManager.getHost(context)
+                val portStr = PreferenceManager.getHostPort(context)
+                val port = portStr?.toIntOrNull()
+                if (host.isNullOrEmpty() || port == null) {
+                    onResult(null, "Host or port not set in settings")
+                    return@Thread
+                }
+                socket  = Socket(host, port)
                 socket.soTimeout = 10_000
                 outStream = DataOutputStream(socket.getOutputStream())
                 inStream = DataInputStream(socket.getInputStream())
