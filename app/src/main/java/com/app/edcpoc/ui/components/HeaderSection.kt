@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import com.app.edcpoc.BuildConfig
 import com.app.edcpoc.R
 import com.app.edcpoc.ui.theme.EdcpocTheme
 import com.app.edcpoc.ui.viewmodel.DialogState
@@ -58,12 +59,14 @@ fun HeaderSection(
                     tint = Color.White
                 )
             }
-            IconButton(onClick = onLogoutClick) {
-                Icon(
-                    imageVector = Icons.Default.ExitToApp,
-                    contentDescription = "Logout",
-                    tint = Color.White
-                )
+            if (BuildConfig.FLAVOR == "demo") {
+                IconButton(onClick = onLogoutClick) {
+                    Icon(
+                        imageVector = Icons.Default.ExitToApp,
+                        contentDescription = "Logout",
+                        tint = Color.White
+                    )
+                }
             }
         }
     }
