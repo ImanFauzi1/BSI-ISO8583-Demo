@@ -535,7 +535,28 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
                 } catch (e: Exception) {
                     LogUtils.e(TAG, "Error unpacking ISO8583 message: ${e.printStackTrace()}")
                 }
-                isoViewModel.isoSendMessage(context, commandValue, pack)
+                isoViewModel.isoSendMessage(context, commandValue, pack) { success, error ->
+                    if (error != null) {
+                        Toast.makeText(this@MainActivity, error, Toast.LENGTH_LONG).show()
+                        return@isoSendMessage
+                    }
+                    try {
+                        val unpack = ISO8583.unpackFromHex(success!!, iso)
+                        AlertDialog.Builder(this@MainActivity)
+                            .setTitle("ISO Start Date Successssss")
+                            .setMessage("response raw: $success\n\n" + unpack.entries.joinToString("\n") { "${it.key}: ${it.value}" })
+                            .setPositiveButton("Close") { dialog, _ -> dialog.dismiss() }
+                            .show()
+                    } catch (e: Exception) {
+                        AlertDialog.Builder(this@MainActivity)
+                            .setTitle("ISO Start Date FAILEDD")
+                            .setMessage("response raw: $success\n\nerr message=${e.message}")
+                            .setPositiveButton("Close") { dialog, _ -> dialog.dismiss() }
+                            .show()
+                        LogUtils.e(TAG, "Error unpacking ISO8583 message: ${e.printStackTrace()}")
+                    }
+
+                }
             }
             LOGON -> {
                 if (BuildConfig.FLAVOR == "integrate") {

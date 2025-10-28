@@ -5,11 +5,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.app.edcpoc.PreferenceManager
 import com.app.edcpoc.utils.Constants.cardNum
-import com.app.edcpoc.utils.Constants.commandValue
 import com.app.edcpoc.utils.EmvUtil
 import com.app.edcpoc.utils.LogUtils
 import com.idpay.victoriapoc.utils.IsoManagement.IsoClient
-import com.app.edcpoc.utils.IsoManager.IsoUtils.parseIsoResponse
 import com.zcs.sdk.util.StringUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,7 +25,7 @@ class ISOViewModel : ViewModel() {
     private val _dialogState = MutableStateFlow(DialogState())
     val dialogState: StateFlow<DialogState> = _dialogState.asStateFlow()
 
-    fun isoSendMessage(context: Context, type: String? = null, isoBuilder: String) {
+    fun isoSendMessage(context: Context, type: String? = null, isoBuilder: String, callback: (String?, String?) -> Unit) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) } // Set loading true
             if (isoBuilder == null) {
@@ -59,14 +57,36 @@ class ISOViewModel : ViewModel() {
                 val socket = withContext(Dispatchers.IO) {
                     IsoClient.connectSocket(isoBuilder)
                 }
-                _uiState.update { it.copy(isLoading = false, isIsoHandled = true, logIso = it.logIso + "Response $socket") }
+                if (isAllHex(socket!!)) {
+                    try {
+                        if (socket.length < (4 + 10 + 4 + 16)) {
+                            _uiState.update { it.copy(isLoading = false, isIsoHandled = true, logIso = it.logIso + "Response hex: $socket\n") }
+                            LogUtils.e(TAG, "Hex data length is too short to be a valid ISO8583 message")
+                        } else {
+                            callback(socket, null)
+                            _uiState.update { it.copy(isLoading = false, isIsoHandled = true) }
+//                            _uiState.update { it.copy(isLoading = false, isIsoHandled = true, logIso = it.logIso + "Response ISO: $socket\nASCII: $toAscii") }
+                        }
+                    } catch (e: Exception) {
+                        _uiState.update { it.copy(isLoading = false, isIsoHandled = true, logIso = it.logIso + "Response message: ${e.message}\nresponse: $socket\n\nexception: ${e.stackTraceToString()}") }
+                    }
+                } else {
+                    _uiState.update { it.copy(
+                        errorMessage = "Gagal kirim ISO $type: $socket",
+                        isIsoHandled = true,
+                        isLoading = false,
+                        logIso = it.logIso + "Response Error: $socket"
+                    ) }
+                    LogUtils.e(TAG, "ISO $type Error: $socket")
+                }
+//                _uiState.update { it.copy(isLoading = false, isIsoHandled = true, logIso = it.logIso + "Response $socket") }
             } catch (e: Exception) {
                 LogUtils.e(TAG, "ISO $type Exception: ${e.message}")
                 _uiState.update { it.copy(
-                    errorMessage = "Gagal kirim ISO $type: ${e.stackTraceToString()}; message=${e.message}",
+                    errorMessage = "Gagal kirim ISO $type: ${e.stackTraceToString()}\n\n message=${e.message}",
                     isIsoHandled = true,
                     isLoading = false,
-                    logIso = it.logIso + "ISO Exception: ${e.stackTraceToString()}; message=${e.message}"
+                    logIso = it.logIso + "ISO Exception: ${e.stackTraceToString()}\n]\nmessage=${e.message}"
                 ) }
                 return@launch
             }
@@ -117,6 +137,10 @@ class ISOViewModel : ViewModel() {
 //                LogUtils.i(TAG, "ISO $type Successfully sent message.")
 //            }
         }
+    }
+
+    private fun isAllHex(str: String): Boolean {
+        return str.matches(Regex("[0-9A-Fa-f]+"))
     }
 
     fun setLoading(isLoading: Boolean) {

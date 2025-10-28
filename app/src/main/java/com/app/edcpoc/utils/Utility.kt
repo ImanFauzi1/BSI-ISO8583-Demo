@@ -361,7 +361,7 @@ object Utility {
     }
 
     fun simpleDateFormat(): String {
-        val sdf = SimpleDateFormat("MMddHHmmss", Locale.getDefault())
+        val sdf = SimpleDateFormat("yyMMddHHmm", Locale.getDefault())
         val formatted = sdf.format(Date())
         return formatted
     }

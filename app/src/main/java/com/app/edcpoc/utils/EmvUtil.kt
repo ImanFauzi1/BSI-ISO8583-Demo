@@ -625,7 +625,7 @@ class EmvUtil @Inject constructor() {
 
     private fun pinpadWork() {
 //        val mk_key = "484455B474A6C6115FF62236D8A09C74"
-        val mk_key = "4A219716AD5D978FADCFF7B86123CB2C"
+        val mk_key = "27C533E1066C3FFA6C599CBBBD6F6C39"
         val key_byte = StringUtils.convertHexToBytes(mk_key)
         var status = mPinPadManager!!.pinPadUpMastKey(
             0,

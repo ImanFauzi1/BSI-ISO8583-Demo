@@ -1,6 +1,7 @@
 package com.idpay.victoriapoc.utils.IsoManagement
 
 import android.content.Context
+import android.util.Log
 import com.app.edcpoc.PreferenceManager
 import com.app.edcpoc.utils.IsoManager.Iso8583Packer
 import com.app.edcpoc.utils.LogUtils
@@ -16,9 +17,12 @@ object IsoClient {
 
     fun connectSocket(hexToSend: String): String? {
         try {
+            Log.d(TAG, "Sending HEX: $hexToSend")
+
             val socket = Socket("10.0.117.75", 30200)
+            socket.soTimeout = 10_000
             val dataOutputStream = DataOutputStream(socket.getOutputStream())
-            dataOutputStream.write(hexStringToByteArray(hexToSend))
+            dataOutputStream.write(StringUtils.convertHexToBytes(hexToSend))
             val dataInputStream = DataInputStream(socket.getInputStream())
             val buffer = ByteArray(65535)
             val x = dataInputStream.read(buffer)
@@ -27,6 +31,7 @@ object IsoClient {
             socket.close()
             return StringUtils.convertBytesToHex(subArray)
         } catch (e: IOException) {
+            LogUtils.e("ISOClient", "Error connecting to socket: ${e.message}\nerror=${e.stackTraceToString()}")
             return e.stackTraceToString()
         }
     }
