@@ -2,19 +2,11 @@ package com.app.edcpoc.ui.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.app.edcpoc.PreferenceManager
 import com.app.edcpoc.data.model.*
 import com.app.edcpoc.data.repository.SessionRepository
-import com.app.edcpoc.utils.Constants.cardNum
-import com.app.edcpoc.utils.Constants.commandValue
-import com.app.edcpoc.utils.EmvUtil
-import com.app.edcpoc.utils.LogUtils
-import com.idpay.victoriapoc.utils.IsoManagement.IsoClient
-import com.idpay.victoriapoc.utils.IsoManagement.IsoUtils.parseIsoResponse
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class SessionViewModel : ViewModel() {

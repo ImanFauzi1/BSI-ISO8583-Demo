@@ -151,6 +151,8 @@ object EktpUtil {
             val cardType = cardInfoEntity.cardExistslot
             val rfCardType = cardInfoEntity.rfCardType
 
+            Log.e(TAG, "Card detected: $cardType, RF Type: $rfCardType")
+
             when (cardType) {
                 CardReaderTypeEnum.RF_CARD -> {
                     Log.e(TAG, "rfCardType: $rfCardType")
@@ -181,6 +183,7 @@ object EktpUtil {
 
     private fun getEktpStrData() {
         indonesianIdentityCard = EktpSdkZ90.instance().EktpReadCardStepOne()
+        Log.d(TAG, "Step One Data: ${indonesianIdentityCard?.id}")
         indonesianIdentityCard = EktpSdkZ90.instance().EktpReadCardStepTwo(indonesianIdentityCard)
     }
 

@@ -39,7 +39,7 @@ import com.app.edcpoc.utils.EktpUtil
 import com.app.edcpoc.utils.IsoManager.ISO8583
 import com.app.edcpoc.utils.KtpReaderManager.createFingerDialog
 import com.app.edcpoc.utils.LogUtils
-import com.idpay.victoriapoc.utils.IsoManagement.IsoUtils.generateIsoStartEndDate
+import com.app.edcpoc.utils.IsoManager.IsoUtils.generateIsoStartEndDate
 import com.simo.ektp.GlobalVars.fmd
 import com.zcs.sdk.util.StringUtils
 import kotlinx.coroutines.launch
@@ -188,7 +188,7 @@ class SvpActivity : ComponentActivity(), EmvUtilInterface {
                 val iso = generateIsoStartEndDate("0800", "910000")
                 val pack = ISO8583.packToHex(iso)
 
-                ISOViewModel.isoSendMessage(this, commandValue, StringUtils.convertHexToBytes(pack))
+//                ISOViewModel.isoSendMessage(this, commandValue, StringUtils.convertHexToBytes(pack))
             } catch (e: Exception) {
                 LogUtils.e(TAG, "Fingerprint Matching Error: ${e.printStackTrace()}")
             }

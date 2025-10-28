@@ -33,15 +33,13 @@ import com.app.edcpoc.ui.theme.EdcpocTheme
 import com.app.edcpoc.ui.viewmodel.ISOViewModel
 import com.app.edcpoc.utils.Constants.END_DATE
 import com.app.edcpoc.utils.Constants.LOGON
-import com.app.edcpoc.utils.Constants.cardNum
 import com.app.edcpoc.utils.Constants.commandValue
 import com.app.edcpoc.utils.Constants.track2data
 import com.app.edcpoc.utils.CoreUtils.initializeEmvUtil
 import com.app.edcpoc.utils.DialogUtil.createEmvDialog
 import com.app.edcpoc.utils.IsoManager.ISO8583
-import com.app.edcpoc.utils.IsoManager.Iso8583Packer
-import com.idpay.victoriapoc.utils.IsoManagement.IsoUtils
-import com.idpay.victoriapoc.utils.IsoManagement.IsoUtils.generateIsoStartEndDate
+import com.app.edcpoc.utils.IsoManager.IsoUtils
+import com.app.edcpoc.utils.IsoManager.IsoUtils.generateIsoStartEndDate
 import com.zcs.sdk.util.LogUtils
 import com.zcs.sdk.util.StringUtils
 import kotlin.getValue
@@ -113,13 +111,13 @@ class OfficerActivity : ComponentActivity(), EmvUtilInterface {
             LOGON -> {
                 val iso = IsoUtils.generateIsoLogonLogoff("0800", "810000", track2data!!)
                 val pack = ISO8583.packToHex(iso)
-                ISOViewModel.isoSendMessage(this@OfficerActivity, commandValue, StringUtils.convertHexToBytes(pack))
+//                ISOViewModel.isoSendMessage(this@OfficerActivity, commandValue, StringUtils.convertHexToBytes(pack))
             }
             END_DATE -> {
                 val iso = generateIsoStartEndDate("0800", "920000")
                 val pack = ISO8583.packToHex(iso)
 
-                ISOViewModel.isoSendMessage(this@OfficerActivity,commandValue, StringUtils.convertHexToBytes(pack))
+//                ISOViewModel.isoSendMessage(this@OfficerActivity,commandValue, StringUtils.convertHexToBytes(pack))
             }
         }
     }

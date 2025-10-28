@@ -4,13 +4,46 @@ import android.content.Context
 import com.app.edcpoc.PreferenceManager
 import com.app.edcpoc.utils.IsoManager.Iso8583Packer
 import com.app.edcpoc.utils.LogUtils
+import com.zcs.sdk.util.StringUtils
 import java.io.DataInputStream
 import java.io.DataOutputStream
+import java.io.IOException
 import java.net.Socket
+
 
 object IsoClient {
     private val TAG = "ISOClient"
 
+    fun connectSocket(hexToSend: String): String? {
+        try {
+            val socket = Socket("10.0.117.75", 30200)
+            val dataOutputStream = DataOutputStream(socket.getOutputStream())
+            dataOutputStream.write(hexStringToByteArray(hexToSend))
+            val dataInputStream = DataInputStream(socket.getInputStream())
+            val buffer = ByteArray(65535)
+            val x = dataInputStream.read(buffer)
+            val subArray = ByteArray(x)
+            System.arraycopy(buffer, 0, subArray, 0, x)
+            socket.close()
+            return StringUtils.convertBytesToHex(subArray)
+        } catch (e: IOException) {
+            return e.stackTraceToString()
+        }
+    }
+    fun hexStringToByteArray(s: String): ByteArray {
+        val len = s.length
+        val data = ByteArray(len / 2)
+
+        var i = 0
+        while (i < len) {
+            data[i / 2] =
+                ((s.get(i).digitToIntOrNull(16) ?: -1 shl 4) + s.get(i + 1).digitToIntOrNull(16)!!
+                    ?: -1).toByte()
+            i += 2
+        }
+
+        return data
+    }
     fun sendMessage(context: Context, isoMsg: ByteArray, onResult: (Map<String, Any>?, error: String?) -> Unit) {
         Thread {
             var socket: Socket? = null
@@ -58,7 +91,7 @@ object IsoClient {
                     null
                 )
             } catch (e: Exception) {
-                onResult(null, e.message)
+                onResult(null, e.printStackTrace().toString())
                 LogUtils.e(TAG, "Error sending ISO message: ${e.message}")
                 LogUtils.e(TAG, "Stacktrace: ${e.stackTraceToString()}")
             } finally {

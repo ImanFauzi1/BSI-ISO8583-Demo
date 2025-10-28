@@ -110,7 +110,7 @@ class ApiRepository {
     }
 
     suspend fun faceCompare(param: FaceCompareRequest): Result<FaceCompareTencentResponse> = withContext(Dispatchers.IO) {
-        val api = provideApiService(tencent_base_url)
+        val api = provideApiService(edcmid_base_url)
         try {
             val response = api.faceCompare(param)
             responseApi(response)

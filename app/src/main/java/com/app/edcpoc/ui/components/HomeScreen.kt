@@ -23,7 +23,8 @@ fun EDCHomeScreen(
     onSessionManagementClick: () -> Unit,
     onLogoutClick: () -> Unit,
     dialogState: DialogState,
-    dismissDialog: () -> Unit
+    dismissDialog: () -> Unit,
+    logIso: List<String> // Tambahkan parameter logIso
 ) {
     if (dialogState.showDialog) {
         AlertDialog(
@@ -88,11 +89,17 @@ fun EDCHomeScreen(
         item {
             Spacer(modifier = Modifier.height(16.dp))
         }
+        item {
+            LoggingSection(logs = logIso) // Kirim logIso ke LoggingSection
+        }
 //        item {
 //            FooterSection()
 //        }
+        item {
+        }
     }
 }
+
 
 @Preview(showBackground = true)
 @Composable
@@ -107,7 +114,8 @@ fun EDCHomeScreenPreview() {
             dialogState = DialogState(),
             dismissDialog = {},
             onSecurityClick = {},
-            onClickSettings = {}
+            onClickSettings = {},
+            logIso = listOf() // Tambahkan logIso kosong di preview
         )
     }
 }

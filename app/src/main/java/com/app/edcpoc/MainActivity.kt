@@ -55,7 +55,6 @@ import com.app.edcpoc.utils.Constants.signBites
 import com.app.edcpoc.utils.Constants.signatureBitmap
 import com.app.edcpoc.utils.Constants.step
 import com.app.edcpoc.utils.Constants.track2data
-import com.app.edcpoc.utils.CoreUtils.initializeEmvUtil
 import com.app.edcpoc.utils.DialogUtil.createEmvDialog
 import com.app.edcpoc.utils.EktpUtil
 import com.app.edcpoc.utils.EktpUtil.checkPsamConfiguration
@@ -70,15 +69,14 @@ import com.app.edcpoc.utils.LogUtils
 import com.app.edcpoc.utils.Utility.clearVar
 import com.app.edcpoc.utils.Utility.convertBmpToBase64
 import com.google.gson.Gson
-import com.idpay.victoriapoc.utils.IsoManagement.IsoUtils
+import com.app.edcpoc.utils.IsoManager.IsoUtils
 import com.app.edcpoc.utils.fingerprint.FingerPrintTask
-import com.app.edcpoc.BuildConfig
 import com.app.edcpoc.utils.Constants.END_DATE
 import com.app.edcpoc.utils.Constants.FINGERPRINT_MESSAGE
 import com.app.edcpoc.utils.Constants.START_DATE
 import com.app.edcpoc.utils.Constants.VERIFY_PIN
 import com.app.edcpoc.utils.EmvUtil
-import com.idpay.victoriapoc.utils.IsoManagement.IsoUtils.generateIsoStartEndDate
+import com.app.edcpoc.utils.IsoManager.IsoUtils.generateIsoStartEndDate
 import com.simo.ektp.EktpSdkZ90
 import com.simo.ektp.GlobalVars.VALUE_AGAMA
 import com.simo.ektp.GlobalVars.VALUE_ALAMAT
@@ -229,7 +227,7 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
                                 }
                                 AlertDialog.Builder(this@MainActivity)
                                     .setTitle("ISO Start Date Success")
-                                    .setMessage(state.iso)
+                                    .setMessage(state.logIso.joinToString(separator = ";;"))
                                     .setPositiveButton("Close") { dialog, _ -> dialog.dismiss() }
                                     .show()
                             }
@@ -508,7 +506,28 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
                 LogUtils.i(TAG, "commandValue=$commandValue, FLAVOR=${BuildConfig.FLAVOR}")
                 if (BuildConfig.FLAVOR == "demo") return
 
-                val iso = IsoUtils.generateIsoStartEndDate("0800", if (commandValue == START_DATE) "910000" else "920000")
+                if (step == 1) {
+                    runOnUiThread {
+                        val dialog = android.app.AlertDialog.Builder(this@MainActivity)
+                            .setMessage("Kartu sudah di swipe")
+                            .setCancelable(false)
+                            .create()
+                        dialog.show()
+                        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                            dialog.dismiss()
+
+                            LogUtils.i(TAG, "Start/End Date Step 1")
+                            LogUtils.i(TAG, "Opening EMV Dialog for Start/End Date Step 1")
+                            isoViewModel.emvUtil?.let { createEmvDialog(this@MainActivity, it, message = "Insert or Swipe Officer Card") }
+
+                        }, 2000)
+                    }
+                    step++
+                    return
+                }
+
+                step = 1
+                val iso = generateIsoStartEndDate("0600", if (commandValue == START_DATE) "910000" else "920000")
                 val pack = ISO8583.packToHex(iso)
                 try {
                     val result = ISO8583.unpackFromHex(pack, iso)
@@ -516,7 +535,7 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
                 } catch (e: Exception) {
                     LogUtils.e(TAG, "Error unpacking ISO8583 message: ${e.printStackTrace()}")
                 }
-                isoViewModel.isoSendMessage(context, commandValue, StringUtils.convertHexToBytes(pack))
+                isoViewModel.isoSendMessage(context, commandValue, pack)
             }
             LOGON -> {
                 if (BuildConfig.FLAVOR == "integrate") {
@@ -529,7 +548,7 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
                         LogUtils.e(TAG, "Error unpacking ISO8583 message: ${e.printStackTrace()}")
                     }
 
-                    isoViewModel.isoSendMessage(context, commandValue, StringUtils.convertHexToBytes(pack))
+//                    isoViewModel.isoSendMessage(context, commandValue, StringUtils.convertHexToBytes(pack))
                 }
             }
              LOGOFF -> {
@@ -554,7 +573,7 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
                     LogUtils.e(TAG, "Error unpacking ISO8583 message: ${e.printStackTrace()}")
                 }
 
-                isoViewModel.isoSendMessage(context, commandValue, StringUtils.convertHexToBytes(pack))
+//                isoViewModel.isoSendMessage(context, commandValue, StringUtils.convertHexToBytes(pack))
             }
             CREATE_PIN -> {
                 var spvCardNumber = PreferenceManager.getSvpCardNum(context)
@@ -583,7 +602,7 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
 
                 handleMatchingFingerprint() { success, error ->
                     if (success != null) {
-                        isoViewModel.isoSendMessage(context, commandValue, StringUtils.convertHexToBytes(pack))
+//                        isoViewModel.isoSendMessage(context, commandValue, StringUtils.convertHexToBytes(pack))
                     } else {
                         isoViewModel.setLoading(false)
                         LogUtils.e(TAG, "Fingerprint verification failed: $error")
@@ -619,7 +638,7 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
 
                 handleMatchingFingerprint { success, error ->
                     if (success != null) {
-                        isoViewModel.isoSendMessage(context, commandValue, StringUtils.convertHexToBytes(pack))
+//                        isoViewModel.isoSendMessage(context, commandValue, StringUtils.convertHexToBytes(pack))
                     } else {
                         isoViewModel.setLoading(false)
                         LogUtils.e(TAG, "Fingerprint verification failed: $error")
@@ -632,13 +651,13 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
                 val iso = IsoUtils.generateIsoVerificationPIN()
                 val pack = ISO8583.packToHex(iso)
 
-                isoViewModel.isoSendMessage(context, commandValue, StringUtils.convertHexToBytes(pack))
+//                isoViewModel.isoSendMessage(context, commandValue, StringUtils.convertHexToBytes(pack))
             }
             CHANGE_PIN -> {
                 val iso = IsoUtils.generateIsoChangePIN()
                 val pack = ISO8583.packToHex(iso)
 
-                isoViewModel.isoSendMessage(context, commandValue, StringUtils.convertHexToBytes(pack))
+//                isoViewModel.isoSendMessage(context, commandValue, StringUtils.convertHexToBytes(pack))
 
             }
         }
@@ -710,14 +729,15 @@ fun EDCHomeApp(
             onEnrollmentClick = { onEnrollmentClick(it) },
             onManajemenPINClick = { isoViewModel.emvUtil?.let { createEmvDialog(context, it, message = "Insert or Swipe Customer Card")} },
             onSessionManagementClick = { isoViewModel.emvUtil?.let { createEmvDialog(context, it, message = "Insert or Swipe Supervisor Card")} },
-            onSecurityClick = { isoViewModel.emvUtil?.let { createEmvDialog(context, it, message = "Insert or Swipe Officer Card")} },
+            onSecurityClick = { isoViewModel.emvUtil?.let { createEmvDialog(context, it, message = "Insert or Swipe Supervisor Card")} },
             onLogoutClick = {
                 commandValue = LOGOFF
                 isoViewModel.emvUtil?.let { createEmvDialog(context, it) }
             },
             dialogState = isoViewModel.dialogState.collectAsState().value,
             dismissDialog = { isoViewModel.dismissDialog() },
-            onClickSettings = { onSettingClick() }
+            onClickSettings = { onSettingClick() },
+            logIso = authState.logIso // Kirim logIso ke HomeScreen
         )
     }
 }

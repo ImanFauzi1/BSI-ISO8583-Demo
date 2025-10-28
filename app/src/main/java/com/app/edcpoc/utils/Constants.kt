@@ -47,6 +47,7 @@ object Constants {
     var fingerTimeout = 10
     var base64Finger: String? = null
 
+
     var indonesianIdentityCard: IndonesianIdentityCard? = null
     var mScanner: FingerprintScanner? = null
     lateinit var signBites: ByteArray
@@ -68,7 +69,7 @@ object Constants {
 
 //    card
     var cardNum: String? = null
-    var spvCardNum: String? = null
+    var officerCardNum: String? = null
     var field48data: String? = null
     var field48hex: String? = null
     var track2hex: String = ""

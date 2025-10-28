@@ -353,4 +353,16 @@ object Utility {
             false
         }
     }
+
+    fun generateSn(): String {
+        val sn = getSn()
+        val snSlice = sn.takeLast(8)
+        return "ID$snSlice"
+    }
+
+    fun simpleDateFormat(): String {
+        val sdf = SimpleDateFormat("MMddHHmmss", Locale.getDefault())
+        val formatted = sdf.format(Date())
+        return formatted
+    }
 }

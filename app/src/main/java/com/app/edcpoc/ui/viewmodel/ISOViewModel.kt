@@ -3,18 +3,21 @@ package com.app.edcpoc.ui.viewmodel
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.app.edcpoc.PreferenceManager
 import com.app.edcpoc.utils.Constants.cardNum
 import com.app.edcpoc.utils.Constants.commandValue
 import com.app.edcpoc.utils.EmvUtil
 import com.app.edcpoc.utils.LogUtils
 import com.idpay.victoriapoc.utils.IsoManagement.IsoClient
-import com.idpay.victoriapoc.utils.IsoManagement.IsoUtils.parseIsoResponse
+import com.app.edcpoc.utils.IsoManager.IsoUtils.parseIsoResponse
 import com.zcs.sdk.util.StringUtils
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 class ISOViewModel : ViewModel() {
     val TAG = "ISOViewModel"
@@ -24,47 +27,95 @@ class ISOViewModel : ViewModel() {
     private val _dialogState = MutableStateFlow(DialogState())
     val dialogState: StateFlow<DialogState> = _dialogState.asStateFlow()
 
-    fun isoSendMessage(context: Context, type: String? = null, isoBuilder: ByteArray?) {
+    fun isoSendMessage(context: Context, type: String? = null, isoBuilder: String) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) } // Set loading true
             if (isoBuilder == null) {
-                _uiState.update { it.copy(errorMessage = "Failed to send ISO, please contact developer.", isIsoHandled = true, isLoading = false) }
+                _uiState.update { it.copy(
+                    errorMessage = "Failed to send ISO, please contact developer.",
+                    isIsoHandled = true,
+                    isLoading = false,
+                    logIso = it.logIso + "Gagal membuat ISO message $type"
+                ) }
                 LogUtils.e(TAG, "Failed to create ISO message $type")
                 return@launch
             }
 
             Thread.sleep(1000)
-            _uiState.update { it.copy(stateType = commandValue, cardNum = cardNum, iso = StringUtils.convertBytesToHex(isoBuilder), errorMessage = null) }
 
-            IsoClient.sendMessage(context, isoBuilder) { response, error ->
-                if (error != null) {
-                    LogUtils.e(TAG, "ISO $type Error: $error")
-                    _uiState.update { it.copy(errorMessage = "Gagal kirim ISO $type: $error", isIsoHandled = true, isLoading = false) }
-                    return@sendMessage
+            val host = PreferenceManager.getHost(context)
+            val portStr = PreferenceManager.getHostPort(context)
+
+//            val isoHex = StringUtils.convertBytesToHex(isoBuilder)
+//            _uiState.update { it.copy(
+//                stateType = commandValue,
+//                cardNum = cardNum,
+//                iso = isoBuilder,
+//                errorMessage = null,
+//                logIso = it.logIso + "Host:$host\nPort:$portStr\n ISO dikirim: $isoBuilder"
+//            ) }
+
+            try {
+                val socket = withContext(Dispatchers.IO) {
+                    IsoClient.connectSocket(isoBuilder)
                 }
-
-                LogUtils.i(TAG, "ISO $type Response: $response")
-
-                if (response == null) {
-                    LogUtils.e(TAG, "Failed to receive ISO $type response")
-                    _uiState.update { it.copy(errorMessage = "Gagal kirim ISO $type", isLoading = false) }
-                    return@sendMessage
-                }
-
-                val isoString = response["string"] as? String ?: ""
-                val fields = parseIsoResponse(isoString)
-                val message = when (commandValue) {
-                    "logon" -> "Sukses logon"
-                    "logoff" -> "Sukses logoff"
-                    "startDate" -> "Sukses mulai tanggal"
-                    "closeDate" -> "Sukses tutup tanggal"
-                    else -> "ISO sukses dikirim"
-                }
-                val detail = fields.entries.joinToString("\n") { "${it.key}: ${it.value}" }
-                _uiState.update { it.copy(cardNum = cardNum, iso = detail, errorMessage = null, isIsoHandled = true, isLoading = false)  }
-
-                LogUtils.i(TAG, "ISO $type Successfully sent message.")
+                _uiState.update { it.copy(isLoading = false, isIsoHandled = true, logIso = it.logIso + "Response $socket") }
+            } catch (e: Exception) {
+                LogUtils.e(TAG, "ISO $type Exception: ${e.message}")
+                _uiState.update { it.copy(
+                    errorMessage = "Gagal kirim ISO $type: ${e.stackTraceToString()}; message=${e.message}",
+                    isIsoHandled = true,
+                    isLoading = false,
+                    logIso = it.logIso + "ISO Exception: ${e.stackTraceToString()}; message=${e.message}"
+                ) }
+                return@launch
             }
+
+//            IsoClient.sendMessage(context, isoBuilder) { response, error ->
+//                if (error != null) {
+//                    LogUtils.e(TAG, "ISO $type Error: $error")
+//                    _uiState.update { it.copy(
+//                        errorMessage = "Gagal kirim ISO $type: $error",
+//                        isIsoHandled = true,
+//                        isLoading = false,
+//                        logIso = it.logIso + "ISO Error: $error"
+//                    ) }
+//                    return@sendMessage
+//                }
+//
+//                LogUtils.i(TAG, "ISO $type Response: $response")
+//
+//                if (response == null) {
+//                    LogUtils.e(TAG, "Failed to receive ISO $type response")
+//                    _uiState.update { it.copy(
+//                        errorMessage = "Gagal kirim ISO $type",
+//                        isLoading = false,
+//                        logIso = it.logIso + "Gagal menerima response ISO $type; Response error $error; response = $response"
+//                    ) }
+//                    return@sendMessage
+//                }
+//
+//                val isoString = response["string"] as? String ?: ""
+//                val fields = parseIsoResponse(isoString)
+//                val message = when (commandValue) {
+//                    "logon" -> "Sukses logon"
+//                    "logoff" -> "Sukses logoff"
+//                    "startDate" -> "Sukses mulai tanggal"
+//                    "closeDate" -> "Sukses tutup tanggal"
+//                    else -> "ISO sukses dikirim"
+//                }
+//                val detail = fields.entries.joinToString(", ") { "${it.key}: ${it.value}" }
+//                _uiState.update { it.copy(
+//                    cardNum = cardNum,
+//                    iso = detail,
+//                    errorMessage = null,
+//                    isIsoHandled = true,
+//                    isLoading = false,
+//                    logIso = it.logIso + "ISO Response: $message, $detail"
+//                ) }
+//
+//                LogUtils.i(TAG, "ISO $type Successfully sent message.")
+//            }
         }
     }
 
@@ -93,4 +144,5 @@ data class SvpUiState(
     val iso: String? = null,
     val cardNum: String? = null,
     val errorMessage: String? = null,
+    val logIso: List<String> = emptyList() // Tambahkan properti log ISO
 )

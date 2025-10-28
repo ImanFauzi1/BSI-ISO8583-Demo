@@ -40,11 +40,10 @@ import com.app.edcpoc.utils.Constants.field55hex
 import com.app.edcpoc.utils.Constants.inputPINResult
 import com.app.edcpoc.utils.Constants.mLatch
 import com.app.edcpoc.utils.Constants.mPinBlock
+import com.app.edcpoc.utils.Constants.officerCardNum
 import com.app.edcpoc.utils.Constants.pinBlockConfirm
 import com.app.edcpoc.utils.Constants.pinBlockNew
 import com.app.edcpoc.utils.Constants.pinBlockOwn
-import com.app.edcpoc.utils.Constants.spvCardNum
-import com.app.edcpoc.utils.Constants.spvPinBlockOwn
 import com.app.edcpoc.utils.Constants.step
 import com.app.edcpoc.utils.Constants.tags
 import com.app.edcpoc.utils.Constants.track2data
@@ -233,6 +232,15 @@ class EmvUtil @Inject constructor() {
                         inputPIN()
                     } else {
                         inputNewPIN()
+                    }
+                }
+                START_DATE -> {
+                    if (step == 1) {
+                        track2data = tk2
+                        callback?.onDoSomething(appContext)
+                    } else {
+                        officerCardNum = cardNum
+                        inputPIN()
                     }
                 }
                 else -> {
@@ -607,6 +615,7 @@ class EmvUtil @Inject constructor() {
         Log.d("Debug", "inputPIN: selesai panggil inputPIN $commandValue")
 
         when(commandValue) {
+            START_DATE -> mPinPadManager?.setInputPinTitle("Masukan PIN Supervisor")
             CHANGE_PIN -> mPinPadManager?.setInputPinTitle("Masukkan PIN anda")
             CREATE_PIN, REISSUE_PIN -> mPinPadManager?.setInputPinTitle("Masukkan PIN Supervisor")
             else -> mPinPadManager?.setInputPinTitle("Masukkan PIN anda")
@@ -615,7 +624,8 @@ class EmvUtil @Inject constructor() {
     }
 
     private fun pinpadWork() {
-        val mk_key = "484455B474A6C6115FF62236D8A09C74"
+//        val mk_key = "484455B474A6C6115FF62236D8A09C74"
+        val mk_key = "4A219716AD5D978FADCFF7B86123CB2C"
         val key_byte = StringUtils.convertHexToBytes(mk_key)
         var status = mPinPadManager!!.pinPadUpMastKey(
             0,

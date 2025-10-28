@@ -1,33 +1,28 @@
-package com.idpay.victoriapoc.utils.IsoManagement
+package com.app.edcpoc.utils.IsoManager
 
-import android.content.Context
 import android.util.Log
-import android.widget.Toast
 import com.app.edcpoc.utils.Constants.commandValue
 import com.app.edcpoc.utils.Constants.field48data
+import com.app.edcpoc.utils.Constants.officerCardNum
 import com.app.edcpoc.utils.Constants.pinBlockConfirm
 import com.app.edcpoc.utils.Constants.pinBlockOwn
 import com.app.edcpoc.utils.Constants.track2data
-import com.app.edcpoc.utils.Constants.track2data
-import com.app.edcpoc.utils.Constants.field48hex
 import com.app.edcpoc.utils.CoreUtils.generateUniqueStan
-import com.app.edcpoc.utils.IsoManager.ISO8583
-import com.app.edcpoc.utils.IsoManager.Model8583Bit
-import com.app.edcpoc.utils.IsoManager.Model8583Request
 import com.app.edcpoc.utils.LogUtils
-import com.google.gson.Gson
+import com.app.edcpoc.utils.Utility.simpleDateFormat
+import com.idpay.victoriapoc.utils.IsoManagement.IsoBuilder
 import com.zcs.sdk.util.StringUtils
-import org.jpos.iso.ISOMsg
-import org.jpos.iso.packager.GenericPackager
-import org.jpos.iso.packager.ISO87BPackager
 
 object IsoUtils {
     private val TAG = "IsoUtils"
+    private val NII = "0001"
+    private val TID = "01000202"
+    private val MID = "451000001000203"
 
     private fun generateBaseRequest(mti: String): Model8583Request {
         val model8583Request = Model8583Request()
         model8583Request.setMTI(mti)
-        model8583Request.setTPDU("0000000001")
+        model8583Request.setTPDU("6000010000")
         return model8583Request
     }
     fun parseIsoResponse(iso: String): Map<String, String> {
@@ -60,6 +55,14 @@ object IsoUtils {
                 "Processing Code",
                 ISO8583.LEN_0,
                 6
+            )
+        )
+        specs.put(
+            7, Model8583Bit(
+                7,
+                "Transmission Date & Time",
+                ISO8583.LEN_0,
+                10
             )
         )
         specs.put(
@@ -98,7 +101,7 @@ object IsoUtils {
             35, Model8583Bit(
                 35,
                 "Track 2 Data",
-                ISO8583.LEN_2FULL,
+                ISO8583.LEN_0,
                 37
             )
         )
@@ -131,7 +134,7 @@ object IsoUtils {
                 41,
                 "Terminal ID",
                 ISO8583.LEN_0,
-                16
+                8
             )
         )
         specs.put(
@@ -139,15 +142,14 @@ object IsoUtils {
                 42,
                 "Merchant ID",
                 ISO8583.LEN_0,
-                30
+                15
             )
         )
         specs.put(
             48, Model8583Bit(
                 48,
-                "Add. Data - Private",
-                ISO8583.LEN_4FULL,
-                999
+                "Private Data",
+                ISO8583.LEN_4HALF
             )
         )
         specs.put(
@@ -155,7 +157,15 @@ object IsoUtils {
                 52,
                 "PIN Data",
                 ISO8583.LEN_0,
-                16
+                32
+            )
+        )
+        specs.put(
+            60, Model8583Bit(
+                60,
+                "Serial ID",
+                ISO8583.LEN_0,
+                10
             )
         )
         return specs
@@ -175,6 +185,14 @@ object IsoUtils {
             )
             model8583Request.bits_sending?.add(
                 Model8583Bit(
+                    7,
+                    "Transmission Date & Time",
+                    ISO8583.LEN_0,
+                    simpleDateFormat()
+                )
+            )
+            model8583Request.bits_sending?.add(
+                Model8583Bit(
                     11,
                     "System Trace Audit Number",
                     ISO8583.LEN_0,
@@ -186,14 +204,14 @@ object IsoUtils {
                     24,
                     "NII",
                     ISO8583.LEN_0,
-                    "831"
+                    NII
                 )
             )
             model8583Request.bits_sending?.add(
                 Model8583Bit(
                     35,
                     "Track 2 Data",
-                    ISO8583.LEN_2FULL,
+                    ISO8583.LEN_0,
                     track2data?.replace('=', 'D')
                 ).setFunction("padStart")
             )
@@ -204,7 +222,7 @@ object IsoUtils {
                     ISO8583.LEN_0,
 //                    StringUtils.convertStringToHex("TERM0001".padEnd(8, ' '))
 //                    "12345678".padEnd(8, ' ')
-                    StringUtils.convertStringToHex("1234".padEnd(8, ' '))
+                    StringUtils.convertStringToHex(TID.padEnd(8, ' '))
                 )
             )
             model8583Request.bits_sending?.add(
@@ -212,8 +230,16 @@ object IsoUtils {
                     42,
                     "Merchant ID",
                     ISO8583.LEN_0,
-                    StringUtils.convertStringToHex("123456".padEnd(15, ' '))
+                    StringUtils.convertStringToHex(MID.padEnd(15, ' '))
 //                    "123456".padEnd(15, '0')
+                )
+            )
+            model8583Request.bits_sending?.add(
+                Model8583Bit(
+                    48,
+                    "Private Data",
+                    ISO8583.LEN_4HALF,
+                    officerCardNum
                 )
             )
             model8583Request.bits_sending?.add(
@@ -224,44 +250,20 @@ object IsoUtils {
                     pinBlockOwn
                 )
             )
+            model8583Request.bits_sending?.add(
+                Model8583Bit(
+                    60,
+                    "Serial ID",
+                    ISO8583.LEN_0,
+                    "ZO80263820"
+                )
+            )
 
             model8583Request.setSpecs(getSpecs())
             return model8583Request
         } catch (e: Exception) {
             LogUtils.e(TAG, "Error creating ISO message", e)
             return null
-        }
-    }
-
-    fun generateIsoStartEndDateJpos(context: Context, mti: String, data: Map<Int, String?>): ISOMsg {
-        try {
-            // force jPOS pakai parser Android (bukan Crimson)
-            System.setProperty("org.xml.sax.driver", "org.xmlpull.v1.sax2.Driver")
-            System.setProperty("javax.xml.parsers.SAXParserFactory", "org.xmlpull.v1.sax2.Driver")
-
-            // pastikan file ada di assets/
-            context.assets.open("iso8583-custom-packager.xml").use { inputStream ->
-                val packager = GenericPackager(inputStream)
-
-                val spec = IsoRepository.specs[mti]
-                    ?: throw IllegalArgumentException("Spec untuk MTI $mti tidak ditemukan")
-
-                return ISOMsg().apply {
-                    this.packager = packager
-                    setMTI(mti)
-
-                    spec.requiredFields.forEach { field ->
-                        data[field]?.let { set(field, it) }
-                            ?: throw IllegalArgumentException("Field $field wajib diisi")
-                    }
-                    spec.optionalFields.forEach { field ->
-                        data[field]?.let { set(field, it) }
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            LogUtils.e("ISO8583", "Error creating ISO message", e)
-            throw e
         }
     }
 
@@ -316,7 +318,7 @@ object IsoUtils {
                     24,
                     "NII",
                     ISO8583.LEN_0,
-                    "831"
+                    NII
                 )
             )
             model8583Request.bits_sending?.add(
@@ -332,7 +334,7 @@ object IsoUtils {
                     41,
                     "Terminal ID",
                     ISO8583.LEN_0,
-                    StringUtils.convertStringToHex("ATM00010".padEnd(15, ' '))
+                    StringUtils.convertStringToHex(TID.padEnd(15, ' '))
                 )
             )
             model8583Request.bits_sending?.add(
@@ -340,7 +342,7 @@ object IsoUtils {
                     42,
                     "Merchant ID",
                     ISO8583.LEN_0,
-                    StringUtils.convertStringToHex("ATM00010".padEnd(15, ' '))
+                    StringUtils.convertStringToHex(MID.padEnd(15, ' '))
                 )
             )
 
@@ -411,7 +413,7 @@ object IsoUtils {
                     24,
                     "NII",
                     ISO8583.LEN_0,
-                    "831"
+                    NII
                 )
             )
             model8583Request.bits_sending?.add(
@@ -429,7 +431,7 @@ object IsoUtils {
                     ISO8583.LEN_0,
 //                    StringUtils.convertStringToHex("TERM0001".padEnd(8, ' '))
 //                    "12345678".padEnd(8, ' ')
-                    StringUtils.convertStringToHex("1234".padEnd(8, ' '))
+                    StringUtils.convertStringToHex(TID.padEnd(8, ' '))
                 )
             )
             model8583Request.bits_sending?.add(
@@ -437,7 +439,7 @@ object IsoUtils {
                     42,
                     "Merchant ID",
                     ISO8583.LEN_0,
-                    StringUtils.convertStringToHex("123456".padEnd(15, ' '))
+                    StringUtils.convertStringToHex(MID.padEnd(15, ' '))
 //                    "123456".padEnd(15, '0')
                 )
             )
@@ -491,7 +493,7 @@ object IsoUtils {
                     24,
                     "NII",
                     ISO8583.LEN_0,
-                    "831"
+                    NII
                 )
             )
             model8583Request.bits_sending?.add(
@@ -509,7 +511,7 @@ object IsoUtils {
                     ISO8583.LEN_0,
 //                    StringUtils.convertStringToHex("TERM0001".padEnd(8, ' '))
 //                    "12345678".padEnd(8, ' ')
-                    StringUtils.convertStringToHex("1234".padEnd(8, ' '))
+                    StringUtils.convertStringToHex(TID.padEnd(8, ' '))
                 )
             )
             model8583Request.bits_sending?.add(
@@ -517,7 +519,7 @@ object IsoUtils {
                     42,
                     "Merchant ID",
                     ISO8583.LEN_0,
-                    StringUtils.convertStringToHex("123456".padEnd(15, ' '))
+                    StringUtils.convertStringToHex(MID.padEnd(15, ' '))
 //                    "123456".padEnd(15, '0')
                 )
             )
@@ -613,7 +615,7 @@ object IsoUtils {
                     24,
                     "NII",
                     ISO8583.LEN_0,
-                    "831"
+                    NII
                 )
             )
             model8583Request.bits_sending?.add(
@@ -631,7 +633,7 @@ object IsoUtils {
                     ISO8583.LEN_0,
 //                    StringUtils.convertStringToHex("TERM0001".padEnd(8, ' '))
 //                    "12345678".padEnd(8, ' ')
-                    StringUtils.convertStringToHex("1234".padEnd(8, ' '))
+                    StringUtils.convertStringToHex(TID.padEnd(8, ' '))
                 )
             )
             model8583Request.bits_sending?.add(
@@ -639,7 +641,7 @@ object IsoUtils {
                     42,
                     "Merchant ID",
                     ISO8583.LEN_0,
-                    StringUtils.convertStringToHex("123456".padEnd(15, ' '))
+                    StringUtils.convertStringToHex(MID.padEnd(15, ' '))
 //                    "123456".padEnd(15, '0')
                 )
             )
@@ -714,7 +716,7 @@ object IsoUtils {
                     24,
                     "NII",
                     ISO8583.LEN_0,
-                    "831"
+                    NII
                 )
             )
             model8583Request.bits_sending?.add(
@@ -732,7 +734,7 @@ object IsoUtils {
                     ISO8583.LEN_0,
 //                    StringUtils.convertStringToHex("TERM0001".padEnd(8, ' '))
 //                    "12345678".padEnd(8, ' ')
-                    StringUtils.convertStringToHex("1234".padEnd(8, ' '))
+                    StringUtils.convertStringToHex(TID.padEnd(8, ' '))
                 )
             )
             model8583Request.bits_sending?.add(
@@ -740,7 +742,7 @@ object IsoUtils {
                     42,
                     "Merchant ID",
                     ISO8583.LEN_0,
-                    StringUtils.convertStringToHex("123456".padEnd(15, ' '))
+                    StringUtils.convertStringToHex(MID.padEnd(15, ' '))
 //                    "123456".padEnd(15, '0')
                 )
             )

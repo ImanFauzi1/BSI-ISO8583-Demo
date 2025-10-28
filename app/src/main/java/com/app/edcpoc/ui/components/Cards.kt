@@ -319,3 +319,8 @@ fun SessionManagementCard(onSessionManagementClick: () -> Unit) {
         }
     }
 }
+
+@Composable
+fun Logcat() {
+    Column {  }
+}

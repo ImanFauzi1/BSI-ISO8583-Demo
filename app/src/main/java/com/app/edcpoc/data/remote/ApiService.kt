@@ -25,7 +25,7 @@ interface ApiService {
     @POST("edcmid-central/ktp2-spv")
     suspend fun sendKtpDataSpv(@Body ktpReq: KtpReq): Response<KtpResp>
 
-    @POST("facecompare/compare")
+    @POST("edcmid-central/facecompare/compare")
     suspend fun faceCompare(@Body body: FaceCompareRequest): Response<FaceCompareTencentResponse>
 
     @POST("edcmid-central/log-ktp/fingerprint")
