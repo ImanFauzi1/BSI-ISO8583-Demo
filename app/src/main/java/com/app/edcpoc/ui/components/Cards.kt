@@ -23,6 +23,7 @@ import com.app.edcpoc.utils.Constants.KTP_READ
 import com.app.edcpoc.utils.Constants.LOGOFF
 import com.app.edcpoc.utils.Constants.LOGON
 import com.app.edcpoc.utils.Constants.MANUAL_KTP_READ
+import com.app.edcpoc.utils.Constants.OPEN_CONNECTION
 import com.app.edcpoc.utils.Constants.REISSUE_PIN
 import com.app.edcpoc.utils.Constants.START_DATE
 import com.app.edcpoc.utils.Constants.VERIFY_PIN
@@ -292,6 +293,22 @@ fun SessionManagementCard(onSessionManagementClick: () -> Unit) {
                 )
             }
             Spacer(modifier = Modifier.height(16.dp))
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            ActionButton(
+                text = "Open Connection Start Date",
+                icon = Icons.Default.DateRange,
+                modifier = Modifier.weight(1f),
+                onClick = {
+                    commandValue = OPEN_CONNECTION
+                    onSessionManagementClick()
+                }
+            )
         }
         Spacer(modifier = Modifier.height(16.dp))
         Row(

@@ -13,6 +13,7 @@ import com.app.edcpoc.utils.Constants.CREATE_PIN
 import com.app.edcpoc.utils.Constants.END_DATE
 import com.app.edcpoc.utils.Constants.LOGOFF
 import com.app.edcpoc.utils.Constants.LOGON
+import com.app.edcpoc.utils.Constants.OPEN_CONNECTION
 import com.app.edcpoc.utils.Constants.READ_TIMEOUT
 import com.app.edcpoc.utils.Constants.REISSUE_PIN
 import com.app.edcpoc.utils.Constants.START_DATE
@@ -46,6 +47,7 @@ import com.app.edcpoc.utils.Constants.pinBlockNew
 import com.app.edcpoc.utils.Constants.pinBlockOwn
 import com.app.edcpoc.utils.Constants.step
 import com.app.edcpoc.utils.Constants.tags
+import com.app.edcpoc.utils.Constants.tpkKey
 import com.app.edcpoc.utils.Constants.track2data
 import com.app.edcpoc.utils.Constants.track2datacustomer
 import com.google.gson.Gson
@@ -71,6 +73,8 @@ import com.zcs.sdk.util.StringUtils
 import java.io.File
 import java.io.IOException
 import java.util.Locale
+import javax.crypto.Cipher
+import javax.crypto.spec.SecretKeySpec
 import javax.inject.Inject
 
 /**
@@ -205,6 +209,7 @@ class EmvUtil @Inject constructor() {
     }
 
     private fun getMagData() {
+        pinpadWork()
         Log.d("Debug", "MAG_CARD")
         Log.d(TAG, "Mag card swipe")
 //        Log.d(TAG, "Mag stateCard $stateCard")
@@ -242,6 +247,9 @@ class EmvUtil @Inject constructor() {
                         officerCardNum = cardNum
                         inputPIN()
                     }
+                }
+                OPEN_CONNECTION -> {
+                    callback?.onDoSomething(appContext)
                 }
                 else -> {
                     track2data = tk2
@@ -545,14 +553,16 @@ class EmvUtil @Inject constructor() {
         }
     }
     fun inputPIN(): Int {
-
+        Log.d("Debug", "inputpin: masuk")
         mPinPadManager?.inputOnlinePin(
             appContext,
             6.toByte(),
             12.toByte(),
             60,
             true,
-            cardNum,
+//            cardNum,
+            "374043057000144742",
+//            "9911019931030711",
             0.toByte(),
             PinAlgorithmMode.ANSI_X_9_8,
             object : OnPinPadInputListener {
@@ -623,32 +633,167 @@ class EmvUtil @Inject constructor() {
         return inputPINResult
     }
 
-    private fun pinpadWork() {
-//        val mk_key = "484455B474A6C6115FF62236D8A09C74"
-        val mk_key = "27C533E1066C3FFA6C599CBBBD6F6C39"
-        val key_byte = StringUtils.convertHexToBytes(mk_key)
-        var status = mPinPadManager!!.pinPadUpMastKey(
-            0,
-            key_byte,
-            key_byte.size.toByte()
-        ) //inject plain masterkey
-        Log.d("Debug", "pinPadUpMastKey status$status")
+    private fun pinpadWork2() {
+//        try {
+//            val mk_key = "27C533E1066C3FFA6C599CBBBD6F6C39"
+////            val tpk_key = StringUtils.convertHexToASCII(tpkKey)
+//            val tpk_key = "7974D8BA41D9A08C16AEEBD2BE735BFA"
+//            val key_byte = StringUtils.convertHexToBytes(mk_key)
+//            //inject plain masterkey
+//            val status = mPinPadManager?.pinPadUpMastKey(
+//                0,
+//                key_byte,
+//                key_byte.size.toByte()
+//            )
+//            Log.d(TAG, "pinPadUpMastKey status : $status")
+//
+//            //inject work key
+//            val tpkEncBytes = StringUtils.convertHexToBytes(tpk_key)
+//
+//            Log.d(TAG, "work_key: $tpk_key")
+//            val status1 = mPinPadManager?.pinPadUpWorkKey(
+//                0, tpkEncBytes, tpkEncBytes.size.toByte(),
+//                null, 0.toByte(), null, 0.toByte()
+//            )
+//            Log.d(TAG, "pinPadUpWorkKey status : $status1")
+//        } catch (e: Exception) {
+//            Log.e(TAG, e.message.toString())
+//        }
+        try {
+            val mk_key = "27C533E1066C3FFA6C599CBBBD6F6C39"
+            val tpk_key = "7974D8BA41D9A08C16AEEBD2BE735BFA"
+            Log.d(TAG, "work_key: $tpk_key")
+            val key_byte = StringUtils.convertHexToBytes(mk_key)
+            //inject plain masterkey
+            val status = mPinPadManager?.pinPadUpMastKey(
+                0,
+                key_byte,
+                key_byte.size.toByte()
+            )
+            Log.d(TAG, "pinPadUpMastKey status : $status")
 
-//The working key ciphertext is regenerated from the plaintext key provided by the bank and the master key downloaded to the device
-        val clearComponentHex = "02020202020202020404040404040404"
-        val keycheckvalueHex: String =
-            MessageDigestUtils.encodeTripleDES("0000000000000000", clearComponentHex)
-                .substring(0, 8)
-        val encryptedComponentHex: String =
-            MessageDigestUtils.encodeTripleDES(clearComponentHex, mk_key) + keycheckvalueHex
-        val pin_key_byte = StringUtils.convertHexToBytes(encryptedComponentHex)
+            //inject work key
+            val tpkEncBytes = StringUtils.convertHexToBytes(tpk_key)
 
-        //inject pin chiper key
-        status = mPinPadManager!!.pinPadUpWorkKey(
-            0, pin_key_byte, pin_key_byte.size.toByte(),
-            null, 0.toByte(), null, 0.toByte()
-        )
+            val kcv = MessageDigestUtils.encodeTripleDES("0000000000000000", tpk_key).substring(0, 8)
+            val encryptedTPK = MessageDigestUtils.encodeTripleDES(tpk_key, mk_key)
+
+            val pinKeyBytes = StringUtils.convertHexToBytes(encryptedTPK)
+
+            Log.d(TAG, "work_key: $tpk_key")
+            val status1 = mPinPadManager?.pinPadUpWorkKey(
+                0, pinKeyBytes, pinKeyBytes.size.toByte(),
+                null, 0.toByte(), null, 0.toByte()
+            )
+            Log.d(TAG, "pinPadUpWorkKey status : $status1")
+        } catch (e: Exception) {
+            Log.e(TAG, e.message.toString())
+        }
     }
+
+    fun pinpadWork() {
+        try {
+            val mk_key = "27C533E1066C3FFA6C599CBBBD6F6C39"
+            val tpk = "8F41765999C1576734C8582120B2A518"
+//            val tpk = StringUtils.convertHexToASCII(tpkKey)
+
+            val key_byte = StringUtils.convertHexToBytes(mk_key)
+            //inject plain masterkey
+            val status = mPinPadManager?.pinPadUpMastKey(
+                0,
+                key_byte,
+                key_byte.size.toByte()
+            )
+            Log.d(TAG, "pinPadUpMastKey status : $status")
+
+            Thread.sleep(700)
+            //inject work key
+            val tpkEncBytes = StringUtils.convertHexToBytes(tpk)
+
+            Log.d(TAG, "work_key: $tpk")
+            val status1 = mPinPadManager?.pinPadUpWorkKey(
+                0, tpkEncBytes, tpkEncBytes.size.toByte(),
+                null, 0.toByte(), null, 0.toByte()
+            )
+            Log.d(TAG, "pinPadUpWorkKey status : $status1")
+        } catch (e: Exception) {
+            Log.e(TAG, e.message.toString())
+        }
+    }
+
+    private fun pinpadWork3() {
+        try {
+            val mk_key = "27C533E1066C3FFA6C599CBBBD6F6C39"
+            val tpk_key = "7974D8BA41D9A08C16AEEBD2BE735BFA"
+
+            val tmk24 = expandDoubleTo24(StringUtils.convertHexToBytes(mk_key))
+            val tpkPlain = tripleDESDecryptECB(tmk24, StringUtils.convertHexToBytes(tpk_key))
+
+            Log.d("TPKPLAIN", "plain=${StringUtils.convertBytesToHex(tpkPlain)}")
+            val status = mPinPadManager?.pinPadUpMastKey(
+                0,
+                tmk24,
+                tmk24.size.toByte()
+            )
+            val tpk24 = expandDoubleTo24(tpkPlain)
+
+            mPinPadManager?.pinPadUpMastKey(
+                0,
+                tpk24,
+                tpk24.size.toByte()
+            )
+        } catch (e: Exception) {
+            Log.e(TAG, e.message.toString())
+        }
+    }
+
+    fun expandDoubleTo24(key16: ByteArray): ByteArray {
+        if (key16.size == 24) return key16
+        require(key16.size == 16) { "Expected 16-byte key, got ${key16.size}" }
+
+        return ByteArray(24).apply {
+            key16.copyInto(this, 0, 0, 16)
+            key16.copyInto(this, 16, 0, 8)
+        }
+    }
+
+    fun tripleDESDecryptECB(key24: ByteArray, data: ByteArray): ByteArray {
+        require(key24.size == 24) { "Key must be 24 bytes for 3DES" }
+        require(data.size % 8 == 0) { "Data length must be multiple of 8 bytes" }
+
+        val cipher = Cipher.getInstance("DESede/ECB/NoPadding")
+        val secretKey = SecretKeySpec(key24, "DESede")
+        cipher.init(Cipher.DECRYPT_MODE, secretKey)
+        return cipher.doFinal(data)
+    }
+
+    //    private fun pinpadWork() {
+////        val mk_key = "484455B474A6C6115FF62236D8A09C74"
+//        val mk_key = "27C533E1066C3FFA6C599CBBBD6F6C39"
+//        val key_byte = StringUtils.convertHexToBytes(mk_key)
+//        var status = mPinPadManager!!.pinPadUpMastKey(
+//            0,
+//            key_byte,
+//            key_byte.size.toByte()
+//        ) //inject plain masterkey
+//        Log.d("Debug", "pinPadUpMastKey status$status")
+//
+////The working key ciphertext is regenerated from the plaintext key provided by the bank and the master key downloaded to the device
+////        val clearComponentHex = "02020202020202020404040404040404"
+//        val clearComponentHex = tpkKey
+//        val keycheckvalueHex: String =
+//            MessageDigestUtils.encodeTripleDES("0000000000000000", clearComponentHex).substring(0, 8)
+//        val encryptedTPK = MessageDigestUtils.encodeTripleDES(clearComponentHex, mk_key)
+////        val encryptedComponentHex: String =
+////            MessageDigestUtils.encodeTripleDES(clearComponentHex, mk_key) + keycheckvalueHex
+//        val pin_key_byte = StringUtils.convertHexToBytes(encryptedTPK)
+//
+//        //inject pin chiper key
+//        status = mPinPadManager!!.pinPadUpWorkKey(
+//            0, pin_key_byte, pin_key_byte.size.toByte(),
+//            null, 0.toByte(), null, 0.toByte()
+//        )
+//    }
     fun inputNewPIN(): Boolean {
         Log.e(TAG, "start inputNewPIN")
         mPinPadManager?.inputOnlinePin(

@@ -17,34 +17,13 @@ object IsoUtils {
     private val TAG = "IsoUtils"
     private val NII = "0001"
     private val TID = "01000202"
-    private val MID = "451000001000203"
+    private val MID = "451000001000202"
 
     private fun generateBaseRequest(mti: String): Model8583Request {
         val model8583Request = Model8583Request()
         model8583Request.setMTI(mti)
         model8583Request.setTPDU("6000018053")
         return model8583Request
-    }
-    fun parseIsoResponse(iso: String): Map<String, String> {
-        var idx = 0
-        fun take(n: Int): String {
-            val s = iso.substring(idx, (idx + n).coerceAtMost(iso.length))
-            idx += n
-            return s
-        }
-        return mapOf(
-            "MTI" to take(4),
-            "Bitmap" to take(16),
-            "ProcessingCode" to take(6),
-            "STI" to take(6),
-            "F12" to take(6),
-            "F13" to take(4),
-            "F24" to take(3),
-            "F37" to take(12),
-            "F38" to take(6),
-            "F39" to take(2),
-            "F41" to take(8)
-        )
     }
     fun getSpecs(): HashMap<Int?, Model8583Bit?>? {
         val specs = HashMap<Int?, Model8583Bit?>();
@@ -161,6 +140,15 @@ object IsoUtils {
             )
         )
         specs.put(
+            53, Model8583Bit(
+                53,
+                "Security Control Info",
+                ISO8583.LEN_0,
+                16
+            )
+
+        )
+        specs.put(
             60, Model8583Bit(
                 60,
                 "Serial ID",
@@ -267,6 +255,75 @@ object IsoUtils {
 //            return null
 //        }
 //    }
+fun generateIsoConnection(mti: String, processingCode: String): Model8583Request? {
+    try {
+        val model8583Request: Model8583Request = generateBaseRequest(mti)
+        Log.d(TAG, "Generating ISO message with Processing Code: $processingCode")
+
+        model8583Request.bits_sending?.add(
+            Model8583Bit(
+                3,
+                "Processing Code",
+                ISO8583.LEN_0,
+                processingCode
+            )
+        )
+        model8583Request.bits_sending?.add(
+            Model8583Bit(
+                7,
+                "Transmission Date & Time",
+                ISO8583.LEN_0,
+                simpleDateFormat()
+            )
+        )
+        model8583Request.bits_sending?.add(
+            Model8583Bit(
+                11,
+                "System Trace Audit Number",
+                ISO8583.LEN_0,
+                generateUniqueStan()
+            )
+        )
+        model8583Request.bits_sending?.add(
+            Model8583Bit(
+                24,
+                "NII",
+                ISO8583.LEN_0,
+                NII
+            )
+        )
+        model8583Request.bits_sending?.add(
+            Model8583Bit(
+                41,
+                "Terminal ID",
+                ISO8583.LEN_0,
+                StringUtils.convertStringToHex(TID)
+            )
+        )
+        model8583Request.bits_sending?.add(
+            Model8583Bit(
+                42,
+                "Merchant ID",
+                ISO8583.LEN_0,
+                StringUtils.convertStringToHex(MID)
+            )
+        )
+        model8583Request.bits_sending?.add(
+            Model8583Bit(
+                60,
+                "Serial ID",
+                ISO8583.LEN_4HALF,
+                StringUtils.convertStringToHex("AB80263820")
+            )
+        )
+
+        model8583Request.setSpecs(getSpecs())
+        return model8583Request
+    } catch (e: Exception) {
+        LogUtils.e(TAG, "Error creating ISO message", e)
+        return null
+    }
+}
 fun generateIsoStartEndDate(mti: String, processingCode: String): Model8583Request? {
     try {
         val model8583Request: Model8583Request = generateBaseRequest(mti)
@@ -301,11 +358,11 @@ fun generateIsoStartEndDate(mti: String, processingCode: String): Model8583Reque
                 24,
                 "NII",
                 ISO8583.LEN_0,
-                "0001"
+                NII
             )
         )
 
-        track2data = "9911019916781791=30091201000044010000"
+//        track2data = "9911019931030711=30091201000044010000"
 //        track2data = "9911019916781791=30091201000044010000"
         val tk = "37" + track2data?.length?.let {
             if (it < 37) {
@@ -347,8 +404,8 @@ fun generateIsoStartEndDate(mti: String, processingCode: String): Model8583Reque
                 "Private Data",
                 ISO8583.LEN_4HALF,
 //                officerCardNum
-                StringUtils.convertStringToHex("9911010026340396")
-//                StringUtils.convertStringToHex(officerCardNum)
+//                StringUtils.convertStringToHex("9911010054404957")
+                StringUtils.convertStringToHex(officerCardNum)
             )
         )
         model8583Request.bits_sending?.add(
@@ -356,8 +413,7 @@ fun generateIsoStartEndDate(mti: String, processingCode: String): Model8583Reque
                 52,
                 "PIN Data",
                 ISO8583.LEN_0,
-//                pinBlockOwn
-                "B9E971F6D9B53D67"
+                pinBlockOwn
             )
         )
         model8583Request.bits_sending?.add(
@@ -417,6 +473,14 @@ fun generateIsoStartEndDate(mti: String, processingCode: String): Model8583Reque
             )
             model8583Request.bits_sending?.add(
                 Model8583Bit(
+                    7,
+                    "Transmission Date & Time",
+                    ISO8583.LEN_0,
+                    simpleDateFormat()
+                )
+            )
+            model8583Request.bits_sending?.add(
+                Model8583Bit(
                     11,
                     "System Trace Audit Number",
                     ISO8583.LEN_0,
@@ -431,12 +495,20 @@ fun generateIsoStartEndDate(mti: String, processingCode: String): Model8583Reque
                     NII
                 )
             )
+//            val officerTrack2data = "9911010026340396=30091201000044010000"
+            val tk = "37" + officerTrack2data?.length?.let {
+                if (it < 37) {
+                    officerTrack2data!!.replace('=', 'D').padEnd(36, '0') + "F"
+                } else {
+                    officerTrack2data!!.replace('=', 'D') + "F"
+                }
+            }
             model8583Request.bits_sending?.add(
                 Model8583Bit(
                     35,
                     "Track 2 Data",
-                    ISO8583.LEN_2FULL,
-                    officerTrack2data.replace('=', 'D')
+                    ISO8583.LEN_0,
+                    tk
                 ).setFunction("padStart")
             )
             model8583Request.bits_sending?.add(
@@ -444,7 +516,7 @@ fun generateIsoStartEndDate(mti: String, processingCode: String): Model8583Reque
                     41,
                     "Terminal ID",
                     ISO8583.LEN_0,
-                    StringUtils.convertStringToHex(TID.padEnd(15, ' '))
+                    StringUtils.convertStringToHex(TID)
                 )
             )
             model8583Request.bits_sending?.add(
@@ -452,16 +524,24 @@ fun generateIsoStartEndDate(mti: String, processingCode: String): Model8583Reque
                     42,
                     "Merchant ID",
                     ISO8583.LEN_0,
-                    StringUtils.convertStringToHex(MID.padEnd(15, ' '))
+                    StringUtils.convertStringToHex(MID)
                 )
             )
-
             model8583Request.bits_sending?.add(
                 Model8583Bit(
                     52,
                     "PIN Data",
                     ISO8583.LEN_0,
                     pinBlockOwn
+                )
+            )
+
+            model8583Request.bits_sending?.add(
+                Model8583Bit(
+                    60,
+                    "Serial ID",
+                    ISO8583.LEN_4HALF,
+                    StringUtils.convertStringToHex("AB80263820")
                 )
             )
 
@@ -498,18 +578,27 @@ fun generateIsoStartEndDate(mti: String, processingCode: String): Model8583Reque
         }
     }
 
-    fun generateIsoCreatePIN(svpCardNumber: String): Model8583Request? {
+    fun generateIsoCreateCustomerPIN(): Model8583Request? {
         try {
-            val model8583Request = generateBaseRequest("0100")
+            val model8583Request: Model8583Request = generateBaseRequest("0600")
+            Log.d(TAG, "Generating ISO message with Processing Code: 710000")
 
-            model8583Request.bits_sending.add(
+            model8583Request.bits_sending?.add(
                 Model8583Bit(
                     3,
                     "Processing Code",
                     ISO8583.LEN_0,
-                    "710000")
+                    "710000"
+                )
             )
-
+            model8583Request.bits_sending?.add(
+                Model8583Bit(
+                    7,
+                    "Transmission Date & Time",
+                    ISO8583.LEN_0,
+                    simpleDateFormat()
+                )
+            )
             model8583Request.bits_sending?.add(
                 Model8583Bit(
                     11,
@@ -526,22 +615,33 @@ fun generateIsoStartEndDate(mti: String, processingCode: String): Model8583Reque
                     NII
                 )
             )
+
+//        track2data = "9911019931030711=30091201000044010000"
+//        track2data = "9911019916781791=30091201000044010000"
+            val tk = "37" + track2data?.length?.let {
+                if (it < 37) {
+                    track2data!!.replace('=', 'D').padEnd(36, '0') + "F"
+                } else {
+                    track2data!!.replace('=', 'D') + "F"
+                }
+            }
+
+            LogUtils.d(TAG, "tk2=$tk")
             model8583Request.bits_sending?.add(
                 Model8583Bit(
                     35,
                     "Track 2 Data",
-                    ISO8583.LEN_2FULL,
-                    svpCardNumber.replace('=', 'D')
+                    ISO8583.LEN_0,
+                    tk
                 )
             )
+
             model8583Request.bits_sending?.add(
                 Model8583Bit(
                     41,
                     "Terminal ID",
                     ISO8583.LEN_0,
-//                    StringUtils.convertStringToHex("TERM0001".padEnd(8, ' '))
-//                    "12345678".padEnd(8, ' ')
-                    StringUtils.convertStringToHex(TID.padEnd(8, ' '))
+                    StringUtils.convertStringToHex(TID)
                 )
             )
             model8583Request.bits_sending?.add(
@@ -549,16 +649,17 @@ fun generateIsoStartEndDate(mti: String, processingCode: String): Model8583Reque
                     42,
                     "Merchant ID",
                     ISO8583.LEN_0,
-                    StringUtils.convertStringToHex(MID.padEnd(15, ' '))
-//                    "123456".padEnd(15, '0')
+                    StringUtils.convertStringToHex(MID)
                 )
             )
             model8583Request.bits_sending?.add(
                 Model8583Bit(
                     48,
-                    "Add. Data - Private",
-                    ISO8583.LEN_4FULL,
-                    field48data
+                    "Private Data",
+                    ISO8583.LEN_4HALF,
+//                officerCardNum
+//                StringUtils.convertStringToHex("9911010054404957")
+                    StringUtils.convertStringToHex(officerCardNum)
                 )
             )
             model8583Request.bits_sending?.add(
@@ -567,20 +668,238 @@ fun generateIsoStartEndDate(mti: String, processingCode: String): Model8583Reque
                     "PIN Data",
                     ISO8583.LEN_0,
                     pinBlockOwn
+//                "688661FA3BC3E124"
+                )
+            )
+            model8583Request.bits_sending?.add(
+                Model8583Bit(
+                    53,
+                    "Security Control Info",
+                    ISO8583.LEN_0
+                )
+            )
+            model8583Request.bits_sending?.add(
+                Model8583Bit(
+                    60,
+                    "Serial ID",
+                    ISO8583.LEN_4HALF,
+                    StringUtils.convertStringToHex("AB80263820")
                 )
             )
 
             model8583Request.setSpecs(getSpecs())
             return model8583Request
         } catch (e: Exception) {
-            LogUtils.e(TAG, "Error creating ISO Create PIN message", e)
+            LogUtils.e(TAG, "Error creating ISO message", e)
+            return null
+        }
+    }
+    fun generateIsoCreateOfficerPIN(): Model8583Request? {
+        try {
+            val model8583Request: Model8583Request = generateBaseRequest("0100")
+            Log.d(TAG, "Generating ISO message with Processing Code: 750000")
+
+            model8583Request.bits_sending?.add(
+                Model8583Bit(
+                    3,
+                    "Processing Code",
+                    ISO8583.LEN_0,
+                    "750000"
+                )
+            )
+            model8583Request.bits_sending?.add(
+                Model8583Bit(
+                    7,
+                    "Transmission Date & Time",
+                    ISO8583.LEN_0,
+                    simpleDateFormat()
+                )
+            )
+            model8583Request.bits_sending?.add(
+                Model8583Bit(
+                    11,
+                    "System Trace Audit Number",
+                    ISO8583.LEN_0,
+                    generateUniqueStan()
+                )
+            )
+            model8583Request.bits_sending?.add(
+                Model8583Bit(
+                    24,
+                    "NII",
+                    ISO8583.LEN_0,
+                    NII
+                )
+            )
+
+//        track2data = "9911019931030711=30091201000044010000"
+//        track2data = "9911019916781791=30091201000044010000"
+            val tk = "37" + track2data?.length?.let {
+                if (it < 37) {
+                    track2data!!.replace('=', 'D').padEnd(36, '0') + "F"
+                } else {
+                    track2data!!.replace('=', 'D') + "F"
+                }
+            }
+
+            LogUtils.d(TAG, "tk2=$tk")
+            model8583Request.bits_sending?.add(
+                Model8583Bit(
+                    35,
+                    "Track 2 Data",
+                    ISO8583.LEN_0,
+                    tk
+                )
+            )
+
+            model8583Request.bits_sending?.add(
+                Model8583Bit(
+                    41,
+                    "Terminal ID",
+                    ISO8583.LEN_0,
+                    StringUtils.convertStringToHex(TID)
+                )
+            )
+            model8583Request.bits_sending?.add(
+                Model8583Bit(
+                    42,
+                    "Merchant ID",
+                    ISO8583.LEN_0,
+                    StringUtils.convertStringToHex(MID)
+                )
+            )
+            model8583Request.bits_sending?.add(
+                Model8583Bit(
+                    52,
+                    "PIN Data",
+                    ISO8583.LEN_0,
+                    pinBlockOwn
+//                "688661FA3BC3E124"
+                )
+            )
+            model8583Request.bits_sending?.add(
+                Model8583Bit(
+                    53,
+                    "Security Control Info",
+                    ISO8583.LEN_0
+                )
+            )
+            model8583Request.bits_sending?.add(
+                Model8583Bit(
+                    60,
+                    "Serial ID",
+                    ISO8583.LEN_4HALF,
+                    StringUtils.convertStringToHex("AB80263820")
+                )
+            )
+
+            model8583Request.setSpecs(getSpecs())
+            return model8583Request
+        } catch (e: Exception) {
+            LogUtils.e(TAG, "Error creating ISO message", e)
             return null
         }
     }
 
-    fun generateIsoReissuePIN(svpCardNumber: String): Model8583Request? {
+    fun generateIsoReissueOfficerPin(): Model8583Request? {
         try {
             val model8583Request = generateBaseRequest("0100")
+
+            model8583Request.bits_sending?.add(
+                Model8583Bit(
+                    3,
+                    "Processing Code",
+                    ISO8583.LEN_0,
+                    "750000"
+                )
+            )
+            model8583Request.bits_sending?.add(
+                Model8583Bit(
+                    7,
+                    "Transmission Date & Time",
+                    ISO8583.LEN_0,
+                    simpleDateFormat()
+                )
+            )
+            model8583Request.bits_sending?.add(
+                Model8583Bit(
+                    11,
+                    "System Trace Audit Number",
+                    ISO8583.LEN_0,
+                    generateUniqueStan()
+                )
+            )
+            model8583Request.bits_sending?.add(
+                Model8583Bit(
+                    24,
+                    "NII",
+                    ISO8583.LEN_0,
+                    NII
+                )
+            )
+
+            track2data = "9911010054404957=30091201000044010000"
+//        track2data = "9911019916781791=30091201000044010000"
+            val tk = "37" + track2data?.length?.let {
+                if (it < 37) {
+                    track2data!!.replace('=', 'D').padEnd(36, '0') + "F"
+                } else {
+                    track2data!!.replace('=', 'D') + "F"
+                }
+            }
+            model8583Request.bits_sending?.add(
+                Model8583Bit(
+                    35,
+                    "Track 2 Data",
+                    ISO8583.LEN_0,
+                    tk
+                )
+            )
+            model8583Request.bits_sending?.add(
+                Model8583Bit(
+                    41,
+                    "Terminal ID",
+                    ISO8583.LEN_0,
+                    StringUtils.convertStringToHex(TID)
+                )
+            )
+            model8583Request.bits_sending?.add(
+                Model8583Bit(
+                    42,
+                    "Merchant ID",
+                    ISO8583.LEN_0,
+                    StringUtils.convertStringToHex(MID)
+                )
+            )
+            model8583Request.bits_sending?.add(
+                Model8583Bit(
+                    52,
+                    "PIN Data",
+                    ISO8583.LEN_0,
+                    pinBlockOwn
+//                    "688661FA3BC3E124"
+                )
+            )
+            model8583Request.bits_sending?.add(
+                Model8583Bit(
+                    60,
+                    "Serial ID",
+                    ISO8583.LEN_4HALF,
+                    StringUtils.convertStringToHex("AB80263820")
+                )
+            )
+
+            model8583Request.setSpecs(getSpecs())
+            return model8583Request
+        } catch (e: Exception) {
+            LogUtils.e(TAG, "Error creating ISO message", e)
+            return null
+        }
+    }
+
+    fun generateIsoReissueCustomerPIN(): Model8583Request? {
+        try {
+            val model8583Request = generateBaseRequest("0600")
 
             model8583Request.bits_sending.add(
                 Model8583Bit(
@@ -611,7 +930,7 @@ fun generateIsoStartEndDate(mti: String, processingCode: String): Model8583Reque
                     35,
                     "Track 2 Data",
                     ISO8583.LEN_2FULL,
-                    svpCardNumber.replace('=', 'D')
+                    track2data?.replace('=', 'D')
                 )
             )
             model8583Request.bits_sending?.add(
@@ -812,7 +1131,14 @@ fun generateIsoStartEndDate(mti: String, processingCode: String): Model8583Reque
                     ISO8583.LEN_0,
                     "740000")
             )
-
+            model8583Request.bits_sending?.add(
+                Model8583Bit(
+                    7,
+                    "Transmission Date & Time",
+                    ISO8583.LEN_0,
+                    simpleDateFormat()
+                )
+            )
             model8583Request.bits_sending?.add(
                 Model8583Bit(
                     11,
@@ -829,12 +1155,22 @@ fun generateIsoStartEndDate(mti: String, processingCode: String): Model8583Reque
                     NII
                 )
             )
+            val tk = "37" + track2data?.length?.let {
+                if (it < 37) {
+                    track2data!!.replace('=', 'D').padEnd(36, '0') + "F"
+                } else {
+                    track2data!!.replace('=', 'D') + "F"
+                }
+            }
+
+            LogUtils.d(TAG, "tk2=$tk")
             model8583Request.bits_sending?.add(
                 Model8583Bit(
                     35,
                     "Track 2 Data",
-                    ISO8583.LEN_2FULL,
-                    track2data?.replace('=', 'D')
+                    ISO8583.LEN_0,
+//                    tk
+                    "374043057000144742D27102201000001410000F"
                 )
             )
             model8583Request.bits_sending?.add(
@@ -842,9 +1178,7 @@ fun generateIsoStartEndDate(mti: String, processingCode: String): Model8583Reque
                     41,
                     "Terminal ID",
                     ISO8583.LEN_0,
-//                    StringUtils.convertStringToHex("TERM0001".padEnd(8, ' '))
-//                    "12345678".padEnd(8, ' ')
-                    StringUtils.convertStringToHex(TID.padEnd(8, ' '))
+                    StringUtils.convertStringToHex("01000203")
                 )
             )
             model8583Request.bits_sending?.add(
@@ -852,8 +1186,7 @@ fun generateIsoStartEndDate(mti: String, processingCode: String): Model8583Reque
                     42,
                     "Merchant ID",
                     ISO8583.LEN_0,
-                    StringUtils.convertStringToHex(MID.padEnd(15, ' '))
-//                    "123456".padEnd(15, '0')
+                    StringUtils.convertStringToHex("451000001000203")
                 )
             )
             model8583Request.bits_sending?.add(
@@ -861,7 +1194,25 @@ fun generateIsoStartEndDate(mti: String, processingCode: String): Model8583Reque
                     52,
                     "PIN Data",
                     ISO8583.LEN_0,
-                    pinBlockOwn
+                pinBlockOwn
+//                    "B34274FA6873D2CC"
+                )
+            )
+            model8583Request.bits_sending?.add(
+                Model8583Bit(
+                    53,
+                    "Security Control Info",
+                    ISO8583.LEN_0,
+                    "0000000000000000"
+                )
+            )
+            model8583Request.bits_sending?.add(
+                Model8583Bit(
+                    60,
+                    "Serial ID",
+                    ISO8583.LEN_4HALF,
+                    StringUtils.convertStringToHex("IP21755741")
+//                    StringUtils.convertStringToHex("AB80263820")
                 )
             )
 

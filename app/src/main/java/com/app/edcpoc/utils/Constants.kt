@@ -203,9 +203,12 @@ object Constants {
         0x5F20
     )
 
+    var tpkKey: String? = null
+
     val FINGERPRINT_MESSAGE = "Letakkan jari anda di pembaca sidik jari..."
 
     // commandValue
+    const val OPEN_CONNECTION = "OPEN_CONNECTION"
     const val START_DATE = "START_DATE"
     const val END_DATE = "END_DATE"
     const val LOGON = "LOGON"
