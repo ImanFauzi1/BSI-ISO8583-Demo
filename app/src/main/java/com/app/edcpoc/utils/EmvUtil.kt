@@ -7,6 +7,7 @@ import android.os.Looper
 import android.util.Log
 import android.widget.Toast
 import com.app.edcpoc.MyApp
+import com.app.edcpoc.PreferenceManager
 import com.app.edcpoc.interfaces.EmvUtilInterface
 import com.app.edcpoc.utils.Constants.CHANGE_PIN
 import com.app.edcpoc.utils.Constants.CREATE_PIN
@@ -45,6 +46,7 @@ import com.app.edcpoc.utils.Constants.officerCardNum
 import com.app.edcpoc.utils.Constants.pinBlockConfirm
 import com.app.edcpoc.utils.Constants.pinBlockNew
 import com.app.edcpoc.utils.Constants.pinBlockOwn
+import com.app.edcpoc.utils.Constants.statusRet
 import com.app.edcpoc.utils.Constants.step
 import com.app.edcpoc.utils.Constants.tags
 import com.app.edcpoc.utils.Constants.tpkKey
@@ -70,6 +72,7 @@ import com.zcs.sdk.pin.PinAlgorithmMode
 import com.zcs.sdk.pin.pinpad.PinPadManager.OnPinPadInputListener
 import com.zcs.sdk.util.MessageDigestUtils
 import com.zcs.sdk.util.StringUtils
+import kotlinx.coroutines.delay
 import java.io.File
 import java.io.IOException
 import java.util.Locale
@@ -221,8 +224,6 @@ class EmvUtil @Inject constructor(context: Context) {
             val tk3 = magReadData.tk3
             val expiredDate = magReadData.expiredDate
 
-            cardNum = magReadData.cardNo
-
             Log.d(TAG, "tk1:  $tk1")
             Log.d(TAG, "tk2:  $tk2")
             Log.d(TAG, "tk3:  $tk3")
@@ -241,10 +242,11 @@ class EmvUtil @Inject constructor(context: Context) {
                 }
                 START_DATE -> {
                     if (step == 1) {
+                        cardNum = magReadData.cardNo
                         track2data = tk2
                         callback?.onDoSomething(appContext)
                     } else {
-                        officerCardNum = cardNum
+                        officerCardNum = magReadData.cardNo
                         inputPIN()
                     }
                 }
@@ -252,6 +254,7 @@ class EmvUtil @Inject constructor(context: Context) {
                     callback?.onDoSomething(appContext)
                 }
                 else -> {
+                    cardNum = magReadData.cardNo
                     track2data = tk2
                     track2hex = StringUtils.convertStringToHex(tk2)
                     val pinResult = inputPIN()
@@ -631,12 +634,42 @@ class EmvUtil @Inject constructor(context: Context) {
         return inputPINResult
     }
 
+    fun pinpadWork2() {
+        try {
+            val mk_key = "27C533E1066C3FFA6C599CBBBD6F6C39"
+            val tpk = "57A1791D6C6D5345F02473A1F7578BCE"
+
+            val key_byte = StringUtils.convertHexToBytes(mk_key)
+
+            val status = mPinPadManager.pinPadUpMastKey(
+                0,
+                key_byte,
+                key_byte.size.toByte()
+            )
+
+            val tpkEnc = MessageDigestUtils.decodeTripleDES(tpk, mk_key)
+            val tpkEncBytes = StringUtils.convertHexToBytes(tpkEnc)
+
+            val status1 = mPinPadManager.pinPadUpWorkKey(
+                0, tpkEncBytes, tpkEncBytes.size.toByte(),
+                null, 0.toByte(), null, 0.toByte()
+            )
+            statusRet = "status=$status1\n\ntpk:$tpk\n\ntpkEnc:$tpkEnc\n\ntpkEncBytes:${StringUtils.convertBytesToHex(tpkEncBytes)}\n\n"
+            Log.d(TAG, "pinPadUpWorkKey status : $status1")
+
+            Log.d("Debug", "" + statusRet)
+        } catch (e: Exception) {
+            Log.e(TAG, e.message.toString())
+        }
+    }
+
     fun pinpadWork() {
         try {
             val mk_key = "27C533E1066C3FFA6C599CBBBD6F6C39"
-            val tpk = StringUtils.convertHexToASCII(tpkKey)
-//            val tpk = "79F05AEF466A72A26D02A5D431A4255B"
+            val tpk = PreferenceManager.getTPK(context = appContext)
+//            val tpk = "57A1791D6C6D5345F02473A1F7578BCE"
             val key_byte = StringUtils.convertHexToBytes(mk_key)
+
             //inject plain masterkey
             val status = mPinPadManager.pinPadUpMastKey(
                 0,
@@ -653,6 +686,7 @@ class EmvUtil @Inject constructor(context: Context) {
                 0, tpkEncBytes, tpkEncBytes.size.toByte(),
                 null, 0.toByte(), null, 0.toByte()
             )
+            statusRet = "status=$status1\n\ntpk:$tpk\n\ntpkEncBytes:${StringUtils.convertBytesToHex(tpkEncBytes)}\n\n"
             Log.d(TAG, "pinPadUpWorkKey status : $status1")
         } catch (e: Exception) {
             Log.e(TAG, e.message.toString())

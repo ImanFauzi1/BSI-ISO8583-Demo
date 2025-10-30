@@ -137,7 +137,7 @@ object IsoUtils {
                 52,
                 "PIN Data",
                 ISO8583.LEN_0,
-                32
+                16
             )
         )
         specs.put(
@@ -409,6 +409,7 @@ fun generateIsoStartEndDate(mti: String, processingCode: String): Model8583Reque
                 StringUtils.convertStringToHex(officerCardNum)
             )
         )
+        Log.d("DEBUG", "PIN BLOCK $pinBlockOwn")
         model8583Request.bits_sending?.add(
             Model8583Bit(
                 52,

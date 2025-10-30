@@ -76,6 +76,8 @@ import com.app.edcpoc.utils.Constants.FINGERPRINT_MESSAGE
 import com.app.edcpoc.utils.Constants.OPEN_CONNECTION
 import com.app.edcpoc.utils.Constants.START_DATE
 import com.app.edcpoc.utils.Constants.VERIFY_PIN
+import com.app.edcpoc.utils.Constants.pinBlockOwn
+import com.app.edcpoc.utils.Constants.statusRet
 import com.app.edcpoc.utils.Constants.tpkKey
 import com.app.edcpoc.utils.CoreUtils
 import com.app.edcpoc.utils.EmvUtil
@@ -531,8 +533,9 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
                     try {
                         val unpack = ISO8583.unpackFromHex(success!!, iso)
                         val getRc = StringUtils.convertHexToASCII(unpack.get("39"))
-                        val get48 = unpack["48"]
-                        tpkKey = get48
+                        val get48 = unpack["48"] ?: ""
+
+                        PreferenceManager.setTPK(this@MainActivity, StringUtils.convertHexToASCII(get48))
 
                         AlertDialog.Builder(this@MainActivity)
                             .setTitle("$getRc - ISO Successssss")
@@ -591,16 +594,20 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
                     try {
                         val unpack = ISO8583.unpackFromHex(success!!, iso)
                         val getRc = StringUtils.convertHexToASCII(unpack.get("39"))
+                        val tpkKey = PreferenceManager.getTPK(this@MainActivity)
+
+                        val unpackPayload = ISO8583.unpackFromHex(pack, iso)
 
                         AlertDialog.Builder(this@MainActivity)
                             .setTitle("$getRc - ISO Success")
-                            .setMessage("Response Code: $getRc\n\n\nresponse raw: $success\n\n" + unpack.entries.joinToString("\n") { "${it.key}: ${it.value}" })
+                            .setMessage("tpk:$tpkKey\n\npayload:$pack\n\nPIN:${unpackPayload["52"]}\n\nResponse Code: $getRc\n\n\nresponse raw: $success\n\n" + unpack.entries.joinToString("\n") { "${it.key}: ${it.value}" })
                             .setPositiveButton("Close") { dialog, _ -> dialog.dismiss() }
                             .show()
                     } catch (e: Exception) {
                         AlertDialog.Builder(this@MainActivity)
                             .setTitle("ISO Start Date FAILEDD")
-                            .setMessage("response raw: $success\n\nerr message=${e.message}")
+                            .setMessage("statusRet=${statusRet}" +
+                                    "response raw: $success\n\niso payload:$pack\n\ntpk:${PreferenceManager.getTPK(this@MainActivity)}\n\npinblock:$pinBlockOwn\n\nerr message=${e.message}")
                             .setPositiveButton("Close") { dialog, _ -> dialog.dismiss() }
                             .show()
                         LogUtils.e(TAG, "Error unpacking ISO8583 message: ${e.printStackTrace()}")

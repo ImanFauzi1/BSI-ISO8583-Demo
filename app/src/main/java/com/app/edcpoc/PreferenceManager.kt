@@ -16,6 +16,7 @@ object PreferenceManager {
     private const val TMS = "tms"
     private const val TMS_PORT = "tms_port"
     private const val FINGERPRINT_DATA = "fingerprint_data"
+    private const val TPK = "tpk"
 
     private fun getPrefs(context: Context): SharedPreferences =
         context.getSharedPreferences(PREF_NAME, Context.MODE_PRIVATE)
@@ -23,6 +24,13 @@ object PreferenceManager {
     fun setPCID(context: Context, pcid: String){
         getPrefs(context).edit { putString("PCID", pcid) }
     }
+
+    fun setTPK(context: Context, tpk: String){
+        getPrefs(context).edit { putString(TPK, tpk) }
+    }
+
+    fun getTPK(context: Context): String? =
+        getPrefs(context).getString(TPK, null)
     fun setSVPUserId(context: Context, userId: String){
         getPrefs(context).edit { putString(SVP_USER_ID, userId) }
     }
