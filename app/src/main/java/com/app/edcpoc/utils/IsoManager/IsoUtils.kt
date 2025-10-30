@@ -677,7 +677,8 @@ fun generateIsoStartEndDate(mti: String, processingCode: String): Model8583Reque
                 Model8583Bit(
                     53,
                     "Security Control Info",
-                    ISO8583.LEN_0
+                    ISO8583.LEN_0,
+                    "0000000000000000"
                 )
             )
             model8583Request.bits_sending?.add(
@@ -783,7 +784,8 @@ fun generateIsoStartEndDate(mti: String, processingCode: String): Model8583Reque
                 Model8583Bit(
                     53,
                     "Security Control Info",
-                    ISO8583.LEN_0
+                    ISO8583.LEN_0,
+                    ""
                 )
             )
             model8583Request.bits_sending?.add(
@@ -927,12 +929,21 @@ fun generateIsoStartEndDate(mti: String, processingCode: String): Model8583Reque
                     NII
                 )
             )
+            val tk = "37" + track2data?.length?.let {
+                if (it < 37) {
+                    track2data!!.replace('=', 'D').padEnd(36, '0') + "F"
+                } else {
+                    track2data!!.replace('=', 'D') + "F"
+                }
+            }
+
+            LogUtils.d(TAG, "tk2=$tk")
             model8583Request.bits_sending?.add(
                 Model8583Bit(
                     35,
                     "Track 2 Data",
-                    ISO8583.LEN_2FULL,
-                    track2data?.replace('=', 'D')
+                    ISO8583.LEN_0,
+                    tk
                 )
             )
             model8583Request.bits_sending?.add(
@@ -940,9 +951,7 @@ fun generateIsoStartEndDate(mti: String, processingCode: String): Model8583Reque
                     41,
                     "Terminal ID",
                     ISO8583.LEN_0,
-//                    StringUtils.convertStringToHex("TERM0001".padEnd(8, ' '))
-//                    "12345678".padEnd(8, ' ')
-                    StringUtils.convertStringToHex(TID.padEnd(8, ' '))
+                    StringUtils.convertStringToHex(TID)
                 )
             )
             model8583Request.bits_sending?.add(
@@ -950,8 +959,7 @@ fun generateIsoStartEndDate(mti: String, processingCode: String): Model8583Reque
                     42,
                     "Merchant ID",
                     ISO8583.LEN_0,
-                    StringUtils.convertStringToHex(MID.padEnd(15, ' '))
-//                    "123456".padEnd(15, '0')
+                    StringUtils.convertStringToHex(MID)
                 )
             )
             model8583Request.bits_sending?.add(
@@ -1032,7 +1040,14 @@ fun generateIsoStartEndDate(mti: String, processingCode: String): Model8583Reque
                     ISO8583.LEN_0,
                     "730000")
             )
-
+            model8583Request.bits_sending?.add(
+                Model8583Bit(
+                    7,
+                    "Transmission Date & Time",
+                    ISO8583.LEN_0,
+                    simpleDateFormat()
+                )
+            )
             model8583Request.bits_sending?.add(
                 Model8583Bit(
                     11,
@@ -1049,12 +1064,21 @@ fun generateIsoStartEndDate(mti: String, processingCode: String): Model8583Reque
                     NII
                 )
             )
+            val tk = "37" + track2data?.length?.let {
+                if (it < 37) {
+                    track2data!!.replace('=', 'D').padEnd(36, '0') + "F"
+                } else {
+                    track2data!!.replace('=', 'D') + "F"
+                }
+            }
+
+            LogUtils.d(TAG, "tk2=$tk")
             model8583Request.bits_sending?.add(
                 Model8583Bit(
                     35,
                     "Track 2 Data",
-                    ISO8583.LEN_2FULL,
-                    track2data?.replace('=', 'D')
+                    ISO8583.LEN_0,
+                    tk
                 )
             )
             model8583Request.bits_sending?.add(
@@ -1062,9 +1086,7 @@ fun generateIsoStartEndDate(mti: String, processingCode: String): Model8583Reque
                     41,
                     "Terminal ID",
                     ISO8583.LEN_0,
-//                    StringUtils.convertStringToHex("TERM0001".padEnd(8, ' '))
-//                    "12345678".padEnd(8, ' ')
-                    StringUtils.convertStringToHex(TID.padEnd(8, ' '))
+                    StringUtils.convertStringToHex(TID)
                 )
             )
             model8583Request.bits_sending?.add(
@@ -1072,16 +1094,15 @@ fun generateIsoStartEndDate(mti: String, processingCode: String): Model8583Reque
                     42,
                     "Merchant ID",
                     ISO8583.LEN_0,
-                    StringUtils.convertStringToHex(MID.padEnd(15, ' '))
-//                    "123456".padEnd(15, '0')
+                    StringUtils.convertStringToHex(MID)
                 )
             )
             model8583Request.bits_sending?.add(
                 Model8583Bit(
                     48,
                     "Add. Data - Private",
-                    ISO8583.LEN_4FULL,
-                    pinBlockConfirm
+                    ISO8583.LEN_4HALF,
+                    StringUtils.convertStringToHex(pinBlockConfirm)
                 )
             )
             model8583Request.bits_sending?.add(
@@ -1092,6 +1113,23 @@ fun generateIsoStartEndDate(mti: String, processingCode: String): Model8583Reque
                     pinBlockOwn
                 )
             )
+            model8583Request.bits_sending?.add(
+                Model8583Bit(
+                    53,
+                    "Security Control Info",
+                    ISO8583.LEN_0,
+                    "0000000000000000"
+                )
+            )
+            model8583Request.bits_sending?.add(
+                Model8583Bit(
+                    60,
+                    "Serial ID",
+                    ISO8583.LEN_4HALF,
+                    StringUtils.convertStringToHex(staticSN)
+                )
+            )
+
 
             model8583Request.setSpecs(getSpecs())
             return model8583Request
@@ -1171,8 +1209,7 @@ fun generateIsoStartEndDate(mti: String, processingCode: String): Model8583Reque
                     35,
                     "Track 2 Data",
                     ISO8583.LEN_0,
-//                    tk
-                    "374043057000144742D27102201000001410000F"
+                    tk
                 )
             )
             model8583Request.bits_sending?.add(
@@ -1180,7 +1217,7 @@ fun generateIsoStartEndDate(mti: String, processingCode: String): Model8583Reque
                     41,
                     "Terminal ID",
                     ISO8583.LEN_0,
-                    StringUtils.convertStringToHex("01000203")
+                    StringUtils.convertStringToHex(TID)
                 )
             )
             model8583Request.bits_sending?.add(
@@ -1188,7 +1225,7 @@ fun generateIsoStartEndDate(mti: String, processingCode: String): Model8583Reque
                     42,
                     "Merchant ID",
                     ISO8583.LEN_0,
-                    StringUtils.convertStringToHex("451000001000203")
+                    StringUtils.convertStringToHex(MID)
                 )
             )
             model8583Request.bits_sending?.add(
@@ -1213,7 +1250,7 @@ fun generateIsoStartEndDate(mti: String, processingCode: String): Model8583Reque
                     60,
                     "Serial ID",
                     ISO8583.LEN_4HALF,
-                    StringUtils.convertStringToHex("IP21755741")
+                    StringUtils.convertStringToHex(staticSN)
 //                    StringUtils.convertStringToHex("AB80263820")
                 )
             )

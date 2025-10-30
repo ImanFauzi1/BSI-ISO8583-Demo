@@ -513,6 +513,8 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
     // comment only for integrate bsi
     override fun onDoSomething(context: Context) {
         when(commandValue) {
+            
+            //DONE
             OPEN_CONNECTION -> {
                 LogUtils.i(TAG, "commandValue=$commandValue, FLAVOR=${BuildConfig.FLAVOR}")
                 if (BuildConfig.FLAVOR == "demo") return
@@ -537,11 +539,7 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
 
                         PreferenceManager.setTPK(this@MainActivity, StringUtils.convertHexToASCII(get48))
 
-                        AlertDialog.Builder(this@MainActivity)
-                            .setTitle("$getRc - ISO Successssss")
-                            .setMessage("Response Code=$getRc\n[48]: $get48 \n\n\nresponse raw: $success\n\n" + unpack.entries.joinToString("\n") { "${it.key}: ${it.value}" })
-                            .setPositiveButton("Close") { dialog, _ -> dialog.dismiss() }
-                            .show()
+                        alertDialog(getRc, pack, success, unpack)
                     } catch (e: Exception) {
                         AlertDialog.Builder(this@MainActivity)
                             .setTitle("ISO FAILEDD")
@@ -553,6 +551,7 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
 
                 }
             }
+            // start date done
             START_DATE, END_DATE -> {
                 LogUtils.i(TAG, "commandValue=$commandValue, FLAVOR=${BuildConfig.FLAVOR}")
                 if (BuildConfig.FLAVOR == "demo") return
@@ -615,6 +614,8 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
 
                 }
             }
+
+            // DONE
             LOGON -> {
                 if (BuildConfig.FLAVOR == "integrate") {
                     val iso = IsoUtils.generateIsoLogonLogoff("0800", "810000", track2data!!)
@@ -633,14 +634,8 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
                         }
                         try {
                             val unpack = ISO8583.unpackFromHex(success!!, iso)
-                            AlertDialog.Builder(this@MainActivity)
-                                .setTitle("ISO Logon Success")
-                                .setMessage(
-                                    "response raw: $success\n\n" + unpack.entries.joinToString(
-                                        "\n"
-                                    ) { "${it.key}: ${it.value}" })
-                                .setPositiveButton("Close") { dialog, _ -> dialog.dismiss() }
-                                .show()
+                            val getRc = StringUtils.convertHexToASCII(unpack.get("39"))
+                            alertDialog(getRc, pack, success, unpack)
                         } catch (e: Exception) {
                             AlertDialog.Builder(this@MainActivity)
                                 .setTitle("ISO Logon Failed")
@@ -679,6 +674,7 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
 
 //                isoViewModel.isoSendMessage(context, commandValue, StringUtils.convertHexToBytes(pack))
             }
+            // DONE
             CREATE_PIN -> {
                 var spvCardNumber = PreferenceManager.getSvpCardNum(context)
                 var customerIso: Model8583Request? = null
@@ -687,7 +683,7 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
                     LogUtils.i(TAG, "Creating PIN Step 1")
                     LogUtils.i(TAG, "commandValue=$commandValue")
                     LogUtils.i(TAG, "Opening EMV Dialog for Create PIN Step 1")
-                    customerIso = IsoUtils.generateIsoCreateOfficerPIN()
+                    customerIso = IsoUtils.generateIsoCreateCustomerPIN()
                     isoViewModel.emvUtil?.let { createEmvDialog(this@MainActivity, it, title = "Authorisation", message = "Insert or Swipe Authorisation Card") }
                     step++
                     return
@@ -703,7 +699,7 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
                 } else {
                     spvCardNumber = track2data!!
                 }
-                val officerIso = IsoUtils.generateIsoCreateCustomerPIN()
+                val officerIso = IsoUtils.generateIsoCreateOfficerPIN()
                 val officerPack = ISO8583.packToHex(officerIso)
                 val customerPack = ISO8583.packToHex(customerIso)
 
@@ -724,7 +720,7 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
                         officerPack
                     ) { success, error ->
                         if (error != null) {
-                            Toast.makeText(this@MainActivity, error, Toast.LENGTH_LONG).show()
+                            showToast(error)
                             return@isoSendMessage
                         }
                         try {
@@ -747,13 +743,7 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
                                         val rc = StringUtils.convertHexToASCII(unpack["39"])
 
                                         if (rc == "00") {
-                                            AlertDialog.Builder(this@MainActivity)
-                                                .setTitle("ISO Logon Success")
-                                                .setMessage(
-                                                    "response raw: $success\n\n" + unpack.entries.joinToString(
-                                                        "\n") { "${it.key}: ${it.value}" })
-                                                .setPositiveButton("Close") { dialog, _ -> dialog.dismiss() }
-                                                    .show()
+                                            alertDialog(rc, customerPack, success, unpack)
                                         } else {
                                             showToast("PIN creation failed")
                                         }
@@ -762,14 +752,6 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
                                     }
                                 }
                             }
-                        //                            AlertDialog.Builder(this@MainActivity)
-//                                .setTitle("ISO Logon Success")
-//                                .setMessage(
-//                                    "response raw: $success\n\n" + unpack.entries.joinToString(
-//                                        "\n"
-//                                    ) { "${it.key}: ${it.value}" })
-//                                .setPositiveButton("Close") { dialog, _ -> dialog.dismiss() }
-//                                .show()
                         } catch (e: Exception) {
                             AlertDialog.Builder(this@MainActivity)
                                 .setTitle("ISO Logon Failed")
@@ -784,6 +766,7 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
                     }
                 }
             }
+            // DONE
             REISSUE_PIN -> {
                 var spvCardNumber = PreferenceManager.getSvpCardNum(context)
 
@@ -810,20 +793,60 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
                     spvCardNumber = track2data!!
                 }
 
-//                val iso = IsoUtils.generateIsoReissueCustomerPIN(spvCardNumber)
-//                val pack = ISO8583.packToHex(iso)
+                val iso = IsoUtils.generateIsoReissueCustomerPIN()
+                val reissueSpv = ISO8583.packToHex(iso)
 
-                handleMatchingFingerprint { success, error ->
-                    if (success != null) {
-//                        isoViewModel.isoSendMessage(context, commandValue, StringUtils.convertHexToBytes(pack))
+                if (reissueCustomer == null) {
+                    showToast("Reissue customer ISO is null")
+                    return
+                }
+                val pack = ISO8583.packToHex(reissueCustomer)
+                isoViewModel.isoSendMessage(context, commandValue, pack) {success, error ->
+                    val unpack = ISO8583.unpackFromHex(success!!, reissueCustomer)
+                    val rc = StringUtils.convertHexToASCII(unpack["39"])
+
+                    if (rc == "00") {
+                        isoViewModel.isoSendMessage(context, commandValue, reissueSpv) { success2, error2 ->
+                            if (error2 != null) {
+                                Toast.makeText(this@MainActivity, error2, Toast.LENGTH_LONG).show()
+                                return@isoSendMessage
+                            }
+                            try {
+                                val unpack = ISO8583.unpackFromHex(success2!!, iso)
+                                val rc = StringUtils.convertHexToASCII(unpack["39"])
+
+                                alertDialog(rc, pack, success2, unpack)
+                            } catch (e: Exception) {
+                                AlertDialog.Builder(this@MainActivity)
+                                    .setTitle("ISO Logon Failed")
+                                    .setMessage("response raw: $success2\n\nerr message=${e.message}")
+                                    .setPositiveButton("Close") { dialog, _ -> dialog.dismiss() }
+                                    .show()
+                                LogUtils.e(
+                                    TAG,
+                                    "Error unpacking ISO8583 message: ${e.printStackTrace()}"
+                                )
+                            }
+                        }
                     } else {
-                        isoViewModel.setLoading(false)
-                        LogUtils.e(TAG, "Fingerprint verification failed: $error")
-                        showToast(error ?: "Fingerprint verification failed")
+                        showToast("Reissue PIN failed at customer level")
                     }
+                }
 
+                if (BuildConfig.FLAVOR == "demo") {
+                    handleMatchingFingerprint { success, error ->
+                        if (success != null) {
+    //                        isoViewModel.isoSendMessage(context, commandValue, StringUtils.convertHexToBytes(pack))
+                        } else {
+                            isoViewModel.setLoading(false)
+                            LogUtils.e(TAG, "Fingerprint verification failed: $error")
+                            showToast(error ?: "Fingerprint verification failed")
+                        }
+
+                    }
                 }
             }
+            // DONE
             VERIFY_PIN -> {
                 val iso = IsoUtils.generateIsoVerificationPIN()
                 val pack = ISO8583.packToHex(iso)
@@ -844,14 +867,7 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
                         val unpack = ISO8583.unpackFromHex(success!!, iso)
                         val rc = StringUtils.convertHexToASCII(unpack["39"])
 
-                        AlertDialog.Builder(this@MainActivity)
-                            .setTitle("$rc - ISO Success")
-                            .setMessage(
-                                "response code=$rc\n\nresponse raw: $success\n\n" + unpack.entries.joinToString(
-                                    "\n"
-                                ) { "${it.key}: ${it.value}" })
-                            .setPositiveButton("Close") { dialog, _ -> dialog.dismiss() }
-                            .show()
+                        alertDialog(rc, pack, success, unpack)
                     } catch (e: Exception) {
                         AlertDialog.Builder(this@MainActivity)
                             .setTitle("ISO Logon Failed")
@@ -869,11 +885,48 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
                 val iso = IsoUtils.generateIsoChangePIN()
                 val pack = ISO8583.packToHex(iso)
 
-//                isoViewModel.isoSendMessage(context, commandValue, StringUtils.convertHexToBytes(pack))
+                try {
+                    val result = ISO8583.unpackFromHex(pack, iso)
+                    LogUtils.d(TAG, "Unpacked ISO8583 Message: ${Gson().toJson(result)}")
+                } catch (e: Exception) {
+                    LogUtils.e(TAG, "Error unpacking ISO8583 message: ${e.printStackTrace()}")
+                }
 
+                isoViewModel.isoSendMessage(context, commandValue, pack) { success, error ->
+                    if (error != null) {
+                        Toast.makeText(this@MainActivity, error, Toast.LENGTH_LONG).show()
+                        return@isoSendMessage
+                    }
+                    try {
+                        val unpack = ISO8583.unpackFromHex(success!!, iso)
+                        val rc = StringUtils.convertHexToASCII(unpack["39"])
+
+                        alertDialog(rc, pack, success, unpack)
+                    } catch (e: Exception) {
+                        AlertDialog.Builder(this@MainActivity)
+                            .setTitle("ISO Logon Failed")
+                            .setMessage("response raw: $success\n\nerr message=${e.message}")
+                            .setPositiveButton("Close") { dialog, _ -> dialog.dismiss() }
+                            .show()
+                        LogUtils.e(
+                            TAG,
+                            "Error unpacking ISO8583 message: ${e.printStackTrace()}"
+                        )
+                    }
+                }
             }
         }
         LogUtils.i("AuthViewModel", "commandValue=$commandValue")
+    }
+
+    private fun alertDialog(getRc: String, pack: String, success: String, unpack: Map<String, Any>) {
+        runOnUiThread {
+            AlertDialog.Builder(this@MainActivity)
+                .setTitle("$getRc - ISO Success")
+                .setMessage("tpk:$tpkKey\n\npayload:$pack\n\nResponse Code: $getRc\n\n\nresponse raw: $success\n\n" + unpack.entries.joinToString("\n") { "${it.key}: ${it.value}" })
+                .setPositiveButton("Close") { dialog, _ -> dialog.dismiss() }
+                .show()
+        }
     }
 
     private fun handleMatchingFingerprint(result: (String?, String?) -> Unit) {
