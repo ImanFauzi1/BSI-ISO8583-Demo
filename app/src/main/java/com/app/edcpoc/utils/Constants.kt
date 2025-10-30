@@ -205,6 +205,8 @@ object Constants {
 
     var tpkKey: String? = null
 
+    val staticSN = "AB70246473"
+
     val FINGERPRINT_MESSAGE = "Letakkan jari anda di pembaca sidik jari..."
 
     // commandValue

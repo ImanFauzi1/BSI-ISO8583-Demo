@@ -6,6 +6,7 @@ import com.app.edcpoc.utils.Constants.field48data
 import com.app.edcpoc.utils.Constants.officerCardNum
 import com.app.edcpoc.utils.Constants.pinBlockConfirm
 import com.app.edcpoc.utils.Constants.pinBlockOwn
+import com.app.edcpoc.utils.Constants.staticSN
 import com.app.edcpoc.utils.Constants.track2data
 import com.app.edcpoc.utils.CoreUtils.generateUniqueStan
 import com.app.edcpoc.utils.LogUtils
@@ -313,7 +314,7 @@ fun generateIsoConnection(mti: String, processingCode: String): Model8583Request
                 60,
                 "Serial ID",
                 ISO8583.LEN_4HALF,
-                StringUtils.convertStringToHex("AB80263820")
+                StringUtils.convertStringToHex(staticSN)
             )
         )
 
@@ -421,7 +422,7 @@ fun generateIsoStartEndDate(mti: String, processingCode: String): Model8583Reque
                 60,
                 "Serial ID",
                 ISO8583.LEN_4HALF,
-                StringUtils.convertStringToHex("AB80263820")
+                StringUtils.convertStringToHex(staticSN)
             )
         )
 
@@ -541,7 +542,7 @@ fun generateIsoStartEndDate(mti: String, processingCode: String): Model8583Reque
                     60,
                     "Serial ID",
                     ISO8583.LEN_4HALF,
-                    StringUtils.convertStringToHex("AB80263820")
+                    StringUtils.convertStringToHex(staticSN)
                 )
             )
 
@@ -683,7 +684,7 @@ fun generateIsoStartEndDate(mti: String, processingCode: String): Model8583Reque
                     60,
                     "Serial ID",
                     ISO8583.LEN_4HALF,
-                    StringUtils.convertStringToHex("AB80263820")
+                    StringUtils.convertStringToHex(staticSN)
                 )
             )
 
@@ -789,7 +790,7 @@ fun generateIsoStartEndDate(mti: String, processingCode: String): Model8583Reque
                     60,
                     "Serial ID",
                     ISO8583.LEN_4HALF,
-                    StringUtils.convertStringToHex("AB80263820")
+                    StringUtils.convertStringToHex(staticSN)
                 )
             )
 
@@ -885,7 +886,7 @@ fun generateIsoStartEndDate(mti: String, processingCode: String): Model8583Reque
                     60,
                     "Serial ID",
                     ISO8583.LEN_4HALF,
-                    StringUtils.convertStringToHex("AB80263820")
+                    StringUtils.convertStringToHex(staticSN)
                 )
             )
 
