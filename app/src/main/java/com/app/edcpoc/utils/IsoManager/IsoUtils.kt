@@ -671,7 +671,7 @@ fun generateIsoStartEndDate(mti: String, processingCode: String): Model8583Reque
                     52,
                     "PIN Data",
                     ISO8583.LEN_0,
-                    pinBlockOwn
+                    pinBlockConfirm
                 )
             )
             model8583Request.bits_sending?.add(
