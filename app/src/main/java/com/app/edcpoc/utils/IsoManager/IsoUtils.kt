@@ -1100,7 +1100,7 @@ fun generateIsoStartEndDate(mti: String, processingCode: String): Model8583Reque
             model8583Request.bits_sending?.add(
                 Model8583Bit(
                     48,
-                    "Add. Data - Private",
+                    "Private Data",
                     ISO8583.LEN_4HALF,
                     StringUtils.convertStringToHex(pinBlockConfirm)
                 )
