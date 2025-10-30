@@ -2,6 +2,7 @@ package com.app.edcpoc.utils.IsoManager
 
 import android.util.Log
 import com.app.edcpoc.utils.Constants.commandValue
+import com.app.edcpoc.utils.Constants.customerPin
 import com.app.edcpoc.utils.Constants.field48data
 import com.app.edcpoc.utils.Constants.officerCardNum
 import com.app.edcpoc.utils.Constants.pinBlockConfirm
@@ -844,6 +845,7 @@ fun generateIsoStartEndDate(mti: String, processingCode: String): Model8583Reque
 
 //            track2data = "9911010054404957=30091201000044010000"
 //        track2data = "9911019916781791=30091201000044010000"
+            Log.d("DEBUG", "t2d = $track2data")
             val tk = "37" + track2data?.length?.let {
                 if (it < 37) {
                     track2data!!.replace('=', 'D').padEnd(36, '0') + "F"
@@ -986,7 +988,7 @@ fun generateIsoStartEndDate(mti: String, processingCode: String): Model8583Reque
                     52,
                     "PIN Data",
                     ISO8583.LEN_0,
-                    pinBlockOwn
+                    pinBlockConfirm
                 )
             )
             model8583Request.bits_sending?.add(
