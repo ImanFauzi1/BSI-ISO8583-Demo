@@ -232,14 +232,12 @@ class EmvUtil @Inject constructor(context: Context) {
 
             when(commandValue) {
                 CREATE_PIN, REISSUE_PIN -> {
+                    cardNum = magReadData.cardNo
+                    track2data = tk2
                     if (step == 2) {
-                        cardNum = magReadData.cardNo
-                        track2data = tk2
                         Log.d("Debug", "step=$step;commandValue=$commandValue;track2datasvp=$track2data")
                         inputPIN()
                     } else {
-                        track2data = tk2
-                        cardNum = magReadData.cardNo
                         inputNewPIN()
                     }
                 }
@@ -833,7 +831,7 @@ class EmvUtil @Inject constructor(context: Context) {
 
                     when(commandValue) {
                         CREATE_PIN, REISSUE_PIN -> {
-                            field48data = "$cardNum$pinBlockConfirm"
+
                             Log.d("Debug", "field48data=$field48data")
                         }
                     }

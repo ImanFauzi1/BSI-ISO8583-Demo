@@ -66,8 +66,7 @@ object Constants {
     var pinBlockOwn: String? = null
     var pinBlockNew: String? = null
     var pinBlockConfirm: String? = null
-    var spvPinBlockOwn: String? = null
-
+    var customerPin: String? = null
 //    card
     var cardNum: String? = null
     var officerCardNum: String? = null
