@@ -2,6 +2,7 @@ package com.app.edcpoc.utils
 
 import android.graphics.Bitmap
 import cn.com.aratek.fp.FingerprintScanner
+import com.app.edcpoc.utils.IsoManager.Model8583Request
 import com.simo.ektp.IndonesianIdentityCard
 import com.zcs.sdk.DriverManager
 import com.zcs.sdk.Printer
@@ -221,4 +222,6 @@ object Constants {
     const val CHANGE_PIN = "CHANGE_PIN"
     const val VERIFY_PIN = "VERIFY_PIN"
     const val REISSUE_PIN = "REISSUE_PIN"
+
+    var reissueCustomer: Model8583Request? = null
 }

@@ -842,7 +842,7 @@ fun generateIsoStartEndDate(mti: String, processingCode: String): Model8583Reque
                 )
             )
 
-            track2data = "9911010054404957=30091201000044010000"
+//            track2data = "9911010054404957=30091201000044010000"
 //        track2data = "9911019916781791=30091201000044010000"
             val tk = "37" + track2data?.length?.let {
                 if (it < 37) {
@@ -886,6 +886,14 @@ fun generateIsoStartEndDate(mti: String, processingCode: String): Model8583Reque
             )
             model8583Request.bits_sending?.add(
                 Model8583Bit(
+                    53,
+                    "Security Control Info",
+                    ISO8583.LEN_0,
+                    "0000000000000000"
+                )
+            )
+            model8583Request.bits_sending?.add(
+                Model8583Bit(
                     60,
                     "Serial ID",
                     ISO8583.LEN_4HALF,
@@ -912,7 +920,14 @@ fun generateIsoStartEndDate(mti: String, processingCode: String): Model8583Reque
                     ISO8583.LEN_0,
                     "720000")
             )
-
+            model8583Request.bits_sending?.add(
+                Model8583Bit(
+                    7,
+                    "Transmission Date & Time",
+                    ISO8583.LEN_0,
+                    simpleDateFormat()
+                )
+            )
             model8583Request.bits_sending?.add(
                 Model8583Bit(
                     11,
@@ -929,6 +944,9 @@ fun generateIsoStartEndDate(mti: String, processingCode: String): Model8583Reque
                     NII
                 )
             )
+
+//        track2data = "9911019931030711=30091201000044010000"
+//        track2data = "9911019916781791=30091201000044010000"
             val tk = "37" + track2data?.length?.let {
                 if (it < 37) {
                     track2data!!.replace('=', 'D').padEnd(36, '0') + "F"
@@ -946,6 +964,7 @@ fun generateIsoStartEndDate(mti: String, processingCode: String): Model8583Reque
                     tk
                 )
             )
+
             model8583Request.bits_sending?.add(
                 Model8583Bit(
                     41,
@@ -964,18 +983,27 @@ fun generateIsoStartEndDate(mti: String, processingCode: String): Model8583Reque
             )
             model8583Request.bits_sending?.add(
                 Model8583Bit(
-                    48,
-                    "Add. Data - Private",
-                    ISO8583.LEN_4FULL,
-                    field48data
-                )
-            )
-            model8583Request.bits_sending?.add(
-                Model8583Bit(
                     52,
                     "PIN Data",
                     ISO8583.LEN_0,
                     pinBlockOwn
+                )
+            )
+            model8583Request.bits_sending?.add(
+                Model8583Bit(
+                    53,
+                    "Security Control Info",
+                    ISO8583.LEN_0,
+                    "0000000000000000"
+                )
+            )
+
+            model8583Request.bits_sending?.add(
+                Model8583Bit(
+                    60,
+                    "Serial ID",
+                    ISO8583.LEN_4HALF,
+                    StringUtils.convertStringToHex(staticSN)
                 )
             )
 

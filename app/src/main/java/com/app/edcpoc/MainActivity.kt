@@ -77,6 +77,7 @@ import com.app.edcpoc.utils.Constants.OPEN_CONNECTION
 import com.app.edcpoc.utils.Constants.START_DATE
 import com.app.edcpoc.utils.Constants.VERIFY_PIN
 import com.app.edcpoc.utils.Constants.pinBlockOwn
+import com.app.edcpoc.utils.Constants.reissueCustomer
 import com.app.edcpoc.utils.Constants.statusRet
 import com.app.edcpoc.utils.Constants.tpkKey
 import com.app.edcpoc.utils.CoreUtils
@@ -766,13 +767,12 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
                     }
                 }
             }
-            // DONE
+            // DONE - not tested
             REISSUE_PIN -> {
                 var spvCardNumber = PreferenceManager.getSvpCardNum(context)
 
-                var reissueCustomer: Model8583Request? = null
                 if (step == 1) {
-                    reissueCustomer = IsoUtils.generateIsoReissueOfficerPin()
+                    reissueCustomer = IsoUtils.generateIsoReissueCustomerPIN()
 
                     LogUtils.i(TAG, "Reissuing PIN Step 1")
                     LogUtils.i(TAG, "commandValue=$commandValue")
@@ -793,7 +793,7 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
                     spvCardNumber = track2data!!
                 }
 
-                val iso = IsoUtils.generateIsoReissueCustomerPIN()
+                val iso = IsoUtils.generateIsoReissueOfficerPin()
                 val reissueSpv = ISO8583.packToHex(iso)
 
                 if (reissueCustomer == null) {
@@ -828,7 +828,9 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
                                 )
                             }
                         }
+                        reissueCustomer = null
                     } else {
+                        reissueCustomer = null
                         showToast("Reissue PIN failed at customer level")
                     }
                 }
@@ -881,6 +883,7 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
                     }
                 }
             }
+            // DONE - not tested
             CHANGE_PIN -> {
                 val iso = IsoUtils.generateIsoChangePIN()
                 val pack = ISO8583.packToHex(iso)
