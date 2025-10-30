@@ -4,8 +4,8 @@ import androidx.lifecycle.ViewModel
 import com.app.edcpoc.utils.Constants.isTimeout
 import com.app.edcpoc.utils.Constants.mScanner
 import com.app.edcpoc.utils.KtpReaderManager.isMatchedFingerprint
+import com.app.edcpoc.utils.LogUtils
 import com.simo.ektp.GlobalVars.fmd
-import com.zcs.sdk.util.LogUtils
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

@@ -2,12 +2,17 @@ package com.app.edcpoc.utils
 
 import android.content.Context
 import android.util.Log
+import com.app.edcpoc.data.model.LogTransactionRequest
+import com.app.edcpoc.ui.viewmodel.ApiViewModel
+import com.app.edcpoc.utils.Constants.cardNum
+import com.app.edcpoc.utils.Constants.pos_entrymode
 import java.io.File
 import java.io.FileWriter
 import java.io.PrintWriter
 import java.io.StringWriter
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.getValue
 
 object LogUtils {
 	private const val DEFAULT_TAG = "VictoriaPOC"
@@ -30,6 +35,12 @@ object LogUtils {
 	private var lastCleanupAtMs: Long = 0L
 	@Volatile
 	private var currentLogDate: String? = null
+	@Volatile
+	private var apiViewModel: ApiViewModel? = null
+
+	fun setApiViewModel(viewModel: ApiViewModel) {
+		apiViewModel = viewModel
+	}
 
 	fun init(context: Context, enableFileLogging: Boolean = true, directoryName: String = "logs", retentionDays: Int = 30) {
 		appContext = context.applicationContext
@@ -144,5 +155,22 @@ object LogUtils {
 		throwable.printStackTrace(pw)
 		pw.flush()
 		return sw.toString()
+	}
+
+	fun sendLogTransaction(status: String, transactionType: String, description: String, remarks: String = "") {
+		try {
+			val viewModel = apiViewModel ?: return
+			val payload = LogTransactionRequest(
+				card_number = cardNum ?: return,
+				transaction_type = transactionType,
+				pos_entrymode = pos_entrymode,
+				status = status,
+				response_code_description = description,
+				remarks = remarks,
+			)
+			viewModel.sendLogTransaction(payload)
+		} catch (e: Exception) {
+			LogUtils.e(DEFAULT_TAG, "Log Transaction Error: ${e.message}")
+		}
 	}
 }

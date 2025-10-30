@@ -4,7 +4,6 @@ import android.graphics.BitmapFactory
 import android.os.Build
 import android.os.Bundle
 import android.util.Base64
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -108,7 +107,7 @@ class KtpPreviewActivity : ComponentActivity() {
             MANUAL_KTP_READ -> apiViewModel.sendKtpDataSpv(payloadRequest())
             else -> {
                 Toast.makeText(this, "Unknown KTP data type", Toast.LENGTH_SHORT).show()
-                Log.e("KtpPreviewActivity", "Unknown KTP data type: ${data.type}")
+                LogUtils.e("KtpPreviewActivity", "Unknown KTP data type: ${data.type}")
             }
         }
     }

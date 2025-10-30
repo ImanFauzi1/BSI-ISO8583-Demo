@@ -35,11 +35,13 @@ private fun provideApiService(baseUrl: String): ApiService {
     val svpUserId = preferenceManager.getSvpUserId(context)
 
     val headerInterceptor = Interceptor { chain ->
-        val request = chain.request().newBuilder()
+        var request = chain.request().newBuilder()
             .addHeader("X-Pinpad-Id", getSn())
-            .addHeader("X-User-Id", svpUserId ?: "")
-            .build()
-        chain.proceed(request)
+        if (svpUserId != null)
+            request.addHeader("X-User-Id", svpUserId)
+
+        val requestFinal = request.build()
+        chain.proceed(requestFinal)
     }
 
     val client = OkHttpClient.Builder()
@@ -65,10 +67,14 @@ class ApiRepository {
             if (body != null) {
                 val status = try {
                     body!!::class.java.getDeclaredField("status").get(body) as? Int
-                } catch (e: Exception) { null }
+                } catch (e: Exception) {
+                    null
+                }
                 val message = try {
                     body!!::class.java.getDeclaredField("message").get(body) as? String
-                } catch (e: Exception) { null }
+                } catch (e: Exception) {
+                    null
+                }
                 if (status == -1) {
                     return Result.failure(Exception(message ?: "Unknown error"))
                 } else {
@@ -109,58 +115,64 @@ class ApiRepository {
         }
     }
 
-    suspend fun faceCompare(param: FaceCompareRequest): Result<FaceCompareTencentResponse> = withContext(Dispatchers.IO) {
-        val api = provideApiService(edcmid_base_url)
-        try {
-            val response = api.faceCompare(param)
-            responseApi(response)
-        } catch (e: Exception) {
-            Result.failure(e)
+    suspend fun faceCompare(param: FaceCompareRequest): Result<FaceCompareTencentResponse> =
+        withContext(Dispatchers.IO) {
+            val api = provideApiService(edcmid_base_url)
+            try {
+                val response = api.faceCompare(param)
+                responseApi(response)
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
         }
-    }
 
-    suspend fun sendFingerLogData(param: KtpReq): Result<LogResponse> = withContext(Dispatchers.IO) {
-        val api = provideApiService(edcmid_base_url)
-        try {
-            val response = api.logFingerprint(param)
-            responseApi(response)
-        } catch (e: Exception) {
-            Result.failure(e)
+    suspend fun sendFingerLogData(param: KtpReq): Result<LogResponse> =
+        withContext(Dispatchers.IO) {
+            val api = provideApiService(edcmid_base_url)
+            try {
+                val response = api.logFingerprint(param)
+                responseApi(response)
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
         }
-    }
 
-    suspend fun sendFaceCompareLogData(param: KtpReq): Result<LogResponse> = withContext(Dispatchers.IO) {
-        val api = provideApiService(edcmid_base_url)
-        try {
-            val response = api.logFaceCompare(param)
-            responseApi(response)
-        } catch (e: Exception) {
-            Result.failure(e)
+    suspend fun sendFaceCompareLogData(param: KtpReq): Result<LogResponse> =
+        withContext(Dispatchers.IO) {
+            val api = provideApiService(edcmid_base_url)
+            try {
+                val response = api.logFaceCompare(param)
+                responseApi(response)
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
         }
-    }
 
-    suspend fun getSvpData(param: SvpRequestBody): Result<SvpResponse> = withContext(Dispatchers.IO) {
-        val api = provideApiService(edcmid_base_url)
-        try {
-            val response = api.getSpvData(param)
-            responseApi(response)
-        } catch (e: Exception) {
-            Result.failure(e)
+    suspend fun getSvpData(param: SvpRequestBody): Result<SvpResponse> =
+        withContext(Dispatchers.IO) {
+            val api = provideApiService(edcmid_base_url)
+            try {
+                val response = api.getSpvData(param)
+                responseApi(response)
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
         }
-    }
 
-    suspend fun sendSvpData(param: SvpRequestBody): Result<SvpResponse> = withContext(Dispatchers.IO) {
-        val api = provideApiService(edcmid_base_url)
-        try {
-            val response = api.sendSpvData(param)
-            responseApi(response)
-        } catch (e: Exception) {
-            Result.failure(e)
+    suspend fun sendSvpData(param: SvpRequestBody): Result<SvpResponse> =
+        withContext(Dispatchers.IO) {
+            val api = provideApiService(edcmid_base_url)
+            try {
+                val response = api.sendSpvData(param)
+                responseApi(response)
+            } catch (e: Exception) {
+                Result.failure(e)
+            }
         }
-    }
 
     suspend fun sendLogTransaction(param: LogTransactionRequest): Result<LogResponse> = withContext(
-        Dispatchers.IO) {
+        Dispatchers.IO
+    ) {
         val api = provideApiService(edcmid_base_url)
         try {
             val response = api.logTransaction(param)

@@ -10,7 +10,7 @@ import android.os.Looper
 import android.provider.Settings
 import android.text.Editable
 import android.util.Base64
-import android.util.Log
+import com.app.edcpoc.utils.LogUtils
 import android.view.LayoutInflater
 import android.widget.Button
 import android.widget.RadioButton
@@ -71,20 +71,20 @@ object Utility {
         CONFIG_FILE = PreferenceManager.getConfigFile(context)
 
         return try {
-            if (DEBUG) Log.d(TAG, "PCID = $PCID")
-            if (DEBUG) Log.d(TAG, "CONFIG_FILE = $CONFIG_FILE")
+            if (DEBUG) LogUtils.d(TAG, "PCID = $PCID")
+            if (DEBUG) LogUtils.d(TAG, "CONFIG_FILE = $CONFIG_FILE")
 
             if (PCID?.length != 32 || CONFIG_FILE?.length != 64) {
                 return false
             }
 
             // Apply config
-            Log.e(TAG, "pcid boolean = $PCID")
+            LogUtils.e(TAG, "pcid boolean = $PCID")
             EktpSdkZ90.instance().setPCID(PCID)
             EktpSdkZ90.instance().setConfigFile(CONFIG_FILE)
             true
         }catch (e: Exception){
-            if (DEBUG) Log.d(TAG, "read psamProfile failed. ${e.message}")
+            if (DEBUG) LogUtils.d(TAG, "read psamProfile failed. ${e.message}")
             false
         }
     }
@@ -108,14 +108,14 @@ object Utility {
                 object : CountDownTimer(timeout.toLong(), 1000) {
                     override fun onTick(millisUntilFinished: Long) {
                         val secondsRemaining = millisUntilFinished / 1000
-                        Log.i(
+                        LogUtils.i(
                             TAG,
                             "timeout : $secondsRemaining seconds"
                         )
                     }
 
                     override fun onFinish() {
-                        Log.i(TAG, "timeout : 0 seconds")
+                        LogUtils.i(TAG, "timeout : 0 seconds")
                         onFinish()
                     }
                 }.start()
@@ -268,8 +268,10 @@ object Utility {
         val sys: Sys = DriverManager.getInstance().baseSysDevice
         val pid = arrayOfNulls<String>(1)
         sys.getPid(pid)
-        val sn = pid[0] ?: return ""
+//        val sn = pid[0] ?: return ""
+        val sn = "0200639070246454"
         return if (sn.length > 8) sn.substring(8) else sn
+
     }
 //    @RequiresPermission("android.permission.READ_PHONE_STATE")
 //    fun getDeviceSerial(context: Context): String {
@@ -332,10 +334,10 @@ object Utility {
             val reader = BufferedReader(InputStreamReader(process.inputStream))
             val output = reader.readText()
             val exitCode = process.waitFor()
-            Log.d(TAG, "Ping to $host result=$exitCode output=$output")
+            LogUtils.d(TAG, "Ping to $host result=$exitCode output=$output")
             exitCode == 0
         } catch (e: Exception) {
-            Log.e(TAG, "Ping to $host failed: ${e.message}", e)
+            LogUtils.e(TAG, "Ping to $host failed: ${e.message}", e)
             false
         }
     }

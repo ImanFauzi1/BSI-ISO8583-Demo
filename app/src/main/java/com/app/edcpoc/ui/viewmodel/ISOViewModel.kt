@@ -25,33 +25,28 @@ class ISOViewModel : ViewModel() {
     private val _dialogState = MutableStateFlow(DialogState())
     val dialogState: StateFlow<DialogState> = _dialogState.asStateFlow()
 
-    fun isoSendMessage(context: Context, type: String? = null, isoBuilder: String, callback: (String?, String?) -> Unit) {
+    fun isoSendMessage(
+        context: Context,
+        type: String? = null,
+        isoBuilder: String,
+        callback: (String?, String?) -> Unit
+    ) {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) } // Set loading true
             if (isoBuilder == null) {
-                _uiState.update { it.copy(
-                    errorMessage = "Failed to send ISO, please contact developer.",
-                    isIsoHandled = true,
-                    isLoading = false,
-                    logIso = it.logIso + "Gagal membuat ISO message $type"
-                ) }
+                _uiState.update {
+                    it.copy(
+                        errorMessage = "Failed to send ISO, please contact developer.",
+                        isIsoHandled = true,
+                        isLoading = false,
+                        logIso = it.logIso + "Gagal membuat ISO message $type"
+                    )
+                }
                 LogUtils.e(TAG, "Failed to create ISO message $type")
                 return@launch
             }
 
             Thread.sleep(1000)
-
-            val host = PreferenceManager.getHost(context)
-            val portStr = PreferenceManager.getHostPort(context)
-
-//            val isoHex = StringUtils.convertBytesToHex(isoBuilder)
-//            _uiState.update { it.copy(
-//                stateType = commandValue,
-//                cardNum = cardNum,
-//                iso = isoBuilder,
-//                errorMessage = null,
-//                logIso = it.logIso + "Host:$host\nPort:$portStr\n ISO dikirim: $isoBuilder"
-//            ) }
 
             try {
                 val socket = withContext(Dispatchers.IO) {
@@ -60,82 +55,55 @@ class ISOViewModel : ViewModel() {
                 if (isAllHex(socket!!)) {
                     try {
                         if (socket.length < (4 + 10 + 4 + 16)) {
-                            _uiState.update { it.copy(isLoading = false, isIsoHandled = true, logIso = it.logIso + "Response hex: $socket\n") }
-                            LogUtils.e(TAG, "Hex data length is too short to be a valid ISO8583 message")
+                            _uiState.update {
+                                it.copy(
+                                    isLoading = false,
+                                    isIsoHandled = true,
+                                    logIso = it.logIso + "Response hex: $socket\n"
+                                )
+                            }
+                            LogUtils.e(
+                                TAG,
+                                "Hex data length is too short to be a valid ISO8583 message"
+                            )
                         } else {
                             callback(socket, null)
                             _uiState.update { it.copy(isLoading = false, isIsoHandled = true) }
 //                            _uiState.update { it.copy(isLoading = false, isIsoHandled = true, logIso = it.logIso + "Response ISO: $socket\nASCII: $toAscii") }
                         }
                     } catch (e: Exception) {
-                        _uiState.update { it.copy(isLoading = false, isIsoHandled = true, logIso = it.logIso + "Response message: ${e.message}\nresponse: $socket\n\nexception: ${e.stackTraceToString()}") }
+                        _uiState.update {
+                            it.copy(
+                                isLoading = false,
+                                isIsoHandled = true,
+                                logIso = it.logIso + "Response message: ${e.message}\nresponse: $socket\n\nexception: ${e.stackTraceToString()}"
+                            )
+                        }
                     }
                 } else {
-                    _uiState.update { it.copy(
-                        errorMessage = "Gagal kirim ISO $type: $socket",
-                        isIsoHandled = true,
-                        isLoading = false,
-                        logIso = it.logIso + "Response Error: $socket"
-                    ) }
+                    _uiState.update {
+                        it.copy(
+                            errorMessage = "Gagal kirim ISO $type: $socket",
+                            isIsoHandled = true,
+                            isLoading = false,
+                            logIso = it.logIso + "Response Error: $socket"
+                        )
+                    }
                     LogUtils.e(TAG, "ISO $type Error: $socket")
                 }
 //                _uiState.update { it.copy(isLoading = false, isIsoHandled = true, logIso = it.logIso + "Response $socket") }
             } catch (e: Exception) {
                 LogUtils.e(TAG, "ISO $type Exception: ${e.message}")
-                _uiState.update { it.copy(
-                    errorMessage = "Gagal kirim ISO $type: ${e.stackTraceToString()}\n\n message=${e.message}",
-                    isIsoHandled = true,
-                    isLoading = false,
-                    logIso = it.logIso + "ISO Exception: ${e.stackTraceToString()}\n]\nmessage=${e.message}"
-                ) }
+                _uiState.update {
+                    it.copy(
+                        errorMessage = "Gagal kirim ISO $type: ${e.stackTraceToString()}\n\n message=${e.message}",
+                        isIsoHandled = true,
+                        isLoading = false,
+                        logIso = it.logIso + "ISO Exception: ${e.stackTraceToString()}\n]\nmessage=${e.message}"
+                    )
+                }
                 return@launch
             }
-
-//            IsoClient.sendMessage(context, isoBuilder) { response, error ->
-//                if (error != null) {
-//                    LogUtils.e(TAG, "ISO $type Error: $error")
-//                    _uiState.update { it.copy(
-//                        errorMessage = "Gagal kirim ISO $type: $error",
-//                        isIsoHandled = true,
-//                        isLoading = false,
-//                        logIso = it.logIso + "ISO Error: $error"
-//                    ) }
-//                    return@sendMessage
-//                }
-//
-//                LogUtils.i(TAG, "ISO $type Response: $response")
-//
-//                if (response == null) {
-//                    LogUtils.e(TAG, "Failed to receive ISO $type response")
-//                    _uiState.update { it.copy(
-//                        errorMessage = "Gagal kirim ISO $type",
-//                        isLoading = false,
-//                        logIso = it.logIso + "Gagal menerima response ISO $type; Response error $error; response = $response"
-//                    ) }
-//                    return@sendMessage
-//                }
-//
-//                val isoString = response["string"] as? String ?: ""
-//                val fields = parseIsoResponse(isoString)
-//                val message = when (commandValue) {
-//                    "logon" -> "Sukses logon"
-//                    "logoff" -> "Sukses logoff"
-//                    "startDate" -> "Sukses mulai tanggal"
-//                    "closeDate" -> "Sukses tutup tanggal"
-//                    else -> "ISO sukses dikirim"
-//                }
-//                val detail = fields.entries.joinToString(", ") { "${it.key}: ${it.value}" }
-//                _uiState.update { it.copy(
-//                    cardNum = cardNum,
-//                    iso = detail,
-//                    errorMessage = null,
-//                    isIsoHandled = true,
-//                    isLoading = false,
-//                    logIso = it.logIso + "ISO Response: $message, $detail"
-//                ) }
-//
-//                LogUtils.i(TAG, "ISO $type Successfully sent message.")
-//            }
         }
     }
 
@@ -147,10 +115,15 @@ class ISOViewModel : ViewModel() {
         _uiState.update { it.copy(isLoading = isLoading) }
     }
 
+    fun setIsVisibleStartDate(isVisibleStartDate: Boolean) {
+        _uiState.update { it.copy(isLoading = isVisibleStartDate) }
+    }
+
     fun clearState() {
         _uiState.value = SvpUiState()
         cardNum = null
     }
+
     fun dismissDialog() {
         _dialogState.update { it.copy(showDialog = false, dialogMessage = null) }
     }
@@ -168,5 +141,6 @@ data class SvpUiState(
     val iso: String? = null,
     val cardNum: String? = null,
     val errorMessage: String? = null,
-    val logIso: List<String> = emptyList() // Tambahkan properti log ISO
+    val logIso: List<String> = emptyList(),
+    val isVisibleStartDate: Boolean = false
 )

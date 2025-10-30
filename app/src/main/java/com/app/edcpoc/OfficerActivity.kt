@@ -1,5 +1,6 @@
 package com.app.edcpoc
 
+import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -30,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.app.edcpoc.interfaces.EmvUtilInterface
 import com.app.edcpoc.ui.theme.EdcpocTheme
+import com.app.edcpoc.ui.viewmodel.ApiViewModel
 import com.app.edcpoc.ui.viewmodel.ISOViewModel
 import com.app.edcpoc.utils.Constants.END_DATE
 import com.app.edcpoc.utils.Constants.LOGON
@@ -38,17 +40,22 @@ import com.app.edcpoc.utils.Constants.track2data
 import com.app.edcpoc.utils.CoreUtils.initializeEmvUtil
 import com.app.edcpoc.utils.DialogUtil.createEmvDialog
 import com.app.edcpoc.utils.IsoManager.ISO8583
+import com.app.edcpoc.utils.IsoManager.IsoHelper
 import com.app.edcpoc.utils.IsoManager.IsoUtils
 import com.app.edcpoc.utils.IsoManager.IsoUtils.generateIsoStartEndDate
-import com.zcs.sdk.util.LogUtils
+import com.app.edcpoc.utils.LogUtils
 import com.zcs.sdk.util.StringUtils
 import kotlin.getValue
 
 class OfficerActivity : ComponentActivity(), EmvUtilInterface {
     private val ISOViewModel: ISOViewModel by viewModels()
+    val apiViewModel: ApiViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        LogUtils.init(context = this, enableFileLogging = true)
+        LogUtils.setApiViewModel(apiViewModel)
 
         if (PreferenceManager.getSvpCardNum(this).isNullOrEmpty()) {
             startActivity(Intent(this, SvpActivity::class.java))
@@ -56,7 +63,7 @@ class OfficerActivity : ComponentActivity(), EmvUtilInterface {
             return
         }
 
-        if (PreferenceManager.getOfficerCardNum(this) != null){
+        if (PreferenceManager.getOfficerCardNum(this) != null) {
             startActivity(Intent(this, MainActivity::class.java))
             finish()
             return
@@ -74,7 +81,7 @@ class OfficerActivity : ComponentActivity(), EmvUtilInterface {
                         ISOViewModel = ISOViewModel,
                         onLogin = {
                             commandValue = LOGON
-                            ISOViewModel.emvUtil?.let { createEmvDialog(this, it)  }
+                            ISOViewModel.emvUtil?.let { createEmvDialog(this, it) }
                         },
                         onError = { message ->
                             Toast.makeText(this@OfficerActivity, message, Toast.LENGTH_LONG).show()
@@ -89,6 +96,7 @@ class OfficerActivity : ComponentActivity(), EmvUtilInterface {
                                 onCloseDate()
                                 return@OfficerLoginScreen
                             }
+                            LogUtils.sendLogTransaction("success", commandValue, "Login Success")
                             PreferenceManager.setOfficerLoggedIn(this@OfficerActivity, track2data)
                             startActivity(Intent(this, MainActivity::class.java))
                             track2data = null
@@ -107,12 +115,35 @@ class OfficerActivity : ComponentActivity(), EmvUtilInterface {
     }
 
     override fun onDoSomething(context: Context) {
-        when(commandValue) {
+        when (commandValue) {
             LOGON -> {
-                val iso = IsoUtils.generateIsoLogonLogoff("0800", "810000", track2data!!)
-                val pack = ISO8583.packToHex(iso)
-//                ISOViewModel.isoSendMessage(this@OfficerActivity, commandValue, StringUtils.convertHexToBytes(pack))
+                val result = IsoHelper.buildLogonWithModel()
+                if (result != null) {
+                    val (pack, iso) = result
+                    ISOViewModel.isoSendMessage(context, commandValue, pack) { success, error ->
+                        if (error != null) {
+                            Toast.makeText(this, error, Toast.LENGTH_LONG).show()
+                            return@isoSendMessage
+                        }
+                        try {
+                            val unpack = ISO8583.unpackFromHex(success!!, iso)
+                            val getRc = StringUtils.convertHexToASCII(unpack.get("39"))
+//                            alertDialog(getRc, pack, success, unpack)
+                        } catch (e: Exception) {
+                            AlertDialog.Builder(this)
+                                .setTitle("ISO Logon Failed")
+                                .setMessage("response raw: $success\n\nerr message=${e.message}")
+                                .setPositiveButton("Close") { dialog, _ -> dialog.dismiss() }
+                                .show()
+                            LogUtils.e(
+                                "Failed",
+                                "Error unpacking ISO8583 message: ${e.printStackTrace()}"
+                            )
+                        }
+                    }
+                }
             }
+
             END_DATE -> {
                 val iso = generateIsoStartEndDate("0800", "920000")
                 val pack = ISO8583.packToHex(iso)
@@ -190,7 +221,9 @@ fun OfficerLoginScreen(
                 imageVector = Icons.Default.Person,
                 contentDescription = "Login Officer",
                 tint = Color(0xFF1976D2),
-                modifier = Modifier.size(64.dp).padding(bottom = 16.dp)
+                modifier = Modifier
+                    .size(64.dp)
+                    .padding(bottom = 16.dp)
             )
             Text(
                 text = "Login Officer",

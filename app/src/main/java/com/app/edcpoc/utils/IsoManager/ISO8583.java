@@ -1,6 +1,6 @@
 package com.app.edcpoc.utils.IsoManager;
 
-import android.util.Log;
+import com.app.edcpoc.utils.LogUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -38,7 +38,7 @@ public class ISO8583 {
             throw new Exception("MTI must be in hex format");
         }
         String bitmap = bitmapGenerator(model8583Request);
-        Log.d("NPLOG","Generated bitmap="+bitmap);
+        LogUtils.INSTANCE.d("NPLOG","Generated bitmap="+bitmap);
         if(bitmap.length()%16!=0){
             throw new Exception("Bitmap length must be multiple of 16 hex characters");
         }
@@ -47,8 +47,8 @@ public class ISO8583 {
         }
         StringBuilder data = new StringBuilder();
         for(Model8583Bit bit:model8583Request.bits_sending){
-            Log.d("NPLOG","Validating data element number="+bit.number);
-            Log.d("NPLOG","Data element details: name="+bit.name+", len="+bit.len+", value="+bit.value);
+            LogUtils.INSTANCE.d("NPLOG","Validating data element number="+bit.number);
+            LogUtils.INSTANCE.d("NPLOG","Data element details: name="+bit.name+", len="+bit.len+", value="+bit.value);
             if(!model8583Request.specs.containsKey(bit.number)){
                 throw new Exception("Data element specification for bit number "+bit.number+" not found");
             }
@@ -64,7 +64,7 @@ public class ISO8583 {
             if(bit.number==1){
                 throw new Exception("Data element number 1 is reserved for bitmap and cannot be set manually");
             }
-            Log.d("NPLOG","Processing data element number="+bit.number);
+            LogUtils.INSTANCE.d("NPLOG","Processing data element number="+bit.number);
             if(bit.function!=null && bit.function.equals("STAN")){
                 //generate STAN
                 long stan = System.currentTimeMillis()%1000000;
@@ -144,7 +144,7 @@ public class ISO8583 {
         }
         String dataLengthHex = String.format("%04X",dataLength);
         String completeHex = dataLengthHex+semiCompleteHex;
-        Log.d("NPLOG","Complete packed hex="+completeHex);
+        LogUtils.INSTANCE.d("NPLOG","Complete packed hex="+completeHex);
         return completeHex;
     }
 
@@ -206,11 +206,11 @@ public class ISO8583 {
     private static String bitmapGenerator(Model8583Request model8583Request) {
         ArrayList<String> bitmapStack = new ArrayList<>();
         for(Model8583Bit bit:model8583Request.bits_sending){
-            Log.d("NPLOG","Processing bit number="+bit.number);
+            LogUtils.INSTANCE.d("NPLOG","Processing bit number="+bit.number);
             checkBitmap(bitmapStack,bit);
-            Log.d("NPLOG","bitmapStack.length="+bitmapStack.size());
+            LogUtils.INSTANCE.d("NPLOG","bitmapStack.length="+bitmapStack.size());
             int bitmapBlockActive = (int)Math.ceil((double)bit.number/64.0)-1;
-            Log.d("NPLOG","bitmapBlockActive="+bitmapBlockActive);
+            LogUtils.INSTANCE.d("NPLOG","bitmapBlockActive="+bitmapBlockActive);
             int indexInBlock = (bit.number - 1) % 64;
             char[] tb = bitmapStack.get(bitmapBlockActive).toCharArray();
             tb[indexInBlock] = '1';
@@ -286,7 +286,7 @@ public class ISO8583 {
         unpackedData.put("bitmap", bitmap);
         unpackedData.put("data", dataElementsHex);
         unpackedData.put("activeBitmaps", String.join(",", activeBitmaps));
-        Log.d("NPLOG", "Unpacking ISO8583 message:");
+        LogUtils.INSTANCE.d("NPLOG", "Unpacking ISO8583 message:");
         return unpackedData;
     }
     private static void parseData(ArrayList<String> activeBitmap, Model8583Request model8583Request,HashMap<String, String> unpackedData, String dataElementsHex) throws Exception {

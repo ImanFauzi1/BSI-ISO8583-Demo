@@ -19,7 +19,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -35,6 +38,7 @@ import com.app.edcpoc.utils.LogUtils
 fun SvpLockedScreen(
     ISOViewModel: ISOViewModel,
     onActivate: () -> Unit,
+    onStartDate: () -> Unit,
     onSuccess: (String) -> Unit,
     onError: (String) -> Unit,
     onSettingClick: () -> Unit
@@ -115,6 +119,16 @@ fun SvpLockedScreen(
                     )
                 ) {
                     Text(text = "Aktivasi", color = Color.White, fontWeight = FontWeight.Bold)
+                }
+                if (uiState.isVisibleStartDate) {
+                    Button(
+                        onClick = onStartDate,
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF2196F3)
+                        )
+                    ) {
+                        Text(text = "Start Date", color = Color.White, fontWeight = FontWeight.Bold)
+                    }
                 }
             }
         }
