@@ -262,6 +262,7 @@ class EmvUtil @Inject constructor(context: Context) {
                     Log.d(TAG, "Input PIN result: $pinResult")
                 }
             }
+            Log.d("DEBUG", "cardNum: $cardNum")
         } else {
             callback?.onError("Mag card read error: ${magReadData.resultcode}")
             Log.e(TAG, "Mag card read error:  " + magReadData.resultcode)

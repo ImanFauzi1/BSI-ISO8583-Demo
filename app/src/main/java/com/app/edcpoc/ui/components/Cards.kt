@@ -78,7 +78,7 @@ fun TransaksiCard(onTransaksiClick: () -> Unit) {
 }
 
 @Composable
-fun SecurityCard(onSecurityClick: () -> Unit) {
+fun SecurityCard(onSecurityClick: () -> Unit, onLogoff: () -> Unit) {
     Column(
         modifier = Modifier.padding(16.dp)
     ) {
@@ -121,7 +121,7 @@ fun SecurityCard(onSecurityClick: () -> Unit) {
                 iconColor = Color(0xFFBBDEFB),
                 onClick = {
                     commandValue = LOGOFF
-                    onSecurityClick()
+                    onLogoff()
                 }
             )
         }

@@ -24,7 +24,8 @@ fun EDCHomeScreen(
     onLogoutClick: () -> Unit,
     dialogState: DialogState,
     dismissDialog: () -> Unit,
-    logIso: List<String> // Tambahkan parameter logIso
+    logIso: List<String>,
+    onLogoff: () -> Unit
 ) {
     if (dialogState.showDialog) {
         AlertDialog(
@@ -77,7 +78,7 @@ fun EDCHomeScreen(
                 Spacer(modifier = Modifier.height(32.dp))
             }
             item {
-                SecurityCard { onSecurityClick() }
+                SecurityCard(onSecurityClick = onSecurityClick, onLogoff = onLogoff)
             }
             item {
                 Spacer(modifier = Modifier.height(32.dp))
@@ -115,6 +116,7 @@ fun EDCHomeScreenPreview() {
             dismissDialog = {},
             onSecurityClick = {},
             onClickSettings = {},
+            onLogoff = {},
             logIso = listOf() // Tambahkan logIso kosong di preview
         )
     }

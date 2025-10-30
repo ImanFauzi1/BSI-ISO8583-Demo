@@ -84,6 +84,7 @@ import com.app.edcpoc.utils.Constants.tpkKey
 import com.app.edcpoc.utils.CoreUtils
 import com.app.edcpoc.utils.EmvUtil
 import com.app.edcpoc.utils.IsoManager.IsoUtils.generateIsoConnection
+import com.app.edcpoc.utils.IsoManager.IsoUtils.generateIsoEndDate
 import com.app.edcpoc.utils.IsoManager.IsoUtils.generateIsoStartEndDate
 import com.app.edcpoc.utils.IsoManager.Model8583Request
 import com.simo.ektp.EktpSdkZ90
@@ -166,9 +167,27 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
                     this@MainActivity,
                     onEnrollmentClick = {onEnrollmentClick(it)},
                     isoViewModel = isoViewModel,
-                    onSessionManagementClick = { onSessionManagementClick() }
+                    onSessionManagementClick = { onSessionManagementClick() },
+                    onLogoffClick = { onLogoff() }
                 )
             }
+        }
+    }
+
+    private fun onLogoff() {
+        runOnUiThread {
+            AlertDialog.Builder(this@MainActivity)
+                .setTitle("Logoff")
+                .setMessage("Are you sure you want to log off?")
+                .setPositiveButton("Yes") { dialog, _ ->
+                    dialog.dismiss()
+                    commandValue = LOGOFF
+                    track2data = null
+                    cardNum = null
+                    onDoSomething(this@MainActivity)
+                }
+                .setNegativeButton("No") { dialog, _ -> dialog.dismiss() }
+                .show()
         }
     }
 
@@ -232,11 +251,11 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
                                         description = "Transaction successful"
                                     )
                                 }
-                                AlertDialog.Builder(this@MainActivity)
-                                    .setTitle("ISO Start Date Success")
-                                    .setMessage(state.logIso.joinToString(separator = ";;"))
-                                    .setPositiveButton("Close") { dialog, _ -> dialog.dismiss() }
-                                    .show()
+//                                AlertDialog.Builder(this@MainActivity)
+//                                    .setTitle("ISO Start Date Success")
+//                                    .setMessage(state.logIso.joinToString(separator = ";;"))
+//                                    .setPositiveButton("Close") { dialog, _ -> dialog.dismiss() }
+//                                    .show()
                             }
                             isoViewModel.clearState()
                         }
@@ -554,7 +573,7 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
                 }
             }
             // start date done
-            START_DATE, END_DATE -> {
+            START_DATE -> {
                 LogUtils.i(TAG, "commandValue=$commandValue, FLAVOR=${BuildConfig.FLAVOR}")
                 if (BuildConfig.FLAVOR == "demo") return
 
@@ -617,6 +636,46 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
                 }
             }
 
+            END_DATE -> {
+                try {
+                    val iso = generateIsoEndDate()
+                    val pack = ISO8583.packToHex(iso)
+
+                    try {
+                        val result = ISO8583.unpackFromHex(pack, iso)
+                        LogUtils.d(TAG, "Unpacked ISO8583 Message: ${Gson().toJson(result)}")
+                    } catch (e: Exception) {
+                        LogUtils.e(TAG, "Error unpacking ISO8583 message: ${e.printStackTrace()}")
+                    }
+                    isoViewModel.isoSendMessage(context, commandValue, pack) { success, error ->
+                        if (error != null) {
+                            Toast.makeText(this@MainActivity, error, Toast.LENGTH_LONG).show()
+                            return@isoSendMessage
+                        }
+                        try {
+                            val unpack = ISO8583.unpackFromHex(success!!, iso)
+                            val getRc = StringUtils.convertHexToASCII(unpack.get("39"))
+
+                            val unpackPayload = ISO8583.unpackFromHex(pack, iso)
+
+                            alertDialog(getRc, pack, success, unpackPayload)
+                        } catch (e: Exception) {
+                            AlertDialog.Builder(this@MainActivity)
+                                .setTitle("ISO Start Date FAILEDD")
+                                .setMessage("statusRet=${statusRet}" +
+                                        "response raw: $success\n\niso payload:$pack\n\ntpk:${PreferenceManager.getTPK(this@MainActivity)}\n\npinblock:$pinBlockOwn\n\nerr message=${e.message}")
+                                .setPositiveButton("Close") { dialog, _ -> dialog.dismiss() }
+                                .show()
+                            LogUtils.e(TAG, "Error unpacking ISO8583 message: ${e.printStackTrace()}")
+                        }
+
+                    }
+                } catch (e: Exception) {
+                    showToast("Error in END_DATE: ${e.message}")
+                    LogUtils.e(TAG, "Error in END_DATE: ${e.message}")
+                }
+            }
+
             // DONE
             LOGON -> {
                 if (BuildConfig.FLAVOR == "integrate") {
@@ -661,11 +720,9 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
                          Toast.makeText(context, "SVP Card Number not found.", Toast.LENGTH_LONG).show()
                          return
                      }
-                 } else {
-                     officerCardNum = track2data!!
                  }
 
-                val iso = IsoUtils.generateIsoLogonLogoff("0800", "820000", officerCardNum)
+                val iso = IsoUtils.generateIsoLogoff()
                 val pack = ISO8583.packToHex(iso)
                 try {
                     val result = ISO8583.unpackFromHex(pack, iso)
@@ -674,6 +731,27 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
                     LogUtils.e(TAG, "Error unpacking ISO8583 message: ${e.printStackTrace()}")
                 }
 
+                 isoViewModel.isoSendMessage(context, commandValue, pack) { success, error ->
+                     if (error != null) {
+                         Toast.makeText(this@MainActivity, error, Toast.LENGTH_LONG).show()
+                         return@isoSendMessage
+                     }
+                     try {
+                         val unpack = ISO8583.unpackFromHex(success!!, iso)
+                         val getRc = StringUtils.convertHexToASCII(unpack.get("39"))
+                         alertDialog(getRc, pack, success, unpack)
+                     } catch (e: Exception) {
+                         AlertDialog.Builder(this@MainActivity)
+                             .setTitle("ISO Logon Failed")
+                             .setMessage("response raw: $success\n\nerr message=${e.message}")
+                             .setPositiveButton("Close") { dialog, _ -> dialog.dismiss() }
+                             .show()
+                         LogUtils.e(
+                             TAG,
+                             "Error unpacking ISO8583 message: ${e.printStackTrace()}"
+                         )
+                     }
+                 }
 //                isoViewModel.isoSendMessage(context, commandValue, StringUtils.convertHexToBytes(pack))
             }
             // DONE
@@ -924,9 +1002,10 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
 
     private fun alertDialog(getRc: String, pack: String, success: String, unpack: Map<String, Any>) {
         runOnUiThread {
+            val tpk = PreferenceManager.getTPK(this@MainActivity)
             AlertDialog.Builder(this@MainActivity)
                 .setTitle("$getRc - ISO Success")
-                .setMessage("tpk:$tpkKey\n\npayload:$pack\n\nResponse Code: $getRc\n\n\nresponse raw: $success\n\n" + unpack.entries.joinToString("\n") { "${it.key}: ${it.value}" })
+                .setMessage("tpk:$tpk\n\npayload:$pack\n\nResponse Code: $getRc\n\n\nresponse raw: $success\n\n" + unpack.entries.joinToString("\n") { "${it.key}: ${it.value}" })
                 .setPositiveButton("Close") { dialog, _ -> dialog.dismiss() }
                 .show()
         }
@@ -983,13 +1062,14 @@ fun EDCHomeApp(
     onSessionManagementClick: () -> Unit,
     onEnrollmentClick: (String) -> Unit,
     isoViewModel: ISOViewModel = viewModel(),
+    onLogoffClick: () -> Unit
 
     ) {
     var currentScreen by remember { mutableStateOf("home") }
     val authState by isoViewModel.uiState.collectAsState()
 
     LaunchedEffect(authState) {
-        if (commandValue == LOGOFF) {
+        if (commandValue == LOGOFF && BuildConfig.FLAVOR == "demo") {
             PreferenceManager.setOfficerLoggedIn(context, null)
             context.startActivity(Intent(context, OfficerActivity::class.java))
             return@LaunchedEffect
@@ -1006,10 +1086,14 @@ fun EDCHomeApp(
             onEnrollmentClick = { onEnrollmentClick(it) },
             onManajemenPINClick = { isoViewModel.emvUtil?.let { createEmvDialog(context, it, message = "Insert or Swipe Customer Card")} },
             onSessionManagementClick = { onSessionManagementClick() },
-            onSecurityClick = { isoViewModel.emvUtil?.let { createEmvDialog(context, it, message = "Insert or Swipe Supervisor Card")} },
+            onSecurityClick = { isoViewModel.emvUtil?.let { createEmvDialog(context, it, message = "Insert or Swipe Officer Card")} },
             onLogoutClick = {
                 commandValue = LOGOFF
-                isoViewModel.emvUtil?.let { createEmvDialog(context, it) }
+                onLogoffClick()
+            },
+            onLogoff = {
+                commandValue = LOGOFF
+                onLogoffClick()
             },
             dialogState = isoViewModel.dialogState.collectAsState().value,
             dismissDialog = { isoViewModel.dismissDialog() },
