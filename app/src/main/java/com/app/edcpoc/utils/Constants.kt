@@ -19,7 +19,7 @@ object Constants {
     val mDriverManager: DriverManager = DriverManager.getInstance()
 
     var mPrinter: Printer? = null
-    var mPinPadManager: PinPadManager? = null
+    lateinit var mPinPadManager: PinPadManager
     var emvHandler: EmvHandler? = null
     var realCardType: CardReaderTypeEnum? = null
     var mCardType: CardReaderTypeEnum = CardReaderTypeEnum.MAG_IC_RF_CARD

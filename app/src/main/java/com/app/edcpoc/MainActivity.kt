@@ -77,6 +77,7 @@ import com.app.edcpoc.utils.Constants.OPEN_CONNECTION
 import com.app.edcpoc.utils.Constants.START_DATE
 import com.app.edcpoc.utils.Constants.VERIFY_PIN
 import com.app.edcpoc.utils.Constants.tpkKey
+import com.app.edcpoc.utils.CoreUtils
 import com.app.edcpoc.utils.EmvUtil
 import com.app.edcpoc.utils.IsoManager.IsoUtils.generateIsoConnection
 import com.app.edcpoc.utils.IsoManager.IsoUtils.generateIsoStartEndDate
@@ -135,10 +136,7 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
         }
         enableEdgeToEdge()
 
-        isoViewModel.emvUtil = EmvUtil()
-        isoViewModel.emvUtil?.initialize()
-        isoViewModel.emvUtil?.emvOpen()
-        isoViewModel.emvUtil?.setCallback(this)
+        isoViewModel.emvUtil = CoreUtils.initializeEmvUtil(this@MainActivity, this)
 
         handlePermissions()
         checkPsamConfiguration(this@MainActivity)
@@ -465,7 +463,13 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
     }
 
     private fun showToast(message: String) {
-        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+        } else {
+            runOnUiThread {
+                Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     private fun handlePermissions() {

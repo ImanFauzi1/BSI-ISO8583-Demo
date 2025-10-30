@@ -26,8 +26,9 @@
         android:theme="@style/Theme.Edcpoc">
         <activity
             android:name="com.zcs.sdk.pin.pinpad.PinPadPasswordActivity"
-            android:theme="@style/Theme.Transparent"
-            android:hardwareAccelerated="false" />
+            android:theme="@style/Theme.WindowActivity"
+            android:hardwareAccelerated="false"
+            android:exported="false"/>
         <activity
             android:name=".SvpActivity"
             android:exported="true"

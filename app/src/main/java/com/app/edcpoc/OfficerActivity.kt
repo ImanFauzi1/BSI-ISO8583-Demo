@@ -62,7 +62,7 @@ class OfficerActivity : ComponentActivity(), EmvUtilInterface {
             return
         }
 
-        ISOViewModel.emvUtil = initializeEmvUtil(this)
+        ISOViewModel.emvUtil = initializeEmvUtil(this@OfficerActivity, this)
 
         setContent {
             EdcpocTheme {

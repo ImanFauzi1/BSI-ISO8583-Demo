@@ -60,7 +60,7 @@ class SvpActivity : ComponentActivity(), EmvUtilInterface {
             return
         }
 
-        ISOViewModel.emvUtil = initializeEmvUtil( this)
+        ISOViewModel.emvUtil = initializeEmvUtil( this@SvpActivity, this)
 
         handleInitSdk()
         observeState()

@@ -27,19 +27,29 @@ object DialogUtil {
     }
 
     fun createEmvDialog(context: Context, emvUtil: EmvUtil, title: String? = "Insert Card", message: String? = "Insert or Swipe Card") {
-        createDialog(
-            context = context,
-            title = title,
-            message = message,
-            showListener = { dialog, dialog1 ->
-                LogUtils.d(TAG, "createEmvDialog: showListener")
-                Thread {
-                    emvUtil.searchBankCard(cardType, dialog)
-                }.start()
-            },
-            cancelListener = { dialog, dialog1 ->
-                emvUtil.cancelSearchCard()
-            },
-        ).show()
+        try {
+            // Check if context is an Activity and is not finishing/destroyed
+            val activity = context as? android.app.Activity
+            if (activity == null || activity.isFinishing || (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN_MR1 && activity.isDestroyed)) {
+                LogUtils.e(TAG, "createEmvDialog: Activity is finishing or destroyed, not showing dialog")
+                return
+            }
+            createDialog(
+                context = context,
+                title = title,
+                message = message,
+                showListener = { dialog, dialog1 ->
+                    LogUtils.d(TAG, "createEmvDialog: showListener")
+                    Thread {
+                        emvUtil.searchBankCard(cardType, dialog)
+                    }.start()
+                },
+                cancelListener = { dialog, dialog1 ->
+                    emvUtil.cancelSearchCard()
+                },
+            ).show()
+        } catch (e: Exception) {
+            LogUtils.e(TAG, "createEmvDialog: Exception - ${e.message}")
+        }
     }
 }
