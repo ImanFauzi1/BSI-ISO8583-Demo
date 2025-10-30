@@ -1,6 +1,7 @@
 package com.app.edcpoc.utils.IsoManager
 
 import android.util.Log
+import com.app.edcpoc.utils.Constants.cardNum
 import com.app.edcpoc.utils.Constants.commandValue
 import com.app.edcpoc.utils.Constants.field48data
 import com.app.edcpoc.utils.Constants.officerCardNum
@@ -661,7 +662,7 @@ fun generateIsoStartEndDate(mti: String, processingCode: String): Model8583Reque
                     ISO8583.LEN_4HALF,
 //                officerCardNum
 //                StringUtils.convertStringToHex("9911010054404957")
-                    StringUtils.convertStringToHex(officerCardNum)
+                    StringUtils.convertStringToHex(cardNum)
                 )
             )
             model8583Request.bits_sending?.add(
@@ -670,7 +671,6 @@ fun generateIsoStartEndDate(mti: String, processingCode: String): Model8583Reque
                     "PIN Data",
                     ISO8583.LEN_0,
                     pinBlockOwn
-//                "688661FA3BC3E124"
                 )
             )
             model8583Request.bits_sending?.add(

@@ -76,6 +76,7 @@ import com.app.edcpoc.utils.Constants.FINGERPRINT_MESSAGE
 import com.app.edcpoc.utils.Constants.OPEN_CONNECTION
 import com.app.edcpoc.utils.Constants.START_DATE
 import com.app.edcpoc.utils.Constants.VERIFY_PIN
+import com.app.edcpoc.utils.Constants.customerIso
 import com.app.edcpoc.utils.Constants.pinBlockOwn
 import com.app.edcpoc.utils.Constants.reissueCustomer
 import com.app.edcpoc.utils.Constants.statusRet
@@ -678,13 +679,12 @@ class MainActivity : ComponentActivity(), EmvUtilInterface {
             // DONE
             CREATE_PIN -> {
                 var spvCardNumber = PreferenceManager.getSvpCardNum(context)
-                var customerIso: Model8583Request? = null
 
                 if (step == 1) {
                     LogUtils.i(TAG, "Creating PIN Step 1")
                     LogUtils.i(TAG, "commandValue=$commandValue")
                     LogUtils.i(TAG, "Opening EMV Dialog for Create PIN Step 1")
-                    customerIso = IsoUtils.generateIsoCreateCustomerPIN()
+                     customerIso = IsoUtils.generateIsoCreateCustomerPIN()
                     isoViewModel.emvUtil?.let { createEmvDialog(this@MainActivity, it, title = "Authorisation", message = "Insert or Swipe Authorisation Card") }
                     step++
                     return

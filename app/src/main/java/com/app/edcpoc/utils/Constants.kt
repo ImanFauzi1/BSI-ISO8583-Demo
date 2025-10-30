@@ -224,4 +224,6 @@ object Constants {
     const val REISSUE_PIN = "REISSUE_PIN"
 
     var reissueCustomer: Model8583Request? = null
+    var customerIso: Model8583Request? = null
+
 }
