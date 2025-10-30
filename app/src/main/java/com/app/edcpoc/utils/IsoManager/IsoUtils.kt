@@ -785,7 +785,7 @@ fun generateIsoStartEndDate(mti: String, processingCode: String): Model8583Reque
                     53,
                     "Security Control Info",
                     ISO8583.LEN_0,
-                    ""
+                    "0000000000000000"
                 )
             )
             model8583Request.bits_sending?.add(

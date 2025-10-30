@@ -235,8 +235,10 @@ class EmvUtil @Inject constructor(context: Context) {
                     if (step == 2) {
                         track2data = tk2
                         Log.d("Debug", "step=$step;commandValue=$commandValue;track2datasvp=$track2data")
+                        cardNum = magReadData.cardNo
                         inputPIN()
                     } else {
+                        cardNum = magReadData.cardNo
                         inputNewPIN()
                     }
                 }
@@ -666,8 +668,8 @@ class EmvUtil @Inject constructor(context: Context) {
     fun pinpadWork() {
         try {
             val mk_key = "27C533E1066C3FFA6C599CBBBD6F6C39"
-            val tpk = PreferenceManager.getTPK(context = appContext)
-//            val tpk = "57A1791D6C6D5345F02473A1F7578BCE"
+//            val tpk = PreferenceManager.getTPK(context = appContext)
+            val tpk = "57A1791D6C6D5345F02473A1F7578BCE"
             val key_byte = StringUtils.convertHexToBytes(mk_key)
 
             //inject plain masterkey
